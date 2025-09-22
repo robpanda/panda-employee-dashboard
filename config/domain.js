@@ -1,11 +1,11 @@
 // Domain Configuration
 const DOMAIN_CONFIG = {
-    // Production domain - replace with your actual domain
+    // Production domain
     production: {
-        domain: 'your-domain.com',
+        domain: 'pandaadmin.com',
         protocol: 'https',
-        api: 'https://api.your-domain.com',
-        cdn: 'https://cdn.your-domain.com'
+        api: 'https://api.pandaadmin.com',
+        s3bucket: 'pandaadmin-com'
     },
     
     // Development/staging
@@ -13,7 +13,7 @@ const DOMAIN_CONFIG = {
         domain: 'panda-exteriors-map-bucket.s3.amazonaws.com',
         protocol: 'https',
         api: 'https://w40mq6ab11.execute-api.us-east-2.amazonaws.com/prod',
-        cdn: 'https://panda-exteriors-map-bucket.s3.amazonaws.com'
+        s3bucket: 'panda-exteriors-map-bucket'
     },
     
     // Current environment
@@ -31,8 +31,9 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 // Domain setup instructions:
-// 1. Purchase domain (e.g., pandaexteriors-portal.com)
-// 2. Set up CloudFront distribution
-// 3. Configure Route 53 DNS
-// 4. Update production config above
-// 5. Change current to 'production'
+// 1. Transfer DNS to Route 53 (see setup commands below)
+// 2. Create S3 bucket: pandaadmin-com
+// 3. Request SSL certificate in ACM
+// 4. Create ALB with SSL certificate
+// 5. Update production config above
+// 6. Change current to 'production'
