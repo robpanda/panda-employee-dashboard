@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - Panda Exteriors</title>
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Panda Exteriors Dashboard</h1>
+            <div class="territory-badge">Smart Import Ready</div>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">📊 Overview</button>
+            <button class="nav-tab" onclick="showTab('employees')">👥 Active Employees</button>
+            <button class="nav-tab" onclick="showTab('terminated')">❌ Terminated</button>
+            <button class="nav-tab" onclick="showTab('duplicates')">🔍 Duplicates</button>
+            <button class="nav-tab" onclick="showTab('upload')">📤 Smart Import</button>
+        </div>
+        
+        <!-- Tab Content Areas -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="overviewEmployees">0</div>
+                    <div class="stat-label">Total Employees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="newHires">0</div>
+                    <div class="stat-label">New Hires (90 days)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="employees" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Employment Date</th>
+                            <th>Years of Service</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Merch Requested</th>
+                            <th>Merch Sent</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="terminated" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Employment Date</th>
+                            <th>Termination Date</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="terminatedTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="duplicates" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Group</th>
+                            <th>Match Type</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Department</th>
+                            <th>Employment Date</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="duplicateTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="upload" class="tab-content">
+            <div class="upload-area">
+                <h3>📤 Smart Import Employee Data</h3>
+                <p><strong>Smart Import Rules:</strong></p>
+                <p>• Anyone NOT on the new list will be terminated</p>
+                <p>• Anyone NEW will be added as active employee</p>
+                <p>• Anyone already in database remains unchanged</p>
+                <input type="file" id="fileInput" style="display: none;" accept=".csv,.xlsx,.xls" />
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+            </div>
+            <div id="uploadStatus"></div>
+        </div>
+    </div>
+
+    <script src="../assets/js/dashboard.js"></script>
+</body>
+</html>
