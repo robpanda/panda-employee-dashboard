@@ -5,7 +5,7 @@ const DOMAIN_CONFIG = {
         domain: 'pandaadmin.com',
         protocol: 'https',
         api: 'https://api.pandaadmin.com',
-        s3bucket: 'pandaadmin-com'
+        s3bucket: 'pandaadmin'
     },
     
     // Development/staging

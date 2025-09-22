@@ -4,79 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lead Management - Panda Exteriors</title>
-    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Lead Management</h1>
-            <div class="territory-badge">CRM System</div>
+            <h1>📊 Lead Management Dashboard</h1>
+            <div class="territory-badge">
+                <a href="/" style="color: white; text-decoration: none;">🏠 Home</a>
+            </div>
         </div>
         
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('interactive')">🔍 Interactive</button>
+            <button class="nav-tab active" onclick="showTab('overview')">📊 Overview</button>
+            <button class="nav-tab" onclick="showTab('interactive')">🔍 Interactive</button>
             <button class="nav-tab" onclick="showTab('campaigns')">📧 Campaigns</button>
             <button class="nav-tab" onclick="showTab('validation')">✅ Validation</button>
             <button class="nav-tab" onclick="showTab('enrichment')">🔍 Enrichment</button>
         </div>
         
-        <div id="interactive" class="tab-content active">
-            <h2>🔍 Interactive Lead Explorer</h2>
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number">141</div>
-                    <div class="stat-label">All Leads</div>
+                    <div class="stat-label">Total Leads</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">10</div>
+                    <div class="stat-label">States</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number">34</div>
-                    <div class="stat-label">Maryland</div>
+                    <div class="stat-label">MD Leads</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-number">99%</div>
+                    <div class="stat-label">Valid Contacts</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Interactive Tab -->
+        <div id="interactive" class="tab-content">
+            <h2>🔍 Interactive Lead Explorer</h2>
+            <p>Click on any chart element or stat card to drill down into lead details.</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card" onclick="showLeadModal('all')">
+                    <div class="stat-number">141</div>
+                    <div class="stat-label">All Leads</div>
+                </div>
+                <div class="stat-card" onclick="showLeadModal('md')">
+                    <div class="stat-number">34</div>
+                    <div class="stat-label">Maryland</div>
+                </div>
+                <div class="stat-card" onclick="showLeadModal('nj')">
                     <div class="stat-number">31</div>
                     <div class="stat-label">New Jersey</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="showLeadModal('pa')">
                     <div class="stat-number">26</div>
                     <div class="stat-label">Pennsylvania</div>
                 </div>
             </div>
         </div>
         
+        <!-- Campaigns Tab -->
         <div id="campaigns" class="tab-content">
             <h2>📧📱 Campaign Segmentation</h2>
+            
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card" onclick="showCampaignModal('email')">
                     <div class="stat-number">70</div>
                     <div class="stat-label">Email Only</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="showCampaignModal('mixed')">
                     <div class="stat-number">71</div>
                     <div class="stat-label">Mixed Campaign</div>
+                </div>
+                <div class="stat-card" onclick="showCampaignModal('sms')">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">SMS Only</div>
+                </div>
+                <div class="stat-card" onclick="showCampaignModal('invalid')">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Invalid</div>
                 </div>
             </div>
         </div>
         
+        <!-- Validation Tab -->
         <div id="validation" class="tab-content">
             <h2>✅ Contact Validation</h2>
-            <div class="validation-form">
-                <input type="email" id="testEmail" placeholder="test@example.com">
-                <button class="btn" onclick="validateEmail()">Validate Email</button>
-                <input type="tel" id="testPhone" placeholder="(555) 123-4567">
-                <button class="btn" onclick="validatePhone()">Validate Phone</button>
+            
+            <div class="stats-grid">
+                <div>
+                    <label for="testEmail">Email Address</label>
+                    <input type="email" id="testEmail" placeholder="test@example.com" value="angelicaann99@gmail.com">
+                    <button class="btn" onclick="validateEmail()">Validate Email</button>
+                </div>
+                <div>
+                    <label for="testPhone">Phone Number</label>
+                    <input type="tel" id="testPhone" placeholder="(555) 123-4567" value="(717) 406-4768">
+                    <button class="btn" onclick="validatePhone()">Validate Phone</button>
+                </div>
             </div>
-            <div id="validationResults"></div>
+            <div id="validationResults" style="display: none; margin-top: 20px;">
+                <div id="emailResults"></div>
+                <div id="phoneResults"></div>
+            </div>
         </div>
         
+        <!-- Enrichment Tab -->
         <div id="enrichment" class="tab-content">
             <h2>🔍 Data Enrichment Options</h2>
-            <div class="enrichment-form">
-                <input type="text" id="addressLine" placeholder="Street Address">
-                <input type="text" id="city" placeholder="City">
-                <input type="text" id="state" placeholder="State" maxlength="2">
-                <input type="text" id="zipCode" placeholder="ZIP Code" maxlength="5">
-                <button class="btn" onclick="validateAddress()">Validate Address</button>
+            
+            <div class="stats-grid">
+                <div>
+                    <label for="addressLine">Street Address</label>
+                    <input type="text" id="addressLine" placeholder="555 Marco Way" value="555 Marco Way">
+                    <label for="city">City</label>
+                    <input type="text" id="city" placeholder="East Stroudsburg" value="East Stroudsburg">
+                </div>
+                <div>
+                    <label for="state">State</label>
+                    <input type="text" id="state" placeholder="PA" value="PA" maxlength="2">
+                    <label for="zipCode">ZIP Code</label>
+                    <input type="text" id="zipCode" placeholder="18302" value="18302" maxlength="5">
+                </div>
             </div>
-            <div id="addressResults"></div>
+            <button class="btn" onclick="validateAddress()">Validate Address</button>
+            <div id="addressResults" style="display: none; margin-top: 20px;">
+                <div id="uspsResults"></div>
+            </div>
         </div>
     </div>
 

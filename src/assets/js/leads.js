@@ -1,4 +1,3 @@
-// Lead Management JavaScript
 function showTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -11,9 +10,18 @@ function showTab(tabName) {
     event.target.classList.add('active');
 }
 
+function showLeadModal(type) {
+    alert(`Showing ${type} leads`);
+}
+
+function showCampaignModal(type) {
+    alert(`Showing ${type} campaign`);
+}
+
 function validateEmail() {
     const email = document.getElementById('testEmail').value;
-    document.getElementById('validationResults').innerHTML = `
+    document.getElementById('validationResults').style.display = 'block';
+    document.getElementById('emailResults').innerHTML = `
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Valid:</strong> <span style="color: #27ae60;">YES</span></p>
     `;
@@ -21,7 +29,8 @@ function validateEmail() {
 
 function validatePhone() {
     const phone = document.getElementById('testPhone').value;
-    document.getElementById('validationResults').innerHTML = `
+    document.getElementById('validationResults').style.display = 'block';
+    document.getElementById('phoneResults').innerHTML = `
         <p><strong>Phone:</strong> ${phone}</p>
         <p><strong>Valid:</strong> <span style="color: #27ae60;">YES</span></p>
     `;
@@ -33,7 +42,8 @@ function validateAddress() {
     const state = document.getElementById('state').value;
     const zip = document.getElementById('zipCode').value;
     
-    document.getElementById('addressResults').innerHTML = `
+    document.getElementById('addressResults').style.display = 'block';
+    document.getElementById('uspsResults').innerHTML = `
         <p><strong>Address:</strong> ${address}</p>
         <p><strong>City:</strong> ${city}</p>
         <p><strong>State:</strong> ${state}</p>

@@ -13,7 +13,17 @@ def lambda_handler(event, context):
     path = event['path']
     
     try:
-        if http_method == 'GET' and path == '/employees':
+        if http_method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization,Accept'
+                },
+                'body': ''
+            }
+        elif http_method == 'GET' and path == '/employees':
             return get_employees(event)
         elif http_method == 'POST' and path == '/employees':
             return create_employee(event)
@@ -35,7 +45,12 @@ def lambda_handler(event, context):
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
             'body': json.dumps({'error': str(e)})
         }
 
@@ -165,6 +180,11 @@ def delete_employee(event):
     
     return {
         'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+        },
         'body': json.dumps({'message': 'Employee deleted successfully'})
     }
