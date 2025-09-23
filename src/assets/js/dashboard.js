@@ -1,6 +1,7 @@
 let employees = [];
 let terminatedEmployees = [];
 let backupData = null;
+let mergedEmployeeIds = new Set(); // Track merged employee IDs
 
 const API_BASE = 'https://w40mq6ab11.execute-api.us-east-2.amazonaws.com/prod';
 
@@ -512,14 +513,25 @@ function deleteDuplicate(index) {
 }
 
 async function loadEmployees() {
+    // Load merged IDs from localStorage
+    const savedMergedIds = localStorage.getItem('mergedEmployeeIds');
+    if (savedMergedIds) {
+        mergedEmployeeIds = new Set(JSON.parse(savedMergedIds));
+    }
+    
     try {
         const response = await fetch(`${API_BASE}/employees`);
         const data = await response.json();
         console.log('Raw API response:', data);
         
         if (data.employees) {
-            const allEmployees = data.employees;
+            let allEmployees = data.employees;
             console.log('Total employees from API:', allEmployees.length);
+            
+            // Filter out previously merged employees
+            allEmployees = allEmployees.filter(emp => {
+                return !emp.employee_id || !mergedEmployeeIds.has(emp.employee_id);
+            });
             
             // Add Employee IDs if missing
             allEmployees.forEach(emp => {
@@ -705,6 +717,14 @@ async function saveEmployeesToDB(allEmployees) {
 }
 
 function showTab(tabName) {
+    // Add loading state
+    const tabElement = document.getElementById(tabName);
+    if (tabElement) {
+        tabElement.style.opacity = '0.5';
+        tabElement.style.transform = 'translateY(10px)';
+    }
+    
+    // Remove active classes with animation
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -712,29 +732,33 @@ function showTab(tabName) {
         tab.classList.remove('active');
     });
     
-    const tabElement = document.getElementById(tabName);
-    if (tabElement) {
-        tabElement.classList.add('active');
-    }
-    
-    if (event && event.target) {
-        event.target.classList.add('active');
-    } else {
-        // Find and activate the correct tab button
-        const tabButtons = document.querySelectorAll('.nav-tab');
-        const tabNames = ['employees', 'terminated', 'duplicates', 'upload'];
-        const tabIndex = tabNames.indexOf(tabName);
-        if (tabIndex >= 0 && tabButtons[tabIndex]) {
-            tabButtons[tabIndex].classList.add('active');
+    // Add active class to new tab
+    setTimeout(() => {
+        if (tabElement) {
+            tabElement.classList.add('active');
+            tabElement.style.opacity = '1';
+            tabElement.style.transform = 'translateY(0)';
         }
-    }
+        
+        if (event && event.target) {
+            event.target.classList.add('active');
+        } else {
+            // Find and activate the correct tab button
+            const tabButtons = document.querySelectorAll('.nav-tab');
+            const tabNames = ['employees', 'terminated', 'duplicates', 'upload'];
+            const tabIndex = tabNames.indexOf(tabName);
+            if (tabIndex >= 0 && tabButtons[tabIndex]) {
+                tabButtons[tabIndex].classList.add('active');
+            }
+        }
+    }, 100);
     
     // Save current tab to localStorage
     localStorage.setItem('currentTab', tabName);
     
     // Render duplicates when switching to duplicates tab
     if (tabName === 'duplicates') {
-        renderDuplicateTable();
+        setTimeout(() => renderDuplicateTable(), 150);
     }
 }
 
@@ -1069,8 +1093,14 @@ function mergeSelectedEmployees() {
     
     const primary = toMerge[0];
     if (confirm(`Merge ${toMerge.length} employees into: ${primary['First Name']} ${primary['Last Name']}?`)) {
+        // Track merged employee IDs
+        toMerge.slice(1).forEach(emp => {
+            if (emp.employee_id) mergedEmployeeIds.add(emp.employee_id);
+        });
+        
         // Merge data from all records into primary
         const merged = mergeEmployeeData(toMerge);
+        merged._merged_ids = toMerge.map(emp => emp.employee_id).filter(id => id);
         
         // Replace primary with merged data
         employees[indices[0]] = merged;
@@ -1082,6 +1112,7 @@ function mergeSelectedEmployees() {
         
         renderEmployeeTable();
         saveEmployeesToDB([...employees, ...terminatedEmployees]);
+        localStorage.setItem('mergedEmployeeIds', JSON.stringify([...mergedEmployeeIds]));
     }
 }
 
@@ -1149,9 +1180,27 @@ function mergeSelectedDuplicates() {
     }
 }
 
+// Add loading animation
+function showLoadingState() {
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.opacity = '0.8';
+        container.style.pointerEvents = 'none';
+    }
+}
+
+function hideLoadingState() {
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.opacity = '1';
+        container.style.pointerEvents = 'auto';
+    }
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard initializing...');
+    showLoadingState();
     
     // Wait for DOM to be fully loaded
     setTimeout(() => {
@@ -1159,7 +1208,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const savedTab = localStorage.getItem('currentTab') || 'employees';
         showTab(savedTab);
         
-        loadEmployees();
+        loadEmployees().then(() => {
+            hideLoadingState();
+        }).catch(() => {
+            hideLoadingState();
+        });
+        
         initializeSearch();
         initializeFileUpload();
     }, 100);
