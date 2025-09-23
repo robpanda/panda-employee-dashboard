@@ -215,7 +215,12 @@ function renderEmployeeTable() {
     tbody.innerHTML = '';
     
     let newHireCount = 0;
+    let newHires1to30 = 0;
+    let newHires31to60 = 0;
+    let newHires61to90 = 0;
     const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const sixtyDaysAgo = new Date(today.getTime() - (60 * 24 * 60 * 60 * 1000));
     const ninetyDaysAgo = new Date(today.getTime() - (90 * 24 * 60 * 60 * 1000));
     
     employees.forEach((emp, index) => {
@@ -224,6 +229,13 @@ function renderEmployeeTable() {
         const empDate = new Date(emp['Employment Date']);
         if (empDate > ninetyDaysAgo && empDate <= today) {
             newHireCount++;
+            if (empDate > thirtyDaysAgo) {
+                newHires1to30++;
+            } else if (empDate > sixtyDaysAgo) {
+                newHires31to60++;
+            } else {
+                newHires61to90++;
+            }
         }
         
         // Calculate days employed for color coding
@@ -260,6 +272,9 @@ function renderEmployeeTable() {
     
     document.getElementById('totalEmployees').textContent = employees.length;
     document.getElementById('newHires').textContent = newHireCount;
+    document.getElementById('newHires1to30').textContent = newHires1to30;
+    document.getElementById('newHires31to60').textContent = newHires31to60;
+    document.getElementById('newHires61to90').textContent = newHires61to90;
     updateEmployeeMergeButton();
 }
 
