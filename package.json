@@ -1,0 +1,19 @@
+{
+  "name": "panda-employee-dashboard",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "npx postcss src/css/main.css -o dist/css/dashboard.min.css --use autoprefixer cssnano",
+    "build:js": "npx esbuild src/js/main.js --bundle --minify --outfile=dist/js/dashboard.min.js",
+    "dev": "npm run build && npx live-server dist",
+    "deploy": "npm run build && aws s3 sync dist/ s3://pandaadmin.com --delete"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "cssnano": "^6.0.1",
+    "esbuild": "^0.19.5",
+    "live-server": "^1.2.2",
+    "postcss": "^8.4.31",
+    "postcss-cli": "^10.1.0"
+  }
+}

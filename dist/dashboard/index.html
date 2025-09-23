@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - Panda Exteriors</title>
+    <link rel="stylesheet" href="css/dashboard.min.css">
+    <link rel="preconnect" href="https://w40mq6ab11.execute-api.us-east-2.amazonaws.com">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <img src="images/panda-logo.png" alt="Panda Exteriors" class="logo">
+                <h1>Employee Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <a href="/" class="home-btn">← Back to Home</a>
+            </div>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="employees">
+                <span class="tab-icon">👥</span>
+                <span class="tab-text">Active Employees</span>
+            </button>
+            <button class="nav-tab" data-tab="terminated">
+                <span class="tab-icon">❌</span>
+                <span class="tab-text">Terminated</span>
+            </button>
+            <button class="nav-tab" data-tab="duplicates">
+                <span class="tab-icon">🔍</span>
+                <span class="tab-text">Duplicates</span>
+            </button>
+            <button class="nav-tab" data-tab="upload">
+                <span class="tab-icon">📤</span>
+                <span class="tab-text">Import</span>
+            </button>
+        </div>
+        
+        <div id="employees" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalEmployees">0</div>
+                    <div class="stat-label">Active Employees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="newHires">0</div>
+                    <div class="stat-label">New Hires (90 days)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="newHires1to30">0</div>
+                    <div class="stat-label">1-30 Days</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="newHires31to60">0</div>
+                    <div class="stat-label">31-60 Days</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="newHires61to90">0</div>
+                    <div class="stat-label">61-90 Days</div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <input type="text" id="globalSearch" placeholder="Search employees..." class="search-input">
+            </div>
+            
+            <div class="table-container">
+                <table id="employeeTable">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col"><input type="checkbox" id="selectAllEmployees" onchange="toggleSelectAllEmployees()"></th>
+                            <th class="sortable" onclick="sortTable(0)">First Name <span class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="sortTable(1)">Last Name <span class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="sortTable(2)">Department <span class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="sortTable(3)">Position <span class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="sortTable(4)">Employment Date <span class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="sortTable(5)">Years of Service <span class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="sortTable(6)">Email <span class="sort-icon">↕</span></th>
+                            <th>Phone</th>
+                            <th>Merch Requested</th>
+                            <th>Merch Sent</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="terminated" class="tab-content">
+            <h2>Terminated Employees</h2>
+            <p>Loading...</p>
+        </div>
+        
+        <div id="duplicates" class="tab-content">
+            <h2>Duplicate Management</h2>
+            <p>Loading...</p>
+        </div>
+        
+        <div id="upload" class="tab-content">
+            <h2>Import Data</h2>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <script src="js/dashboard.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panda Admin Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .portal-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .logo {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .nav-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 20px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .nav-btn.dashboard {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+        
+        .nav-btn.dashboard:hover {
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        }
+        
+        .nav-btn.referrals {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        .nav-btn.referrals:hover {
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <div class="logo">🎯</div>
+        <h1>Panda Admin Portal</h1>
+        <div class="nav-buttons">
+            <a href="dashboard/" class="nav-btn dashboard">
+                👥 Employee Dashboard
+            </a>
+            <a href="leads.html" class="nav-btn">
+                📊 Lead Management
+            </a>
+            <a href="referrals.html" class="nav-btn referrals">
+                🤝 Referral Management
+            </a>
+        </div>
+    </div>
+</body>
+</html>
