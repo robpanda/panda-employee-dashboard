@@ -1,5 +1,6 @@
 import json
 import boto3
+from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
     print(f"Event: {json.dumps(event)}")
@@ -33,15 +34,24 @@ def lambda_handler(event, context):
             employees = body.get('employees', [])
             print(f"Received {len(employees)} employees")
             
-            # Just update the items without clearing
-            count = 0
-            for emp in employees:
-                if 'id' not in emp:
-                    emp['id'] = emp.get('employee_id', f"emp_{count}")
-                table.put_item(Item=emp)
-                count += 1
+            # Clear existing data first
+            print("Clearing existing data...")
+            response = table.scan()
+            with table.batch_writer() as batch:
+                for item in response['Items']:
+                    batch.delete_item(Key={'id': item['id']})
+            print(f"Cleared {len(response['Items'])} existing items")
             
-            print(f"Updated {count} employees")
+            # Add new data
+            count = 0
+            with table.batch_writer() as batch:
+                for emp in employees:
+                    if 'id' not in emp:
+                        emp['id'] = emp.get('employee_id', f"emp_{count}")
+                    batch.put_item(Item=emp)
+                    count += 1
+            
+            print(f"Added {count} employees")
             return {
                 'statusCode': 200,
                 'headers': headers,
