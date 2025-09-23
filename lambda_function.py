@@ -6,7 +6,7 @@ from decimal import Decimal
 import uuid
 
 dynamodb = boto3.resource('dynamodb')
-employees_table = dynamodb.Table(os.environ['EMPLOYEES_TABLE'])
+employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'panda-employees'))
 
 def lambda_handler(event, context):
     http_method = event['httpMethod']
@@ -19,7 +19,8 @@ def lambda_handler(event, context):
                 'headers': {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization,Accept'
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization,Accept',
+                    'Access-Control-Allow-Credentials': 'false'
                 },
                 'body': ''
             }
@@ -61,7 +62,7 @@ def get_employees(event):
         # Search by email
         response = employees_table.query(
             IndexName='email-index',
-            KeyConditionExpression='email = :email',
+            KeyConditionExpression='Email = :email',
             ExpressionAttributeValues={':email': query_params['email']}
         )
         items = response['Items']
@@ -70,11 +71,15 @@ def get_employees(event):
         response = employees_table.scan()
         items = response['Items']
     
-    # Convert Decimal to float for JSON serialization
+    # Convert Decimal to float for JSON serialization and ensure consistent field names
     for item in items:
         for key, value in item.items():
             if isinstance(value, Decimal):
                 item[key] = float(value)
+        
+        # Ensure employee_id exists
+        if 'employee_id' not in item and 'id' in item:
+            item['employee_id'] = item['id']
     
     return {
         'statusCode': 200,
@@ -84,37 +89,69 @@ def get_employees(event):
             'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type,Authorization'
         },
-        'body': json.dumps(items)
+        'body': json.dumps({'employees': items})
     }
 
 def create_employee(event):
     body = json.loads(event['body'])
     
+    # Handle bulk employee data
+    if 'employees' in body:
+        employees_data = body['employees']
+        
+        # Clear existing data and insert new
+        response = employees_table.scan()
+        with employees_table.batch_writer() as batch:
+            for item in response['Items']:
+                batch.delete_item(Key={'id': item.get('id', item.get('employee_id', ''))})
+        
+        # Insert new employees
+        with employees_table.batch_writer() as batch:
+            for emp_data in employees_data:
+                # Handle both frontend format and API format
+                employee = {
+                    'id': emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))),
+                    'employee_id': emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))),
+                    'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
+                    'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
+                    'Department': emp_data.get('Department', emp_data.get('department', '')),
+                    'Position': emp_data.get('Position', emp_data.get('position', '')),
+                    'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
+                    'Years of Service': emp_data.get('Years of Service', emp_data.get('years_of_service', '')),
+                    'Email': emp_data.get('Email', emp_data.get('email', '')),
+                    'Phone': emp_data.get('Phone', emp_data.get('phone', '')),
+                    'Merch Requested': emp_data.get('Merch Requested', emp_data.get('merch_requested', '')),
+                    'Merch Sent': emp_data.get('Merch Sent', emp_data.get('merch_sent', 'No')),
+                    'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
+                    'Terminated': emp_data.get('Terminated', emp_data.get('terminated', 'No')),
+                    'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
+                    'updated_at': datetime.now().isoformat()
+                }
+                batch.put_item(Item=employee)
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'message': f'{len(employees_data)} employees saved successfully'})
+        }
+    
+    # Handle single employee
     employee_id = str(uuid.uuid4())
     current_date = datetime.now().isoformat()
     
-    # Calculate days employed and years worked
-    employment_date = body.get('employment_date', body.get('registration_date', current_date))
-    employment_datetime = datetime.fromisoformat(employment_date)
-    days_employed = (datetime.now() - employment_datetime).days
-    years_worked = round(days_employed / 365.25, 1)
-    
     employee = {
+        'id': employee_id,
         'employee_id': employee_id,
         'last_name': body['last_name'],
         'first_name': body['first_name'],
         'email': body['email'],
-        'employment_date': employment_date,
-        'days_employed': days_employed,
-        'years_worked': years_worked,
+        'employment_date': body.get('employment_date', current_date),
         'terminated': body.get('terminated', 'No'),
-        'terminated_date': body.get('terminated_date', ''),
-        'term_email_status': body.get('term_email_status', ''),
-        'send_90_day_merch': body.get('send_90_day_merch', 'No'),
-        'new_hire_merch_requested': body.get('new_hire_merch_requested', 'No'),
-        'new_hire_merch_sent': body.get('new_hire_merch_sent', 'No'),
-        'rehire': body.get('rehire', 'No'),
-        'created_at': current_date,
         'updated_at': current_date
     }
     
@@ -122,7 +159,12 @@ def create_employee(event):
     
     return {
         'statusCode': 201,
-        'headers': {'Content-Type': 'application/json'},
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+        },
         'body': json.dumps({'employee_id': employee_id, 'message': 'Employee created successfully'})
     }
 

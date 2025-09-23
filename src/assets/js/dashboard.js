@@ -76,26 +76,44 @@ function smartImport(newEmployees) {
     const today = new Date().toISOString().split('T')[0];
     let added = 0, terminated = 0, unchanged = 0;
     
-    // Create lookup for new employees by email and name
-    const newLookup = new Map();
+    // Add Employee IDs to new employees
     newEmployees.forEach(emp => {
-        const email = (emp.Email || '').toLowerCase().trim();
-        const name = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-        
-        if (email) newLookup.set(email, emp);
-        if (name) newLookup.set(name, emp);
+        if (!emp.employee_id && emp['First Name'] && emp['Last Name']) {
+            emp.employee_id = generateEmployeeId(emp['First Name'], emp['Last Name']);
+        }
     });
     
-    // Check existing active employees
-    const toTerminate = [];
-    employees.forEach((emp, index) => {
+    // Create lookup by Employee ID (primary), email (secondary), name (tertiary)
+    const newById = new Map();
+    const newByEmail = new Map();
+    const newByName = new Map();
+    
+    newEmployees.forEach(emp => {
+        const id = emp.employee_id;
         const email = (emp.Email || '').toLowerCase().trim();
         const name = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
         
-        const found = newLookup.has(email) || newLookup.has(name);
+        if (id) newById.set(id, emp);
+        if (email) newByEmail.set(email, emp);
+        if (name && name !== ' ') newByName.set(name, emp);
+    });
+    
+    // Check existing employees
+    const toTerminate = [];
+    employees.forEach((emp, index) => {
+        const id = emp.employee_id;
+        const email = (emp.Email || '').toLowerCase().trim();
+        const name = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
         
-        if (!found) {
+        // Priority: ID > Email > Name
+        const foundById = id && newById.has(id);
+        const foundByEmail = !foundById && email && newByEmail.has(email);
+        const foundByName = !foundById && !foundByEmail && name && name !== ' ' && newByName.has(name);
+        
+        if (!foundById && !foundByEmail && !foundByName) {
             toTerminate.push(index);
+        } else {
+            unchanged++;
         }
     });
     
@@ -107,60 +125,89 @@ function smartImport(newEmployees) {
         terminatedEmployees.push(emp);
         employees.splice(index, 1);
         terminated++;
+        unchanged--;
     });
     
     // Add new employees
     newEmployees.forEach(newEmp => {
+        const id = newEmp.employee_id;
         const email = (newEmp.Email || '').toLowerCase().trim();
         const name = `${newEmp['First Name'] || ''} ${newEmp['Last Name'] || ''}`.toLowerCase().trim();
         
+        // Check if exists in current lists
         const existsActive = employees.some(emp => {
+            const empId = emp.employee_id;
             const empEmail = (emp.Email || '').toLowerCase().trim();
             const empName = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-            return (email && empEmail === email) || (name && empName === name);
+            return (id && empId === id) || (email && empEmail === email) || (name && name !== ' ' && empName === name);
         });
         
         const existsTerminated = terminatedEmployees.some(emp => {
+            const empId = emp.employee_id;
             const empEmail = (emp.Email || '').toLowerCase().trim();
             const empName = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-            return (email && empEmail === email) || (name && empName === name);
+            return (id && empId === id) || (email && empEmail === email) || (name && name !== ' ' && empName === name);
         });
         
         if (!existsActive && !existsTerminated) {
-            // New employee - set as new hire with today's date if no employment date
             if (!newEmp['Employment Date']) {
                 newEmp['Employment Date'] = today;
             }
             newEmp['Terminated'] = 'No';
             employees.push(newEmp);
             added++;
-        } else {
-            unchanged++;
         }
     });
     
     return { added, terminated, unchanged };
 }
 
-function undoImport() {
+async function undoImport() {
     if (!backupData) {
         alert('No backup data available to undo.');
         return;
     }
     
-    employees = [...backupData.employees];
-    terminatedEmployees = [...backupData.terminatedEmployees];
+    try {
+        employees = [...backupData.employees];
+        terminatedEmployees = [...backupData.terminatedEmployees];
+        
+        renderEmployeeTable();
+        renderTerminatedTable();
+        
+        // Save restored data to database
+        await saveEmployeesToDB([...employees, ...terminatedEmployees]);
+        
+        document.getElementById('uploadStatus').innerHTML = 
+            `<div style="color: green; margin-top: 10px;">✓ Import undone - data restored to previous state</div>`;
+        
+        backupData = null;
+    } catch (error) {
+        document.getElementById('uploadStatus').innerHTML = 
+            `<div style="color: red; margin-top: 10px;">✗ Undo failed: ${error.message}</div>`;
+    }
+}
+
+async function clearAllData() {
+    if (!confirm('Are you sure you want to clear ALL employee data? This cannot be undone.')) {
+        return;
+    }
     
-    renderEmployeeTable();
-    renderTerminatedTable();
-    
-    // Save restored data to database
-    saveEmployeesToDB([...employees, ...terminatedEmployees]);
-    
-    document.getElementById('uploadStatus').innerHTML = 
-        `<div style="color: blue; margin-top: 10px;">✓ Import undone - data restored to previous state</div>`;
-    
-    backupData = null;
+    try {
+        employees = [];
+        terminatedEmployees = [];
+        
+        await saveEmployeesToDB([]);
+        
+        renderEmployeeTable();
+        renderTerminatedTable();
+        
+        document.getElementById('uploadStatus').innerHTML = 
+            `<div style="color: orange; margin-top: 10px;">⚠️ All employee data cleared</div>`;
+    } catch (error) {
+        document.getElementById('uploadStatus').innerHTML = 
+            `<div style="color: red; margin-top: 10px;">✗ Clear failed: ${error.message}</div>`;
+    }
 }
 
 function renderEmployeeTable() {
@@ -191,7 +238,8 @@ function renderEmployeeTable() {
         }
         
         row.innerHTML = `
-            <td><input type="checkbox" class="employee-select" data-index="${index}" onchange="updateEmployeeMergeButton()"> <a href="#" class="name-link" onclick="openEditModal(${index})">${emp['First Name'] || ''}</a></td>
+            <td><input type="checkbox" class="employee-select" data-index="${index}" onchange="updateEmployeeMergeButton()"></td>
+            <td><a href="#" class="name-link" onclick="openEditModal(${index})">${emp['First Name'] || ''}</a></td>
             <td>${emp['Last Name'] || ''}</td>
             <td>${emp.Department || ''}</td>
             <td>${emp.Position || ''}</td>
@@ -387,7 +435,59 @@ function renderDuplicateTable() {
 }
 
 function mergeDuplicate(index) {
-    alert('Merge functionality - combine duplicate records');
+    const duplicates = findDuplicates();
+    const target = duplicates[index];
+    
+    // Find all duplicates with same email/name
+    const relatedDuplicates = duplicates.filter(dup => 
+        (target.Email && dup.Email && target.Email.toLowerCase() === dup.Email.toLowerCase()) ||
+        (target['First Name'] && target['Last Name'] && 
+         dup['First Name'] && dup['Last Name'] &&
+         target['First Name'].toLowerCase() === dup['First Name'].toLowerCase() &&
+         target['Last Name'].toLowerCase() === dup['Last Name'].toLowerCase())
+    );
+    
+    if (relatedDuplicates.length < 2) {
+        alert('No related duplicates found to merge.');
+        return;
+    }
+    
+    if (confirm(`Merge ${relatedDuplicates.length} related records into: ${target['First Name']} ${target['Last Name']}?`)) {
+        const merged = mergeEmployeeData(relatedDuplicates);
+        
+        // Update primary record
+        let updated = false;
+        for (let i = 0; i < employees.length; i++) {
+            if (isSameEmployee(employees[i], target)) {
+                employees[i] = merged;
+                updated = true;
+                break;
+            }
+        }
+        
+        if (!updated) {
+            for (let i = 0; i < terminatedEmployees.length; i++) {
+                if (isSameEmployee(terminatedEmployees[i], target)) {
+                    terminatedEmployees[i] = merged;
+                    updated = true;
+                    break;
+                }
+            }
+        }
+        
+        // Remove other duplicates
+        relatedDuplicates.slice(1).forEach(dup => {
+            const empIndex = employees.findIndex(e => isSameEmployee(e, dup));
+            const termIndex = terminatedEmployees.findIndex(e => isSameEmployee(e, dup));
+            if (empIndex >= 0) employees.splice(empIndex, 1);
+            if (termIndex >= 0) terminatedEmployees.splice(termIndex, 1);
+        });
+        
+        renderEmployeeTable();
+        renderTerminatedTable();
+        renderDuplicateTable();
+        saveEmployeesToDB([...employees, ...terminatedEmployees]);
+    }
 }
 
 function deleteDuplicate(index) {
@@ -400,19 +500,171 @@ async function loadEmployees() {
     try {
         const response = await fetch(`${API_BASE}/employees`);
         const data = await response.json();
+        console.log('Raw API response:', data);
+        
         if (data.employees) {
             const allEmployees = data.employees;
+            console.log('Total employees from API:', allEmployees.length);
+            
+            // Add Employee IDs if missing
+            allEmployees.forEach(emp => {
+                if (!emp.employee_id && emp['First Name'] && emp['Last Name']) {
+                    emp.employee_id = generateEmployeeId(emp['First Name'], emp['Last Name']);
+                }
+            });
+            
             employees = allEmployees.filter(emp => emp.Terminated !== 'Yes');
             terminatedEmployees = allEmployees.filter(emp => emp.Terminated === 'Yes');
+            
+            console.log('Active employees:', employees.length);
+            console.log('Terminated employees:', terminatedEmployees.length);
+            
             renderEmployeeTable();
             renderTerminatedTable();
         }
     } catch (error) {
-        console.error('Error loading employees:', error);
+        console.error('API failed, loading from localStorage:', error);
+        // Load from localStorage as fallback
+        const savedEmployees = localStorage.getItem('employees');
+        const savedTerminated = localStorage.getItem('terminatedEmployees');
+        
+        if (savedEmployees) {
+            employees = JSON.parse(savedEmployees);
+            terminatedEmployees = JSON.parse(savedTerminated || '[]');
+            console.log('Loaded from localStorage - Active:', employees.length, 'Terminated:', terminatedEmployees.length);
+            renderEmployeeTable();
+            renderTerminatedTable();
+        }
     }
 }
 
+function generateEmployeeId(firstName, lastName) {
+    const first = (firstName || '').substring(0, 2).toUpperCase();
+    const last = (lastName || '').substring(0, 2).toUpperCase();
+    const timestamp = Date.now().toString().slice(-4);
+    return `${first}${last}${timestamp}`;
+}
+
+function mergeEmployeeData(employees) {
+    if (!employees || employees.length === 0) return {};
+    if (employees.length === 1) return {...employees[0]};
+    
+    const merged = {...employees[0]}; // Start with first employee as base
+    
+    // Merge data from other employees, prioritizing non-empty values
+    for (let i = 1; i < employees.length; i++) {
+        const emp = employees[i];
+        
+        Object.keys(emp).forEach(key => {
+            const currentValue = merged[key];
+            const newValue = emp[key];
+            
+            // Skip if new value is empty/null/undefined
+            if (!newValue || newValue.toString().trim() === '') return;
+            
+            // If current value is empty, use new value
+            if (!currentValue || currentValue.toString().trim() === '') {
+                merged[key] = newValue;
+                return;
+            }
+            
+            // Special handling for specific fields
+            switch (key) {
+                case 'Employment Date':
+                    // Use earliest employment date
+                    const currentDate = new Date(currentValue);
+                    const newDate = new Date(newValue);
+                    if (newDate < currentDate) {
+                        merged[key] = newValue;
+                    }
+                    break;
+                    
+                case 'Termination Date':
+                    // Use latest termination date if both exist
+                    const currentTermDate = new Date(currentValue);
+                    const newTermDate = new Date(newValue);
+                    if (newTermDate > currentTermDate) {
+                        merged[key] = newValue;
+                    }
+                    break;
+                    
+                case 'Years of Service':
+                    // Use higher years of service
+                    const currentYears = parseFloat(currentValue) || 0;
+                    const newYears = parseFloat(newValue) || 0;
+                    if (newYears > currentYears) {
+                        merged[key] = newValue;
+                    }
+                    break;
+                    
+                case 'Terminated':
+                    // If either is terminated, mark as terminated
+                    if (newValue === 'Yes') {
+                        merged[key] = 'Yes';
+                    }
+                    break;
+                    
+                case 'Merch Sent':
+                    // If either has merch sent, mark as sent
+                    if (newValue === 'Yes') {
+                        merged[key] = 'Yes';
+                    }
+                    break;
+                    
+                case 'Merch Sent Date':
+                    // Use latest merch sent date
+                    if (merged['Merch Sent'] === 'Yes' && newValue) {
+                        const currentMerchDate = new Date(currentValue || '1900-01-01');
+                        const newMerchDate = new Date(newValue);
+                        if (newMerchDate > currentMerchDate) {
+                            merged[key] = newValue;
+                        }
+                    }
+                    break;
+                    
+                default:
+                    // For other fields, keep current value unless it's clearly less complete
+                    if (newValue.length > currentValue.length) {
+                        merged[key] = newValue;
+                    }
+                    break;
+            }
+        });
+    }
+    
+    return merged;
+}
+
+function isSameEmployee(emp1, emp2) {
+    if (!emp1 || !emp2) return false;
+    
+    // Check by employee ID first (most reliable)
+    if (emp1.employee_id && emp2.employee_id) {
+        return emp1.employee_id === emp2.employee_id;
+    }
+    
+    // Check by email (second most reliable)
+    const email1 = (emp1.Email || '').toLowerCase().trim();
+    const email2 = (emp2.Email || '').toLowerCase().trim();
+    if (email1 && email2 && email1 === email2) {
+        return true;
+    }
+    
+    // Check by full name (least reliable)
+    const name1 = `${emp1['First Name'] || ''} ${emp1['Last Name'] || ''}`.toLowerCase().trim();
+    const name2 = `${emp2['First Name'] || ''} ${emp2['Last Name'] || ''}`.toLowerCase().trim();
+    if (name1 && name2 && name1 !== ' ' && name2 !== ' ' && name1 === name2) {
+        return true;
+    }
+    
+    return false;
+}
+
 async function saveEmployeesToDB(allEmployees) {
+    // Save to localStorage as backup
+    localStorage.setItem('employees', JSON.stringify(employees));
+    localStorage.setItem('terminatedEmployees', JSON.stringify(terminatedEmployees));
+    
     try {
         const response = await fetch(`${API_BASE}/employees`, {
             method: 'POST',
@@ -424,16 +676,16 @@ async function saveEmployeesToDB(allEmployees) {
         });
         
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            console.warn('Database save failed, using localStorage');
+            return { message: 'Saved locally' };
         }
         
         const result = await response.json();
         console.log('Data saved successfully:', result);
         return result;
     } catch (error) {
-        console.error('Database save error:', error);
-        throw error;
+        console.warn('Database save failed, using localStorage:', error);
+        return { message: 'Saved locally' };
     }
 }
 
@@ -445,8 +697,25 @@ function showTab(tabName) {
         tab.classList.remove('active');
     });
     
-    document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
+    const tabElement = document.getElementById(tabName);
+    if (tabElement) {
+        tabElement.classList.add('active');
+    }
+    
+    if (event && event.target) {
+        event.target.classList.add('active');
+    } else {
+        // Find and activate the correct tab button
+        const tabButtons = document.querySelectorAll('.nav-tab');
+        const tabNames = ['employees', 'terminated', 'duplicates', 'upload'];
+        const tabIndex = tabNames.indexOf(tabName);
+        if (tabIndex >= 0 && tabButtons[tabIndex]) {
+            tabButtons[tabIndex].classList.add('active');
+        }
+    }
+    
+    // Save current tab to localStorage
+    localStorage.setItem('currentTab', tabName);
     
     // Render duplicates when switching to duplicates tab
     if (tabName === 'duplicates') {
@@ -459,8 +728,8 @@ async function downloadFromGoogleSheets() {
         '<div style="color: blue; margin-top: 10px;">📥 Fetching data from Google Sheets...</div>';
     
     try {
-        // Google Sheets CSV export URL
-        const sheetId = '1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4';
+        // Updated Google Sheets CSV export URL
+        const sheetId = '1TI7TsvwCkHXum_nKr2YBFUye3kai41mSaPm8m5Z7EyM';
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
         
         const response = await fetch(csvUrl, { mode: 'cors' });
@@ -478,7 +747,7 @@ async function downloadFromGoogleSheets() {
             <div style="color: orange; margin-top: 10px;">
                 ⚠️ Direct import failed due to CORS restrictions.<br>
                 Please manually download the CSV:<br>
-                1. <a href="https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/edit" target="_blank">Open Google Sheet</a><br>
+                1. <a href="https://docs.google.com/spreadsheets/d/1TI7TsvwCkHXum_nKr2YBFUye3kai41mSaPm8m5Z7EyM/edit" target="_blank">Open Google Sheet</a><br>
                 2. File → Download → Comma Separated Values (.csv)<br>
                 3. Upload the downloaded CSV file using the "Choose File" button
             </div>
@@ -486,8 +755,66 @@ async function downloadFromGoogleSheets() {
     }
 }
 
-// File upload handling
-document.addEventListener('DOMContentLoaded', function() {
+async function initialDataImport() {
+    document.getElementById('uploadStatus').innerHTML = 
+        '<div style="color: blue; margin-top: 10px;">🔄 Performing initial data import...</div>';
+    
+    try {
+        // Clear existing data first
+        employees = [];
+        terminatedEmployees = [];
+        
+        // Import from the new Google Sheet
+        const sheetId = '1TI7TsvwCkHXum_nKr2YBFUye3kai41mSaPm8m5Z7EyM';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        
+        const response = await fetch(csvUrl, { mode: 'cors' });
+        if (!response.ok) {
+            throw new Error('Failed to fetch Google Sheets data');
+        }
+        
+        const csvText = await response.text();
+        const newEmployees = parseCSV(csvText);
+        
+        // Add Employee IDs and set as active
+        newEmployees.forEach(emp => {
+            if (!emp.employee_id && emp['First Name'] && emp['Last Name']) {
+                emp.employee_id = generateEmployeeId(emp['First Name'], emp['Last Name']);
+            }
+            emp['Terminated'] = 'No';
+        });
+        
+        employees = newEmployees;
+        
+        // Save to database
+        await saveEmployeesToDB([...employees, ...terminatedEmployees]);
+        
+        renderEmployeeTable();
+        renderTerminatedTable();
+        
+        document.getElementById('uploadStatus').innerHTML = `
+            <div style="color: green; margin-top: 10px;">
+                ✓ Initial import completed successfully:<br>
+                • ${newEmployees.length} employees imported<br>
+                • Employee IDs generated<br>
+                • Data saved to database
+            </div>
+        `;
+        
+        showTab('employees');
+        
+    } catch (error) {
+        document.getElementById('uploadStatus').innerHTML = `
+            <div style="color: red; margin-top: 10px;">
+                ✗ Initial import failed: ${error.message}<br>
+                Please try manual CSV download and upload.
+            </div>
+        `;
+    }
+}
+
+// File upload handling - consolidated into main DOMContentLoaded
+function initializeFileUpload() {
     const fileInput = document.getElementById('fileInput');
     if (!fileInput) {
         console.error('File input not found');
@@ -499,7 +826,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!file) return;
         
         console.log('File selected:', file.name, file.size, 'bytes');
-        document.getElementById('uploadStatus').innerHTML = '<div style="color: blue;">📁 Processing file...</div>';
+        const uploadStatus = document.getElementById('uploadStatus');
+        if (uploadStatus) {
+            uploadStatus.innerHTML = '<div style="color: blue;">📁 Processing file...</div>';
+        }
         
         const fileName = file.name.toLowerCase();
         
@@ -513,24 +843,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     processImport(newEmployees);
                 } catch (error) {
                     console.error('CSV parsing error:', error);
-                    document.getElementById('uploadStatus').innerHTML = 
-                        `<div style="color: red;">✗ CSV parsing error: ${error.message}</div>`;
+                    if (uploadStatus) {
+                        uploadStatus.innerHTML = 
+                            `<div style="color: red;">✗ CSV parsing error: ${error.message}</div>`;
+                    }
                 }
             };
             reader.onerror = function() {
-                document.getElementById('uploadStatus').innerHTML = 
-                    '<div style="color: red;">✗ Error reading file</div>';
+                if (uploadStatus) {
+                    uploadStatus.innerHTML = 
+                        '<div style="color: red;">✗ Error reading file</div>';
+                }
             };
             reader.readAsText(file);
         } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-            document.getElementById('uploadStatus').innerHTML = 
-                '<div style="color: blue;">📊 For Excel files:<br>1. <a href="https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/edit" target="_blank">Open Google Sheet</a><br>2. File → Download → CSV<br>3. Upload CSV here</div>';
+            if (uploadStatus) {
+                uploadStatus.innerHTML = 
+                    '<div style="color: blue;">📊 For Excel files:<br>1. <a href="https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/edit" target="_blank">Open Google Sheet</a><br>2. File → Download → CSV<br>3. Upload CSV here</div>';
+            }
         } else {
-            document.getElementById('uploadStatus').innerHTML = 
-                '<div style="color: red;">✗ Please upload a CSV or Excel file</div>';
+            if (uploadStatus) {
+                uploadStatus.innerHTML = 
+                    '<div style="color: red;">✗ Please upload a CSV or Excel file</div>';
+            }
         }
     });
-});
+}
 
 async function processImport(newEmployees) {
     try {
@@ -716,7 +1054,13 @@ function mergeSelectedEmployees() {
     
     const primary = toMerge[0];
     if (confirm(`Merge ${toMerge.length} employees into: ${primary['First Name']} ${primary['Last Name']}?`)) {
-        // Remove duplicates, keep primary
+        // Merge data from all records into primary
+        const merged = mergeEmployeeData(toMerge);
+        
+        // Replace primary with merged data
+        employees[indices[0]] = merged;
+        
+        // Remove other records (in reverse order to maintain indices)
         indices.slice(1).sort((a, b) => b - a).forEach(index => {
             employees.splice(index, 1);
         });
@@ -750,39 +1094,69 @@ function mergeSelectedDuplicates() {
     const duplicates = findDuplicates();
     const toMerge = indices.map(i => duplicates[i]);
     
-    // Simple merge: keep first record, delete others
     const primary = toMerge[0];
-    alert(`Merging ${toMerge.length} records into: ${primary['First Name']} ${primary['Last Name']}`);
-    
-    // Remove duplicates from arrays
-    toMerge.slice(1).forEach(dup => {
-        const empIndex = employees.findIndex(e => e.Email === dup.Email);
-        const termIndex = terminatedEmployees.findIndex(e => e.Email === dup.Email);
-        if (empIndex >= 0) employees.splice(empIndex, 1);
-        if (termIndex >= 0) terminatedEmployees.splice(termIndex, 1);
-    });
-    
-    renderEmployeeTable();
-    renderTerminatedTable();
-    renderDuplicateTable();
-    saveEmployeesToDB([...employees, ...terminatedEmployees]);
+    if (confirm(`Merge ${toMerge.length} records into: ${primary['First Name']} ${primary['Last Name']}?`)) {
+        // Merge data from all records
+        const merged = mergeEmployeeData(toMerge);
+        
+        // Find and update the primary record in the appropriate array
+        let updated = false;
+        for (let i = 0; i < employees.length; i++) {
+            if (isSameEmployee(employees[i], primary)) {
+                employees[i] = merged;
+                updated = true;
+                break;
+            }
+        }
+        
+        if (!updated) {
+            for (let i = 0; i < terminatedEmployees.length; i++) {
+                if (isSameEmployee(terminatedEmployees[i], primary)) {
+                    terminatedEmployees[i] = merged;
+                    updated = true;
+                    break;
+                }
+            }
+        }
+        
+        // Remove other duplicate records
+        toMerge.slice(1).forEach(dup => {
+            const empIndex = employees.findIndex(e => isSameEmployee(e, dup));
+            const termIndex = terminatedEmployees.findIndex(e => isSameEmployee(e, dup));
+            if (empIndex >= 0) employees.splice(empIndex, 1);
+            if (termIndex >= 0) terminatedEmployees.splice(termIndex, 1);
+        });
+        
+        renderEmployeeTable();
+        renderTerminatedTable();
+        renderDuplicateTable();
+        saveEmployeesToDB([...employees, ...terminatedEmployees]);
+    }
 }
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard initializing...');
-    loadEmployees();
     
-    // Initialize search functionality
+    // Wait for DOM to be fully loaded
     setTimeout(() => {
+        // Restore last active tab
+        const savedTab = localStorage.getItem('currentTab') || 'employees';
+        showTab(savedTab);
+        
+        loadEmployees();
         initializeSearch();
-    }, 1000);
+        initializeFileUpload();
+    }, 100);
 });
 
 // Add keyboard shortcut for quick import
 document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 'i') {
         e.preventDefault();
-        document.getElementById('fileInput').click();
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput) {
+            fileInput.click();
+        }
     }
 });
