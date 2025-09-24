@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Data - Panda Exteriors</title>
+    <link rel="stylesheet" href="css/dashboard.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <img src="images/panda-logo.png" alt="Panda Exteriors" class="logo">
+                <h1>Import Employee Data</h1>
+            </div>
+            <div class="header-right">
+                <a href="../" class="home-btn">← Back to Portal</a>
+            </div>
+        </div>
+        
+        <div class="nav-tabs">
+            <a href="index.html" class="nav-tab">
+                <span class="tab-icon">👥</span>
+                <span class="tab-text">Active Employees</span>
+            </a>
+            <a href="terminated.html" class="nav-tab">
+                <span class="tab-icon">❌</span>
+                <span class="tab-text">Terminated</span>
+            </a>
+            <a href="duplicates.html" class="nav-tab">
+                <span class="tab-icon">🔍</span>
+                <span class="tab-text">Duplicates</span>
+            </a>
+            <a href="import.html" class="nav-tab active">
+                <span class="tab-icon">📤</span>
+                <span class="tab-text">Import</span>
+            </a>
+        </div>
+        
+        <div class="tab-content active" style="padding:24px;">
+            <div class="import-header">
+                <h2>Import Employee Data</h2>
+                <p>Upload CSV or Excel files to add or update employee records</p>
+            </div>
+            
+            <div class="import-grid">
+                <div class="import-card">
+                    <div class="import-icon">📁</div>
+                    <h3>Upload File</h3>
+                    <p>Select a CSV or Excel file from your computer</p>
+                    <input type="file" id="fileInput" style="display:none;" accept=".csv,.xlsx,.xls">
+                    <button class="import-btn primary" onclick="document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                </div>
+                
+                <div class="import-card">
+                    <div class="import-icon">📎</div>
+                    <h3>Download Template</h3>
+                    <p>Get the correct format for your employee data</p>
+                    <button class="import-btn secondary" onclick="downloadTemplate()">
+                        Download Template
+                    </button>
+                </div>
+                
+                <div class="import-card danger">
+                    <div class="import-icon">🗑️</div>
+                    <h3>Clear All Data</h3>
+                    <p>Remove all employee records from the system</p>
+                    <button class="import-btn danger" onclick="clearAllData()">
+                        Clear All Data
+                    </button>
+                </div>
+            </div>
+            
+            <div class="import-rules">
+                <h4>Import Rules</h4>
+                <div class="rules-grid">
+                    <div class="rule-item">
+                        <span class="rule-icon">➕</span>
+                        <span>New employees will be added as active</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-icon">🔄</span>
+                        <span>Existing employees will be updated</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-icon">📄</span>
+                        <span>Supports CSV and Excel formats</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="uploadStatus" class="upload-status"></div>
+            
+            <div id="importPreview" class="import-preview" style="display:none;">
+                <div class="preview-header">
+                    <h4>Import Preview</h4>
+                    <p>Review your data before importing</p>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead id="previewHeaders"></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <div class="preview-actions">
+                    <button class="btn confirm" onclick="confirmImport()">✓ Confirm Import</button>
+                    <button class="btn cancel" onclick="cancelImport()">✗ Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/import.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminated Employees - Panda Exteriors</title>
+    <link rel="stylesheet" href="css/dashboard.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <img src="images/panda-logo.png" alt="Panda Exteriors" class="logo">
+                <h1>Terminated Employees</h1>
+            </div>
+            <div class="header-right">
+                <a href="../" class="home-btn">← Back to Portal</a>
+            </div>
+        </div>
+        
+        <div class="nav-tabs">
+            <a href="index.html" class="nav-tab">
+                <span class="tab-icon">👥</span>
+                <span class="tab-text">Active Employees</span>
+            </a>
+            <a href="terminated.html" class="nav-tab active">
+                <span class="tab-icon">❌</span>
+                <span class="tab-text">Terminated</span>
+            </a>
+            <a href="duplicates.html" class="nav-tab">
+                <span class="tab-icon">🔍</span>
+                <span class="tab-text">Duplicates</span>
+            </a>
+            <a href="import.html" class="nav-tab">
+                <span class="tab-icon">📤</span>
+                <span class="tab-text">Import</span>
+            </a>
+        </div>
+        
+        <div class="tab-content active" style="padding:24px;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalTerminated">0</div>
+                    <div class="stat-label">Terminated Employees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="terminatedThisMonth">0</div>
+                    <div class="stat-label">This Month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="terminatedThisYear">0</div>
+                    <div class="stat-label">This Year</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgTenure">0</div>
+                    <div class="stat-label">Avg Tenure (Years)</div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <div class="search-container">
+                    <input type="text" id="terminatedSearch" placeholder="Search terminated employees..." class="search-input">
+                    <button class="search-btn" onclick="searchTerminated()">🔍</button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Employment Date</th>
+                            <th>Termination Date</th>
+                            <th>Email</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="terminatedTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/terminated.min.js"></script>
+</body>
+</html>
