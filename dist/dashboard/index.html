@@ -137,6 +137,25 @@
                 <label>Phone:</label>
                 <input type="tel" id="editPhone">
             </div>
+            <div class="form-group">
+                <label>Years of Service:</label>
+                <input type="number" step="0.1" id="editYearsOfService">
+            </div>
+            <div class="form-group">
+                <label>Merch Requested:</label>
+                <textarea id="editMerchRequested" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Merch Sent:</label>
+                <select id="editMerchSent">
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Merch Sent Date:</label>
+                <input type="date" id="editMerchSentDate">
+            </div>
             <div class="form-actions">
                 <button class="btn" onclick="saveEmployee()">Save Changes</button>
                 <button class="btn" onclick="closeEditModal()">Cancel</button>
