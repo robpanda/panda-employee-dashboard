@@ -93,18 +93,116 @@
         </div>
         
         <div id="terminated" class="tab-content">
-            <h2>Terminated Employees</h2>
-            <p>Loading...</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalTerminated">0</div>
+                    <div class="stat-label">Terminated Employees</div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <div class="search-container">
+                    <input type="text" id="terminatedSearch" placeholder="Search terminated employees..." class="search-input">
+                    <button class="search-btn" onclick="searchTerminated()">🔍</button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Employment Date</th>
+                            <th>Termination Date</th>
+                            <th>Email</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="terminatedTableBody"></tbody>
+                </table>
+            </div>
         </div>
         
         <div id="duplicates" class="tab-content">
-            <h2>Duplicate Management</h2>
-            <p>Loading...</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalDuplicates">0</div>
+                    <div class="stat-label">Potential Duplicates</div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <div class="search-container">
+                    <input type="text" id="duplicateSearch" placeholder="Search duplicates..." class="search-input">
+                    <button class="search-btn" onclick="searchDuplicates()">🔍</button>
+                </div>
+            </div>
+            
+            <div style="margin-bottom:15px;">
+                <button class="btn" onclick="mergeSelectedDuplicates()" id="mergeBtn" disabled>Merge Selected</button>
+                <span id="selectedCount">0 selected</span>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllDuplicates" onchange="toggleSelectAllDuplicates()"></th>
+                            <th>Match Type</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Department</th>
+                            <th>Email</th>
+                            <th>Employment Date</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="duplicateTableBody"></tbody>
+                </table>
+            </div>
         </div>
         
         <div id="upload" class="tab-content">
-            <h2>Import Data</h2>
-            <p>Loading...</p>
+            <div class="upload-area">
+                <h3>📄 Smart Import Employee Data</h3>
+                <p><strong>Import Rules:</strong></p>
+                <ul style="text-align:left;margin:20px 0;">
+                    <li>New employees will be added as active</li>
+                    <li>Existing employees will be updated</li>
+                    <li>Missing employees can be marked as terminated</li>
+                </ul>
+                <p><strong>Supported Formats:</strong> CSV, Excel (.xlsx, .xls)</p>
+                
+                <input type="file" id="fileInput" style="display:none;" accept=".csv,.xlsx,.xls">
+                <button class="btn" onclick="document.getElementById('fileInput').click()" style="margin:10px;">
+                    📁 Choose File
+                </button>
+                <button class="btn" onclick="downloadTemplate()" style="margin:10px;background:#10b981;">
+                    📎 Download Template
+                </button>
+                <button class="btn" onclick="clearAllData()" style="margin:10px;background:#ef4444;">
+                    🗑️ Clear All Data
+                </button>
+            </div>
+            
+            <div id="uploadStatus" style="margin-top:20px;"></div>
+            
+            <div id="importPreview" style="display:none;margin-top:20px;">
+                <h4>Import Preview</h4>
+                <div class="table-container" style="max-height:300px;">
+                    <table>
+                        <thead id="previewHeaders"></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:15px;">
+                    <button class="btn" onclick="confirmImport()">✓ Confirm Import</button>
+                    <button class="btn" onclick="cancelImport()" style="background:#6b7280;">✗ Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
 
