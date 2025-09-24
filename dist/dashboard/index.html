@@ -105,6 +105,45 @@
         </div>
     </div>
 
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Employee</h2>
+            <div class="form-group">
+                <label>First Name:</label>
+                <input type="text" id="editFirstName">
+            </div>
+            <div class="form-group">
+                <label>Last Name:</label>
+                <input type="text" id="editLastName">
+            </div>
+            <div class="form-group">
+                <label>Department:</label>
+                <input type="text" id="editDepartment">
+            </div>
+            <div class="form-group">
+                <label>Position:</label>
+                <input type="text" id="editPosition">
+            </div>
+            <div class="form-group">
+                <label>Employment Date:</label>
+                <input type="date" id="editEmploymentDate">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="editEmail">
+            </div>
+            <div class="form-group">
+                <label>Phone:</label>
+                <input type="tel" id="editPhone">
+            </div>
+            <div class="form-actions">
+                <button class="btn" onclick="saveEmployee()">Save Changes</button>
+                <button class="btn" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/dashboard.min.js"></script>
 </body>
 </html>
