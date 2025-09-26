@@ -109,10 +109,10 @@
     </div>
 
     <script>
-        // Super admin credentials
+        // Super admin credentials - moved to environment variables
         const SUPER_ADMIN = {
-            email: 'superadmin@pandaexteriors.com',
-            password: 'PandaAdmin2024!'
+            email: process.env.ADMIN_EMAIL || 'admin@company.com',
+            password: process.env.ADMIN_PASSWORD || 'defaultpass'
         };
         
         document.getElementById('loginForm').addEventListener('submit', function(e) {

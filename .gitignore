@@ -1,35 +1,4 @@
-# Dependencies
-node_modules/
-*.zip
-
-# Environment files
 .env
-.env.local
-.env.production
-
-# AWS
-.aws/
-*.pem
-
-# Logs
 *.log
-logs/
-
-# OS generated files
+node_modules/
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Backup files
-*.bak
-*.backup
