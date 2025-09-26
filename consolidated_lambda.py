@@ -77,13 +77,20 @@ def import_employees():
         updated_count = 0
         
         for row in csv_reader:
-            if not row.get('Last Name'):
+            # Skip empty rows
+            if not row.get('Last Name') or not row.get('First Name'):
                 continue
                 
+            first_name = row.get('First Name', '').strip()
+            last_name = row.get('Last Name', '').strip()
+            
+            # Generate email from name
+            email = f"{first_name.lower()}.{last_name.lower()}@pandaexteriors.com"
+            
             employee_data = {
-                'last_name': row.get('Last Name', '').strip(),
-                'first_name': row.get('First Name', '').strip(),
-                'name': f"{row.get('First Name', '').strip()} {row.get('Last Name', '').strip()}",
+                'last_name': last_name,
+                'first_name': first_name,
+                'name': f"{first_name} {last_name}",
                 'employee_id': row.get('Employee ID', '').strip(),
                 'role': row.get('Role', '').strip(),
                 'supervisor': row.get('Supervisor', '').strip(),
@@ -91,7 +98,7 @@ def import_employees():
                 'department': row.get('Department', '').strip(),
                 'hire_date': row.get('Hire Date', '').strip(),
                 'phone': row.get('Phone', '').strip(),
-                'email': f"{row.get('First Name', '').strip().lower()}.{row.get('Last Name', '').strip().lower()}@pandaexteriors.com",
+                'email': email,
                 'status': 'active',
                 'password': 'Welcome2025!',
                 'points_lifetime': Decimal('0'),
@@ -99,17 +106,22 @@ def import_employees():
                 'points_balance': Decimal('0')
             }
             
-            # Check if employee exists
+            # Use email as primary key for uniqueness
             try:
-                existing = table.get_item(Key={'last_name': employee_data['last_name']})
+                existing = table.get_item(Key={'email': email})
                 if 'Item' in existing:
+                    # Update existing employee but preserve points
+                    existing_item = existing['Item']
+                    employee_data['points_lifetime'] = existing_item.get('points_lifetime', Decimal('0'))
+                    employee_data['points_balance'] = existing_item.get('points_balance', Decimal('0'))
+                    employee_data['points_redeemed'] = existing_item.get('points_redeemed', Decimal('0'))
                     updated_count += 1
                 else:
                     imported_count += 1
             except:
                 imported_count += 1
             
-            # Insert/update employee
+            # Insert/update employee with email as key
             table.put_item(Item=employee_data)
         
         return {
@@ -144,27 +156,31 @@ def award_points(event):
                 'body': json.dumps({'error': 'Invalid employee or points amount'})
             }
         
-        # Find employee by email
-        response = table.scan(
-            FilterExpression='email = :email',
-            ExpressionAttributeValues={':email': employee_email}
-        )
-        
-        if not response['Items']:
+        # Find employee by email (now primary key)
+        try:
+            response = table.get_item(Key={'email': employee_email})
+            if 'Item' not in response:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Employee not found'})
+                }
+            employee = response['Item']
+        except Exception as e:
             return {
                 'statusCode': 404,
                 'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Employee not found'})
             }
         
-        employee = response['Items'][0]
+
         
         # Update points
         new_lifetime = (employee.get('points_lifetime', Decimal('0')) + points)
         new_balance = (employee.get('points_balance', Decimal('0')) + points)
         
         table.update_item(
-            Key={'last_name': employee['last_name']},
+            Key={'email': employee_email},
             UpdateExpression='SET points_lifetime = :lifetime, points_balance = :balance',
             ExpressionAttributeValues={
                 ':lifetime': new_lifetime,
@@ -219,24 +235,30 @@ def employee_login(event):
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
-        # Find employee by email
-        response = table.scan(
-            FilterExpression='email = :email AND #status = :status',
-            ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={
-                ':email': email,
-                ':status': 'active'
-            }
-        )
-        
-        if not response['Items']:
+        # Find employee by email (now primary key)
+        try:
+            response = table.get_item(Key={'email': email})
+            if 'Item' not in response:
+                return {
+                    'statusCode': 401,
+                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Invalid credentials'})
+                }
+            employee = response['Item']
+            
+            # Check if employee is active
+            if employee.get('status') != 'active':
+                return {
+                    'statusCode': 401,
+                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Account inactive'})
+                }
+        except Exception as e:
             return {
                 'statusCode': 401,
                 'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Invalid credentials'})
             }
-        
-        employee = response['Items'][0]
         
         # Check password (in production, use proper hashing)
         if employee.get('password') != password:
