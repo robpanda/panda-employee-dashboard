@@ -97,6 +97,7 @@
                                 <h5 class="mb-0"><i class="fas fa-users me-2"></i>Active Employees</h5>
                                 <div>
                                     <button class="btn btn-outline-light btn-sm me-2" onclick="clearFilters()">Clear Filters</button>
+                                    <button class="btn btn-warning btn-sm me-2" onclick="importFromGoogleSheets()">Sync Google Sheets</button>
                                     <a href="admin.html" class="btn btn-light btn-sm">Admin Console</a>
                                 </div>
                             </div>
@@ -161,52 +162,54 @@
         if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
             window.location.replace('login.html');
         }
-        let employees = [
-            {
-                name: 'John Smith',
-                email: 'john.smith@pandaexteriors.com',
-                employee_id: 'PE001',
-                role: 'Sales Representative',
-                supervisor: 'Jane Manager',
-                office: 'Maryland',
-                department: 'Sales',
-                hire_date: '2023-01-15',
-                phone: '555-0123',
-                status: 'active'
-            },
-            {
-                name: 'Sarah Johnson',
-                email: 'sarah.johnson@pandaexteriors.com',
-                employee_id: 'PE002',
-                role: 'Project Manager',
-                supervisor: 'Mike Director',
-                office: 'Virginia',
-                department: 'Operations',
-                hire_date: '2022-08-20',
-                phone: '555-0124',
-                status: 'active'
-            },
-            {
-                name: 'Bob Wilson',
-                email: 'bob.wilson@pandaexteriors.com',
-                employee_id: 'PE003',
-                role: 'Installer',
-                supervisor: 'Tom Lead',
-                office: 'Maryland',
-                department: 'Installation',
-                hire_date: '2021-03-10',
-                phone: '555-0125',
-                status: 'terminated'
-            }
-        ];
+        const API_URL = 'https://your-lambda-function-url.lambda-url.us-east-1.on.aws';
+        let employees = [];
         let filteredEmployees = [...employees];
         let sortColumn = '';
         let sortDirection = 'asc';
 
         document.addEventListener('DOMContentLoaded', function() {
-            displayEmployees();
-            populateFilters();
+            loadEmployees();
         });
+
+        async function loadEmployees() {
+            try {
+                const response = await fetch(`${API_URL}/employees`);
+                employees = await response.json();
+                filteredEmployees = [...employees];
+                displayEmployees();
+                populateFilters();
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-danger">Failed to load employees. Please check API connection.</div>';
+            }
+        }
+
+        async function importFromGoogleSheets() {
+            try {
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-info">Importing from Google Sheets...</div>';
+                
+                const response = await fetch(`${API_URL}/import`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('importResults').innerHTML = 
+                        `<div class="alert alert-success">${result.message}</div>`;
+                    await loadEmployees(); // Reload data
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('importResults').innerHTML = 
+                    `<div class="alert alert-danger">Import failed: ${error.message}</div>`;
+            }
+        }
 
         function displayEmployees() {
             const activeTableBody = document.getElementById('activeEmployeesTableBody');
