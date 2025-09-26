@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panda Admin Portal</title>
+</head>
+<body>
     <script>
-        // Redirect to login if not authenticated
+        // Immediate redirect to login if not authenticated
         if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
-            window.location.href = 'login.html';
+            window.location.replace('login.html');
         }
     </script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -83,8 +86,7 @@
             box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
         }
     </style>
-</head>
-<body>
+
     <div class="portal-container">
         <div class="logo">🎯</div>
         <h1>Panda Admin Portal</h1>

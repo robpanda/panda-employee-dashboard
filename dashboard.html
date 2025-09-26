@@ -1,1 +1,350 @@
-<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Panda Exteriors Employee Management</title>\n    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n    <link href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css\" rel=\"stylesheet\">\n    <style>\n        .navbar-brand { font-weight: bold; }\n        .nav-pills .nav-link { border-radius: 0.5rem; font-weight: 500; }\n        .nav-pills .nav-link.active { background: linear-gradient(135deg, #007bff, #0056b3); }\n        .card { border: none; border-radius: 0.75rem; }\n        .table th { border-top: none; font-size: 0.9rem; }\n        .input-group-text { border-right: none; }\n        .form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }\n        .status-terminated { background-color: #f8d7da; }\n        .status-active { background-color: #d1edff; }\n        .sortable { cursor: pointer; user-select: none; }\n        .sortable:hover { background-color: #e9ecef; }\n    </style>\n</head>\n<body class=\"bg-light\">\n    <nav class=\"navbar navbar-expand-lg navbar-dark bg-primary shadow\">\n        <div class=\"container\">\n            <a class=\"navbar-brand\" href=\"./\"><i class=\"fas fa-users me-2\"></i>Panda Exteriors</a>\n            <div class=\"navbar-nav ms-auto\">\n                <a class=\"nav-link active\" href=\"dashboard.html\"><i class=\"fas fa-users me-1\"></i>Employees</a>\n                <a class=\"nav-link\" href=\"leads.html\"><i class=\"fas fa-chart-line me-1\"></i>Leads</a>\n                <a class=\"nav-link\" href=\"referrals.html\"><i class=\"fas fa-handshake me-1\"></i>Referrals</a>\n                <a class=\"nav-link\" href=\"./\"><i class=\"fas fa-home me-1\"></i>Portal</a>\n            </div>\n        </div>\n    </nav>\n\n    <div class=\"container-fluid mt-4\">\n        <div class=\"row mb-4\">\n            <div class=\"col-12\">\n                <div class=\"d-flex justify-content-between align-items-center mb-4\">\n                    <h1 class=\"display-6 fw-bold text-primary mb-0\">Employee Dashboard</h1>\n                    <div class=\"badge bg-primary fs-6 px-3 py-2\">Total: <span id=\"totalCount\">0</span></div>\n                </div>\n                \n                <div class=\"card shadow-sm mb-4\">\n                    <div class=\"card-body py-3\">\n                        <div class=\"row g-3 align-items-center\">\n                            <div class=\"col-md-4\">\n                                <div class=\"input-group\">\n                                    <span class=\"input-group-text bg-light\"><i class=\"fas fa-search\"></i></span>\n                                    <input type=\"text\" class=\"form-control\" id=\"searchInput\" placeholder=\"Search employees...\" onkeyup=\"filterEmployees()\">\n                                </div>\n                            </div>\n                            <div class=\"col-md-2\">\n                                <select class=\"form-select\" id=\"officeFilter\" onchange=\"filterEmployees()\">\n                                    <option value=\"\">All Offices</option>\n                                </select>\n                            </div>\n                            <div class=\"col-md-2\">\n                                <select class=\"form-select\" id=\"roleFilter\" onchange=\"filterEmployees()\">\n                                    <option value=\"\">All Roles</option>\n                                </select>\n                            </div>\n                            <div class=\"col-md-2\">\n                                <button class=\"btn btn-outline-secondary w-100\" onclick=\"clearFilters()\"><i class=\"fas fa-times\"></i> Clear</button>\n                            </div>\n                            <div class=\"col-md-2\">\n                                <button class=\"btn btn-success w-100\" onclick=\"syncWithGoogleSheets()\">\n                                    <i class=\"fas fa-sync\"></i> Sync\n                                </button>\n                            </div>\n                        </div>\n                    </div>\n                </div>\n                \n                <ul class=\"nav nav-pills nav-fill mb-4\" id=\"mainTabs\" role=\"tablist\">\n                    <li class=\"nav-item\" role=\"presentation\">\n                        <button class=\"nav-link active\" id=\"active-employees-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#active-employees\" type=\"button\" role=\"tab\">\n                            <i class=\"fas fa-users me-2\"></i>Active Employees <span class=\"badge bg-success ms-2\" id=\"activeCount\">0</span>\n                        </button>\n                    </li>\n                    <li class=\"nav-item\" role=\"presentation\">\n                        <button class=\"nav-link\" id=\"terminated-employees-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#terminated-employees\" type=\"button\" role=\"tab\">\n                            <i class=\"fas fa-user-times me-2\"></i>Terminated Employees <span class=\"badge bg-danger ms-2\" id=\"terminatedCount\">0</span>\n                        </button>\n                    </li>\n                </ul>\n\n                <div class=\"tab-content\" id=\"mainTabContent\">\n                    <div class=\"tab-pane fade show active\" id=\"active-employees\" role=\"tabpanel\">\n                        <div class=\"card shadow-sm\">\n                            <div class=\"card-header bg-success text-white\">\n                                <h5 class=\"mb-0\"><i class=\"fas fa-users me-2\"></i>Active Employees</h5>\n                            </div>\n                            <div class=\"card-body p-0\">\n                                <div id=\"importResults\" class=\"p-3\"></div>\n                                \n                                <div class=\"table-responsive\">\n                                    <table class=\"table table-hover mb-0\">\n                                        <thead class=\"table-light\">\n                                            <tr>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('name')\">Name <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('employee_id')\">Employee ID <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('role')\">Role <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('supervisor')\">Supervisor <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('office')\">Office <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('department')\">Department <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('hire_date')\">Hire Date <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold\">Actions</th>\n                                            </tr>\n                                        </thead>\n                                        <tbody id=\"activeEmployeesTableBody\">\n                                        </tbody>\n                                    </table>\n                                </div>\n                            </div>\n                        </div>\n                    </div>\n                    \n                    <div class=\"tab-pane fade\" id=\"terminated-employees\" role=\"tabpanel\">\n                        <div class=\"card shadow-sm\">\n                            <div class=\"card-header bg-danger text-white\">\n                                <h5 class=\"mb-0\"><i class=\"fas fa-user-times me-2\"></i>Terminated Employees</h5>\n                            </div>\n                            <div class=\"card-body p-0\">\n                                <div class=\"table-responsive\">\n                                    <table class=\"table table-hover mb-0\">\n                                        <thead class=\"table-light\">\n                                            <tr>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('name')\">Name <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('employee_id')\">Employee ID <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('role')\">Role <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('office')\">Office <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold sortable\" onclick=\"sortTable('hire_date')\">Hire Date <i class=\"fas fa-sort\"></i></th>\n                                                <th class=\"fw-semibold\">Actions</th>\n                                            </tr>\n                                        </thead>\n                                        <tbody id=\"terminatedEmployeesTableBody\">\n                                        </tbody>\n                                    </table>\n                                </div>\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        </div>\n    </div>\n\n    <script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js\"></script>\n    <script>\n        let employees = [\n            {\n                name: 'John Smith',\n                email: 'john.smith@pandaexteriors.com',\n                employee_id: 'PE001',\n                role: 'Sales Representative',\n                supervisor: 'Jane Manager',\n                office: 'Maryland',\n                department: 'Sales',\n                hire_date: '2023-01-15',\n                phone: '555-0123',\n                status: 'active'\n            },\n            {\n                name: 'Sarah Johnson',\n                email: 'sarah.johnson@pandaexteriors.com',\n                employee_id: 'PE002',\n                role: 'Project Manager',\n                supervisor: 'Mike Director',\n                office: 'Virginia',\n                department: 'Operations',\n                hire_date: '2022-08-20',\n                phone: '555-0124',\n                status: 'active'\n            },\n            {\n                name: 'Bob Wilson',\n                email: 'bob.wilson@pandaexteriors.com',\n                employee_id: 'PE003',\n                role: 'Installer',\n                supervisor: 'Tom Lead',\n                office: 'Maryland',\n                department: 'Installation',\n                hire_date: '2021-03-10',\n                phone: '555-0125',\n                status: 'terminated'\n            }\n        ];\n        let filteredEmployees = [...employees];\n        let sortColumn = '';\n        let sortDirection = 'asc';\n\n        document.addEventListener('DOMContentLoaded', function() {\n            displayEmployees();\n            populateFilters();\n        });\n\n        function syncWithGoogleSheets() {\n            const syncButton = document.querySelector('button[onclick=\"syncWithGoogleSheets()\"]');\n            const originalText = syncButton.innerHTML;\n            syncButton.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i> Syncing...';\n            syncButton.disabled = true;\n\n            setTimeout(() => {\n                document.getElementById('importResults').innerHTML = \n                    '<div class=\"alert alert-success\">Google Sheets sync functionality will be implemented soon.</div>';\n                syncButton.innerHTML = originalText;\n                syncButton.disabled = false;\n            }, 2000);\n        }\n\n        function displayEmployees() {\n            const activeTableBody = document.getElementById('activeEmployeesTableBody');\n            const terminatedTableBody = document.getElementById('terminatedEmployeesTableBody');\n            \n            activeTableBody.innerHTML = '';\n            terminatedTableBody.innerHTML = '';\n            \n            let activeCount = 0;\n            let terminatedCount = 0;\n            \n            filteredEmployees.forEach(employee => {\n                const row = createEmployeeRow(employee);\n                \n                if (employee.status === 'active') {\n                    activeTableBody.appendChild(row);\n                    activeCount++;\n                } else {\n                    terminatedTableBody.appendChild(row);\n                    terminatedCount++;\n                }\n            });\n            \n            document.getElementById('activeCount').textContent = activeCount;\n            document.getElementById('terminatedCount').textContent = terminatedCount;\n            document.getElementById('totalCount').textContent = activeCount + terminatedCount;\n        }\n\n        function createEmployeeRow(employee) {\n            const row = document.createElement('tr');\n            \n            if (employee.status === 'active') {\n                row.innerHTML = `\n                    <td><strong>${employee.name || ''}</strong><br><small class=\"text-muted\">${employee.email || ''}</small></td>\n                    <td>${employee.employee_id || ''}</td>\n                    <td>${employee.role || ''}</td>\n                    <td>${employee.supervisor || ''}</td>\n                    <td>${employee.office || ''}</td>\n                    <td>${employee.department || ''}</td>\n                    <td>${employee.hire_date || ''}</td>\n                    <td>\n                        <button class=\"btn btn-sm btn-outline-primary\" onclick=\"viewEmployee('${employee.email}')\">\n                            <i class=\"fas fa-eye\"></i>\n                        </button>\n                    </td>\n                `;\n            } else {\n                row.innerHTML = `\n                    <td><strong>${employee.name || ''}</strong><br><small class=\"text-muted\">${employee.email || ''}</small></td>\n                    <td>${employee.employee_id || ''}</td>\n                    <td>${employee.role || ''}</td>\n                    <td>${employee.office || ''}</td>\n                    <td>${employee.hire_date || ''}</td>\n                    <td>\n                        <button class=\"btn btn-sm btn-outline-primary\" onclick=\"viewEmployee('${employee.email}')\">\n                            <i class=\"fas fa-eye\"></i>\n                        </button>\n                    </td>\n                `;\n            }\n            \n            return row;\n        }\n\n        function populateFilters() {\n            const offices = [...new Set(employees.map(e => e.office).filter(Boolean))];\n            const roles = [...new Set(employees.map(e => e.role).filter(Boolean))];\n            \n            populateSelect('officeFilter', offices);\n            populateSelect('roleFilter', roles);\n        }\n\n        function populateSelect(selectId, options) {\n            const select = document.getElementById(selectId);\n            const allOption = select.querySelector('option[value=\"\"]');\n            select.innerHTML = '';\n            select.appendChild(allOption);\n            \n            options.sort().forEach(option => {\n                const optionElement = document.createElement('option');\n                optionElement.value = option;\n                optionElement.textContent = option;\n                select.appendChild(optionElement);\n            });\n        }\n\n        function filterEmployees() {\n            const searchTerm = document.getElementById('searchInput').value.toLowerCase();\n            const officeFilter = document.getElementById('officeFilter').value;\n            const roleFilter = document.getElementById('roleFilter').value;\n            \n            filteredEmployees = employees.filter(employee => {\n                const matchesSearch = !searchTerm || \n                    (employee.name && employee.name.toLowerCase().includes(searchTerm)) ||\n                    (employee.email && employee.email.toLowerCase().includes(searchTerm)) ||\n                    (employee.employee_id && employee.employee_id.toLowerCase().includes(searchTerm));\n                \n                const matchesOffice = !officeFilter || employee.office === officeFilter;\n                const matchesRole = !roleFilter || employee.role === roleFilter;\n                \n                return matchesSearch && matchesOffice && matchesRole;\n            });\n            \n            displayEmployees();\n        }\n\n        function clearFilters() {\n            document.getElementById('searchInput').value = '';\n            document.getElementById('officeFilter').value = '';\n            document.getElementById('roleFilter').value = '';\n            filteredEmployees = [...employees];\n            displayEmployees();\n        }\n\n        function sortTable(column) {\n            if (sortColumn === column) {\n                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';\n            } else {\n                sortColumn = column;\n                sortDirection = 'asc';\n            }\n            \n            filteredEmployees.sort((a, b) => {\n                let aVal = a[column] || '';\n                let bVal = b[column] || '';\n                \n                if (sortDirection === 'asc') {\n                    return aVal.localeCompare(bVal);\n                } else {\n                    return bVal.localeCompare(aVal);\n                }\n            });\n            \n            displayEmployees();\n        }\n\n        function viewEmployee(email) {\n            const employee = employees.find(e => e.email === email);\n            if (employee) {\n                alert(`Employee Details:\\n\\nName: ${employee.name}\\nEmployee ID: ${employee.employee_id}\\nRole: ${employee.role}\\nSupervisor: ${employee.supervisor}\\nOffice: ${employee.office}\\nDepartment: ${employee.department}\\nHire Date: ${employee.hire_date}\\nPhone: ${employee.phone}\\nEmail: ${employee.email}\\nStatus: ${employee.status}`);\n            }\n        }\n    </script>\n</body>\n</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panda Exteriors Employee Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand { font-weight: bold; }
+        .nav-pills .nav-link { border-radius: 0.5rem; font-weight: 500; }
+        .nav-pills .nav-link.active { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .card { border: none; border-radius: 0.75rem; }
+        .table th { border-top: none; font-size: 0.9rem; }
+        .input-group-text { border-right: none; }
+        .form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+        .status-terminated { background-color: #f8d7da; }
+        .status-active { background-color: #d1edff; }
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { background-color: #e9ecef; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+        <div class="container">
+            <a class="navbar-brand" href="./"><i class="fas fa-users me-2"></i>Panda Exteriors</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="dashboard.html"><i class="fas fa-users me-1"></i>Employees</a>
+                <a class="nav-link" href="leads.html"><i class="fas fa-chart-line me-1"></i>Leads</a>
+                <a class="nav-link" href="referrals.html"><i class="fas fa-handshake me-1"></i>Referrals</a>
+                <a class="nav-link" href="./"><i class="fas fa-home me-1"></i>Portal</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="display-6 fw-bold text-primary mb-0">Employee Dashboard</h1>
+                    <div class="badge bg-primary fs-6 px-3 py-2">Total: <span id="totalCount">0</span></div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body py-3">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                                            <input type="text" class="form-control" id="searchInput" placeholder="Search employees..." onkeyup="filterEmployees()">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="officeFilter" onchange="filterEmployees()">
+                                            <option value="">All Offices</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="roleFilter" onchange="filterEmployees()">
+                                            <option value="">All Roles</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center">
+                                <h5 class="card-title"><i class="fas fa-box text-primary"></i> Asset Management</h5>
+                                <p class="card-text">Manage company assets and inventory</p>
+                                <a href="assets.html" class="btn btn-primary">View Assets</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <ul class="nav nav-pills nav-fill mb-4" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="active-employees-tab" data-bs-toggle="tab" data-bs-target="#active-employees" type="button" role="tab">
+                            <i class="fas fa-users me-2"></i>Active Employees <span class="badge bg-success ms-2" id="activeCount">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="terminated-employees-tab" data-bs-toggle="tab" data-bs-target="#terminated-employees" type="button" role="tab">
+                            <i class="fas fa-user-times me-2"></i>Terminated Employees <span class="badge bg-danger ms-2" id="terminatedCount">0</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="mainTabContent">
+                    <div class="tab-pane fade show active" id="active-employees" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Active Employees</h5>
+                                <div>
+                                    <button class="btn btn-outline-light btn-sm me-2" onclick="clearFilters()">Clear Filters</button>
+                                    <a href="admin.html" class="btn btn-light btn-sm">Admin Console</a>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="importResults" class="p-3"></div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('supervisor')">Supervisor <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('department')">Department <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="activeEmployeesTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="terminated-employees" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="fas fa-user-times me-2"></i>Terminated Employees</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="terminatedEmployeesTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let employees = [
+            {
+                name: 'John Smith',
+                email: 'john.smith@pandaexteriors.com',
+                employee_id: 'PE001',
+                role: 'Sales Representative',
+                supervisor: 'Jane Manager',
+                office: 'Maryland',
+                department: 'Sales',
+                hire_date: '2023-01-15',
+                phone: '555-0123',
+                status: 'active'
+            },
+            {
+                name: 'Sarah Johnson',
+                email: 'sarah.johnson@pandaexteriors.com',
+                employee_id: 'PE002',
+                role: 'Project Manager',
+                supervisor: 'Mike Director',
+                office: 'Virginia',
+                department: 'Operations',
+                hire_date: '2022-08-20',
+                phone: '555-0124',
+                status: 'active'
+            },
+            {
+                name: 'Bob Wilson',
+                email: 'bob.wilson@pandaexteriors.com',
+                employee_id: 'PE003',
+                role: 'Installer',
+                supervisor: 'Tom Lead',
+                office: 'Maryland',
+                department: 'Installation',
+                hire_date: '2021-03-10',
+                phone: '555-0125',
+                status: 'terminated'
+            }
+        ];
+        let filteredEmployees = [...employees];
+        let sortColumn = '';
+        let sortDirection = 'asc';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            displayEmployees();
+            populateFilters();
+        });
+
+        function displayEmployees() {
+            const activeTableBody = document.getElementById('activeEmployeesTableBody');
+            const terminatedTableBody = document.getElementById('terminatedEmployeesTableBody');
+            
+            activeTableBody.innerHTML = '';
+            terminatedTableBody.innerHTML = '';
+            
+            let activeCount = 0;
+            let terminatedCount = 0;
+            
+            filteredEmployees.forEach(employee => {
+                const row = createEmployeeRow(employee);
+                
+                if (employee.status === 'active') {
+                    activeTableBody.appendChild(row);
+                    activeCount++;
+                } else {
+                    terminatedTableBody.appendChild(row);
+                    terminatedCount++;
+                }
+            });
+            
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('terminatedCount').textContent = terminatedCount;
+            document.getElementById('totalCount').textContent = activeCount + terminatedCount;
+        }
+
+        function createEmployeeRow(employee) {
+            const row = document.createElement('tr');
+            
+            if (employee.status === 'active') {
+                row.innerHTML = `
+                    <td><strong>${employee.name || ''}</strong><br><small class="text-muted">${employee.email || ''}</small></td>
+                    <td>${employee.employee_id || ''}</td>
+                    <td>${employee.role || ''}</td>
+                    <td>${employee.supervisor || ''}</td>
+                    <td>${employee.office || ''}</td>
+                    <td>${employee.department || ''}</td>
+                    <td>${employee.hire_date || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+            } else {
+                row.innerHTML = `
+                    <td><strong>${employee.name || ''}</strong><br><small class="text-muted">${employee.email || ''}</small></td>
+                    <td>${employee.employee_id || ''}</td>
+                    <td>${employee.role || ''}</td>
+                    <td>${employee.office || ''}</td>
+                    <td>${employee.hire_date || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+            }
+            
+            return row;
+        }
+
+        function populateFilters() {
+            const offices = [...new Set(employees.map(e => e.office).filter(Boolean))];
+            const roles = [...new Set(employees.map(e => e.role).filter(Boolean))];
+            
+            populateSelect('officeFilter', offices);
+            populateSelect('roleFilter', roles);
+        }
+
+        function populateSelect(selectId, options) {
+            const select = document.getElementById(selectId);
+            const allOption = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            select.appendChild(allOption);
+            
+            options.sort().forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        function filterEmployees() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const officeFilter = document.getElementById('officeFilter').value;
+            const roleFilter = document.getElementById('roleFilter').value;
+            
+            filteredEmployees = employees.filter(employee => {
+                const matchesSearch = !searchTerm || 
+                    (employee.name && employee.name.toLowerCase().includes(searchTerm)) ||
+                    (employee.email && employee.email.toLowerCase().includes(searchTerm)) ||
+                    (employee.employee_id && employee.employee_id.toLowerCase().includes(searchTerm));
+                
+                const matchesOffice = !officeFilter || employee.office === officeFilter;
+                const matchesRole = !roleFilter || employee.role === roleFilter;
+                
+                return matchesSearch && matchesOffice && matchesRole;
+            });
+            
+            displayEmployees();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('officeFilter').value = '';
+            document.getElementById('roleFilter').value = '';
+            filteredEmployees = [...employees];
+            displayEmployees();
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredEmployees.sort((a, b) => {
+                let aVal = a[column] || '';
+                let bVal = b[column] || '';
+                
+                if (sortDirection === 'asc') {
+                    return aVal.localeCompare(bVal);
+                } else {
+                    return bVal.localeCompare(aVal);
+                }
+            });
+            
+            displayEmployees();
+        }
+
+        function viewEmployee(email) {
+            const employee = employees.find(e => e.email === email);
+            if (employee) {
+                alert(`Employee Details:\n\nName: ${employee.name}\nEmployee ID: ${employee.employee_id}\nRole: ${employee.role}\nSupervisor: ${employee.supervisor}\nOffice: ${employee.office}\nDepartment: ${employee.department}\nHire Date: ${employee.hire_date}\nPhone: ${employee.phone}\nEmail: ${employee.email}\nStatus: ${employee.status}`);
+            }
+        }
+    </script>
+</body>
+</html>
