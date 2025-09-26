@@ -65,7 +65,7 @@ def get_employees():
 def import_employees():
     try:
         # Google Sheets CSV URL
-        sheet_url = "https://docs.google.com/spreadsheets/d/1OIWKKr527C1-E6H4fj71c_5Mq6kJev7ZjkgV_71XiRc/export?format=csv"
+        sheet_url = "https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/export?format=csv"
         
         response = requests.get(sheet_url)
         csv_content = response.text
