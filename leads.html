@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Management - Panda Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+        <div class="container">
+            <a class="navbar-brand" href="./"><img src="panda-logo.png" alt="Panda" style="height: 40px;"></a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="dashboard.html">Employees</a>
+                <a class="nav-link active" href="leads.html">Leads</a>
+                <a class="nav-link" href="referrals.html">Referrals</a>
+                <a class="nav-link" href="assets.html">Assets</a>
+                <a class="nav-link" href="admin.html">Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1><i class="fas fa-chart-line text-primary"></i> Lead Management</h1>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3 id="totalLeads">0</h3>
+                        <p>Total Leads</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h3 id="hotLeads">0</h3>
+                        <p>Hot Leads</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3 id="closedLeads">0</h3>
+                        <p>Closed Won</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <h3 id="closeRate">0%</h3>
+                        <p>Close Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Lead Sources</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="sourceChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Monthly Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="performanceChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h5>Lead Pipeline</h5>
+                <button class="btn btn-primary" onclick="addLead()">Add Lead</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Contact</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th>Value</th>
+                                <th>Assigned To</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sampleLeads = [
+            { id: 1, customer: 'ABC Construction', contact: '555-1001', source: 'Website', status: 'Hot', value: '$15,000', assignedTo: 'John Smith', date: '2025-09-20' },
+            { id: 2, customer: 'XYZ Roofing', contact: '555-1002', source: 'Referral', status: 'Qualified', value: '$25,000', assignedTo: 'Sarah Wilson', date: '2025-09-22' },
+            { id: 3, customer: 'Home Depot', contact: '555-1003', source: 'Cold Call', status: 'Closed Won', value: '$50,000', assignedTo: 'Bob Davis', date: '2025-09-15' },
+            { id: 4, customer: 'Local Builder', contact: '555-1004', source: 'Trade Show', status: 'New', value: '$8,000', assignedTo: 'Mike Johnson', date: '2025-09-25' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLeads();
+            createCharts();
+        });
+
+        function loadLeads() {
+            const tbody = document.getElementById('leadsTable');
+            tbody.innerHTML = '';
+            
+            let total = sampleLeads.length;
+            let hot = sampleLeads.filter(l => l.status === 'Hot').length;
+            let closed = sampleLeads.filter(l => l.status === 'Closed Won').length;
+            
+            document.getElementById('totalLeads').textContent = total;
+            document.getElementById('hotLeads').textContent = hot;
+            document.getElementById('closedLeads').textContent = closed;
+            document.getElementById('closeRate').textContent = total > 0 ? Math.round((closed/total)*100) + '%' : '0%';
+            
+            sampleLeads.forEach(lead => {
+                const statusClass = lead.status === 'Closed Won' ? 'success' : 
+                                  lead.status === 'Hot' ? 'danger' : 
+                                  lead.status === 'Qualified' ? 'warning' : 'secondary';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${lead.customer}</td>
+                        <td>${lead.contact}</td>
+                        <td>${lead.source}</td>
+                        <td><span class="badge bg-${statusClass}">${lead.status}</span></td>
+                        <td>${lead.value}</td>
+                        <td>${lead.assignedTo}</td>
+                        <td>${lead.date}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewLead(${lead.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function createCharts() {
+            // Simple text-based charts for now
+            document.getElementById('sourceChart').style.display = 'none';
+            document.getElementById('performanceChart').style.display = 'none';
+            
+            document.getElementById('sourceChart').parentElement.innerHTML = `
+                <div class="text-center">
+                    <p><strong>Website:</strong> 35%</p>
+                    <p><strong>Referrals:</strong> 30%</p>
+                    <p><strong>Cold Calls:</strong> 20%</p>
+                    <p><strong>Trade Shows:</strong> 15%</p>
+                </div>
+            `;
+            
+            document.getElementById('performanceChart').parentElement.innerHTML = `
+                <div class="text-center">
+                    <p><strong>September:</strong> 12 leads</p>
+                    <p><strong>August:</strong> 8 leads</p>
+                    <p><strong>July:</strong> 15 leads</p>
+                </div>
+            `;
+        }
+
+        function addLead() {
+            alert('Add lead functionality - integrate with CRM system');
+        }
+
+        function viewLead(id) {
+            const lead = sampleLeads.find(l => l.id === id);
+            alert(`Lead Details:\nCustomer: ${lead.customer}\nValue: ${lead.value}\nStatus: ${lead.status}`);
+        }
+    </script>
+</body>
+</html>
