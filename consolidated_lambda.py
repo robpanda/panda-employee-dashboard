@@ -32,6 +32,8 @@ def lambda_handler(event, context):
             return award_points(event)
         elif path == '/employee-login' and method == 'POST':
             return employee_login(event)
+        elif path == '/upload-employees' and method == 'POST':
+            return upload_employees(event)
         else:
             return {
                 'statusCode': 404,
@@ -282,4 +284,116 @@ def employee_login(event):
             'statusCode': 500,
             'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Login failed: {str(e)}'})
+        }
+
+def upload_employees(event):
+    try:
+        import base64
+        import pandas as pd
+        
+        # Parse multipart form data
+        content_type = event.get('headers', {}).get('content-type', '')
+        if 'multipart/form-data' not in content_type:
+            return {
+                'statusCode': 400,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Invalid content type'})
+            }
+        
+        # Decode base64 body
+        body = base64.b64decode(event['body'])
+        
+        # Simple multipart parsing (for CSV files)
+        body_str = body.decode('utf-8')
+        
+        # Extract CSV content between boundaries
+        lines = body_str.split('\n')
+        csv_start = -1
+        csv_end = -1
+        
+        for i, line in enumerate(lines):
+            if 'Employee Id' in line or 'Employee ID' in line:
+                csv_start = i
+            elif csv_start > -1 and line.startswith('--'):
+                csv_end = i
+                break
+        
+        if csv_start == -1:
+            return {
+                'statusCode': 400,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'CSV headers not found'})
+            }
+        
+        csv_lines = lines[csv_start:csv_end] if csv_end > -1 else lines[csv_start:]
+        csv_content = '\n'.join(csv_lines)
+        
+        # Parse CSV
+        csv_reader = csv.DictReader(io.StringIO(csv_content))
+        
+        imported_count = 0
+        updated_count = 0
+        
+        for row in csv_reader:
+            if not row.get('Last Name') or not row.get('First Name'):
+                continue
+                
+            first_name = row.get('First Name', '').strip()
+            last_name = row.get('Last Name', '').strip()
+            
+            # Generate email from name
+            email = f"{first_name.lower()}.{last_name.lower()}@pandaexteriors.com"
+            
+            employee_data = {
+                'last_name': last_name,
+                'first_name': first_name,
+                'name': f"{first_name} {last_name}",
+                'employee_id': row.get('Employee Id', '').strip(),
+                'role': row.get('Job Title (PIT)', '').strip() or row.get('Position Description', '').strip(),
+                'supervisor': row.get('Supervisor', '').strip(),
+                'office': row.get('Current Work Location Name', '').strip(),
+                'department': row.get('Department Description', '').strip(),
+                'hire_date': row.get('Hire Date', '').strip(),
+                'phone': '',
+                'email': email,
+                'status': 'active' if row.get('Employee Status Code', '').strip().lower() == 'active' else 'inactive',
+                'password': 'Welcome2025!',
+                'points_lifetime': Decimal('0'),
+                'points_redeemed': Decimal('0'),
+                'points_balance': Decimal('0')
+            }
+            
+            # Check if employee exists
+            try:
+                existing = table.get_item(Key={'last_name': last_name})
+                if 'Item' in existing:
+                    # Update existing employee but preserve points
+                    existing_item = existing['Item']
+                    employee_data['points_lifetime'] = existing_item.get('points_lifetime', Decimal('0'))
+                    employee_data['points_balance'] = existing_item.get('points_balance', Decimal('0'))
+                    employee_data['points_redeemed'] = existing_item.get('points_redeemed', Decimal('0'))
+                    updated_count += 1
+                else:
+                    imported_count += 1
+            except:
+                imported_count += 1
+            
+            # Insert/update employee
+            table.put_item(Item=employee_data)
+        
+        return {
+            'statusCode': 200,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({
+                'message': f'Upload completed. {imported_count} new employees, {updated_count} updated.',
+                'imported': imported_count,
+                'updated': updated_count
+            })
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'Upload failed: {str(e)}'})
         }

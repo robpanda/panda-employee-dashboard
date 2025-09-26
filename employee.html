@@ -259,6 +259,11 @@
                             <i class="fas fa-download me-2"></i>Sync Google Sheets
                         </button>
                         <br>
+                        <input type="file" id="fileUpload" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleFileUpload(event)">
+                        <button class="btn btn-outline-success btn-sm mb-2" onclick="document.getElementById('fileUpload').click()">
+                            <i class="fas fa-file-upload me-2"></i>Upload CSV/Excel
+                        </button>
+                        <br>
                         <button class="btn btn-outline-success btn-sm" onclick="exportEmployees()">
                             <i class="fas fa-file-export me-2"></i>Export CSV
                         </button>
@@ -919,6 +924,40 @@
                     alert.parentNode.removeChild(alert);
                 }
             }, 5000);
+        }
+        
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-info">Uploading and processing file...</div>';
+                
+                const response = await fetch(`${API_URL}/upload-employees`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('importResults').innerHTML = 
+                        `<div class="alert alert-success">${result.message}</div>`;
+                    await loadEmployees();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('importResults').innerHTML = 
+                    `<div class="alert alert-danger">Upload failed: ${error.message}</div>`;
+            }
+            
+            // Reset file input
+            event.target.value = '';
         }
         
         function createAnalyticsCharts() {
