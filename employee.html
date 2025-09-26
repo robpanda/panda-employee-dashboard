@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panda Exteriors Employee Management</title>
+    <!-- Cache bust: 2025-09-26-14:30 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand { font-weight: bold; }
+        .nav-pills .nav-link { border-radius: 0.5rem; font-weight: 500; }
+        .nav-pills .nav-link.active { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .card { border: none; border-radius: 0.75rem; }
+        .table th { border-top: none; font-size: 0.9rem; }
+        .input-group-text { border-right: none; }
+        .form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+        .status-terminated { background-color: #f8d7da; }
+        .status-active { background-color: #d1edff; }
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { background-color: #e9ecef; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+        <div class="container">
+            <a class="navbar-brand" href="./"><i class="fas fa-users me-2"></i>Panda Exteriors</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="dashboard.html"><i class="fas fa-users me-1"></i>Employees</a>
+                <a class="nav-link" href="leads.html"><i class="fas fa-chart-line me-1"></i>Leads</a>
+                <a class="nav-link" href="referrals.html"><i class="fas fa-handshake me-1"></i>Referrals</a>
+                <a class="nav-link" href="./"><i class="fas fa-home me-1"></i>Portal</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="display-6 fw-bold text-primary mb-0">Employee Dashboard</h1>
+                    <div class="badge bg-primary fs-6 px-3 py-2">Total: <span id="totalCount">0</span></div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body py-3">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                                            <input type="text" class="form-control" id="searchInput" placeholder="Search employees..." onkeyup="filterEmployees()">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="officeFilter" onchange="filterEmployees()">
+                                            <option value="">All Offices</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="roleFilter" onchange="filterEmployees()">
+                                            <option value="">All Roles</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center">
+                                <h5 class="card-title"><i class="fas fa-box text-primary"></i> Asset Management</h5>
+                                <p class="card-text">Manage company assets and inventory</p>
+                                <a href="assets.html" class="btn btn-primary">View Assets</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                
+                <ul class="nav nav-pills nav-fill mb-4" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="active-employees-tab" data-bs-toggle="tab" data-bs-target="#active-employees" type="button" role="tab">
+                            <i class="fas fa-users me-2"></i>Active Employees <span class="badge bg-success ms-2" id="activeCount">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="terminated-employees-tab" data-bs-toggle="tab" data-bs-target="#terminated-employees" type="button" role="tab">
+                            <i class="fas fa-user-times me-2"></i>Terminated Employees <span class="badge bg-danger ms-2" id="terminatedCount">0</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="mainTabContent">
+                    <div class="tab-pane fade show active" id="active-employees" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Active Employees</h5>
+                                <div>
+                                    <button class="btn btn-outline-light btn-sm me-2" onclick="clearFilters()">Clear Filters</button>
+                                    <a href="admin.html" class="btn btn-light btn-sm">Admin Console</a>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="importResults" class="p-3"></div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('supervisor')">Supervisor <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('department')">Department <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="activeEmployeesTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="terminated-employees" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="fas fa-user-times me-2"></i>Terminated Employees</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                                <th class="fw-semibold">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="terminatedEmployeesTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Check authentication
+        if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
+            window.location.replace('login.html');
+        }
+        const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
+        let employees = [];
+        let filteredEmployees = [...employees];
+        let sortColumn = '';
+        let sortDirection = 'asc';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmployees();
+        });
+
+        async function loadEmployees() {
+            try {
+                const response = await fetch(`${API_URL}/employees`);
+                employees = await response.json();
+                filteredEmployees = [...employees];
+                displayEmployees();
+                populateFilters();
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-danger">Failed to load employees. Please check API connection.</div>';
+            }
+        }
+
+
+
+        function displayEmployees() {
+            const activeTableBody = document.getElementById('activeEmployeesTableBody');
+            const terminatedTableBody = document.getElementById('terminatedEmployeesTableBody');
+            
+            activeTableBody.innerHTML = '';
+            terminatedTableBody.innerHTML = '';
+            
+            let activeCount = 0;
+            let terminatedCount = 0;
+            
+            filteredEmployees.forEach(employee => {
+                const row = createEmployeeRow(employee);
+                
+                if (employee.status === 'active') {
+                    activeTableBody.appendChild(row);
+                    activeCount++;
+                } else {
+                    terminatedTableBody.appendChild(row);
+                    terminatedCount++;
+                }
+            });
+            
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('terminatedCount').textContent = terminatedCount;
+            document.getElementById('totalCount').textContent = activeCount + terminatedCount;
+        }
+
+        function createEmployeeRow(employee) {
+            const row = document.createElement('tr');
+            
+            if (employee.status === 'active') {
+                row.innerHTML = `
+                    <td><strong>${employee.name || ''}</strong><br><small class="text-muted">${employee.email || ''}</small></td>
+                    <td>${employee.employee_id || ''}</td>
+                    <td>${employee.role || ''}</td>
+                    <td>${employee.supervisor || ''}</td>
+                    <td>${employee.office || ''}</td>
+                    <td>${employee.department || ''}</td>
+                    <td>${employee.hire_date || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+            } else {
+                row.innerHTML = `
+                    <td><strong>${employee.name || ''}</strong><br><small class="text-muted">${employee.email || ''}</small></td>
+                    <td>${employee.employee_id || ''}</td>
+                    <td>${employee.role || ''}</td>
+                    <td>${employee.office || ''}</td>
+                    <td>${employee.hire_date || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+            }
+            
+            return row;
+        }
+
+        function populateFilters() {
+            const offices = [...new Set(employees.map(e => e.office).filter(Boolean))];
+            const roles = [...new Set(employees.map(e => e.role).filter(Boolean))];
+            
+            populateSelect('officeFilter', offices);
+            populateSelect('roleFilter', roles);
+        }
+
+        function populateSelect(selectId, options) {
+            const select = document.getElementById(selectId);
+            const allOption = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            select.appendChild(allOption);
+            
+            options.sort().forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        function filterEmployees() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const officeFilter = document.getElementById('officeFilter').value;
+            const roleFilter = document.getElementById('roleFilter').value;
+            
+            filteredEmployees = employees.filter(employee => {
+                const matchesSearch = !searchTerm || 
+                    (employee.name && employee.name.toLowerCase().includes(searchTerm)) ||
+                    (employee.email && employee.email.toLowerCase().includes(searchTerm)) ||
+                    (employee.employee_id && employee.employee_id.toLowerCase().includes(searchTerm));
+                
+                const matchesOffice = !officeFilter || employee.office === officeFilter;
+                const matchesRole = !roleFilter || employee.role === roleFilter;
+                
+                return matchesSearch && matchesOffice && matchesRole;
+            });
+            
+            displayEmployees();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('officeFilter').value = '';
+            document.getElementById('roleFilter').value = '';
+            filteredEmployees = [...employees];
+            displayEmployees();
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredEmployees.sort((a, b) => {
+                let aVal = a[column] || '';
+                let bVal = b[column] || '';
+                
+                if (sortDirection === 'asc') {
+                    return aVal.localeCompare(bVal);
+                } else {
+                    return bVal.localeCompare(aVal);
+                }
+            });
+            
+            displayEmployees();
+        }
+
+        function viewEmployee(email) {
+            const employee = employees.find(e => e.email === email);
+            if (employee) {
+                alert(`Employee Details:\n\nName: ${employee.name}\nEmployee ID: ${employee.employee_id}\nRole: ${employee.role}\nSupervisor: ${employee.supervisor}\nOffice: ${employee.office}\nDepartment: ${employee.department}\nHire Date: ${employee.hire_date}\nPhone: ${employee.phone}\nEmail: ${employee.email}\nStatus: ${employee.status}`);
+            }
+        }
+    </script>
+</body>
+</html>
