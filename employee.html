@@ -3,1006 +3,466 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panda Exteriors Dashboard - Complete Business Management</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Employee Management - Panda Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+        .card { border: none; border-radius: 0.75rem; }
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { background-color: #e9ecef; }
+        .employee-card {
+            transition: transform 0.2s;
+            border-left: 4px solid #28a745;
         }
-        
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            background: white;
-            min-height: 100vh;
-            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        .employee-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 { font-size: 1.8em; }
-        
-        .territory-badge {
-            background: #27ae60;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-        }
-        
-        .nav-tabs {
-            background: #34495e;
-            display: flex;
-            justify-content: center;
-            border-bottom: 3px solid #2c3e50;
-            overflow-x: auto;
-        }
-        
-        .nav-tab {
-            background: none;
-            border: none;
-            color: #bdc3c7;
-            padding: 15px 20px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-            white-space: nowrap;
-        }
-        
-        .nav-tab:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        
-        .nav-tab.active {
-            color: white;
-            background: rgba(255,255,255,0.1);
-            border-bottom-color: #3498db;
-        }
-        
-        .tab-content {
-            display: none;
-            padding: 30px;
-            min-height: calc(100vh - 140px);
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            text-align: center;
-            transition: transform 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-number {
-            font-size: 2.5em;
+        .points-badge {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
             font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
         }
-        
-        .stat-label {
-            color: #7f8c8d;
-            font-size: 1.1em;
-        }
-        
-        .upload-area {
-            border: 2px dashed #3498db;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 30px;
-            background: #f8f9fa;
-        }
-        
-        .upload-btn {
-            background: #3498db;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 10px;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-        }
-        
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 14px;
-        }
-        
-        th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #2c3e50;
-            position: sticky;
-            top: 0;
-        }
-        
-        tr:hover { background: #f8f9fa; }
-        
-        .action-btn {
-            padding: 4px 8px;
-            margin: 2px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .merge-btn { background: #28a745; color: white; }
-        .delete-btn { background: #dc3545; color: white; }
-        
-        .btn {
-            background: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-        
-        .btn:hover { background: #2980b9; }
-        
-        .name-link {
-            color: #3498db;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        
-        .name-link:hover {
-            text-decoration: underline;
-        }
+        .status-active { color: #28a745; }
+        .status-terminated { color: #dc3545; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎯 Panda Exteriors Dashboard</h1>
-            <div class="territory-badge">Smart Import Ready</div>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow">
+        <div class="container">
+            <a class="navbar-brand" href="/"><img src="panda-logo.png" alt="Panda" style="height: 40px;"></a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/employee.html">Employees</a>
+                <a class="nav-link" href="/points.html">Points</a>
+                <a class="nav-link" href="/leads.html">Leads</a>
+                <a class="nav-link" href="/referrals.html">Referrals</a>
+                <a class="nav-link" href="/assets.html">Assets</a>
+                <a class="nav-link" href="/admin.html">Admin</a>
+            </div>
         </div>
-        
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('overview')">📊 Overview</button>
-            <button class="nav-tab" onclick="showTab('interactive')">🔍 Interactive</button>
-            <button class="nav-tab" onclick="showTab('campaigns')">📧 Campaigns</button>
-            <button class="nav-tab" onclick="showTab('validation')">✅ Validation</button>
-            <button class="nav-tab" onclick="showTab('enrichment')">🔍 Enrichment</button>
-            <button class="nav-tab" onclick="showTab('employees')">👥 Active Employees</button>
-            <button class="nav-tab" onclick="showTab('terminated')">❌ Terminated</button>
-            <button class="nav-tab" onclick="showTab('duplicates')">🔍 Duplicates</button>
-            <button class="nav-tab" onclick="showTab('upload')">📤 Smart Import</button>
-        </div>
-        
-        <!-- Overview Tab -->
-        <div id="overview" class="tab-content active">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number">141</div>
-                    <div class="stat-label">Total Leads</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">10</div>
-                    <div class="stat-label">States</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">34</div>
-                    <div class="stat-label">MD Leads</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="overviewEmployees">0</div>
-                    <div class="stat-label">Total Employees</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">99%</div>
-                    <div class="stat-label">Valid Contacts</div>
-                </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-6 fw-bold text-success mb-0">Employee Management</h1>
+            <div class="d-flex gap-2">
+                <div class="badge bg-success fs-6 px-3 py-2">Active: <span id="activeCount">0</span></div>
+                <div class="badge bg-secondary fs-6 px-3 py-2">Total: <span id="totalCount">0</span></div>
             </div>
         </div>
         
-        <!-- Interactive Tab -->
-        <div id="interactive" class="tab-content">
-            <h2>🔍 Interactive Lead Explorer</h2>
-            <p>Click on any chart element or stat card to drill down into lead details.</p>
-            
-            <div class="stats-grid">
-                <div class="stat-card" onclick="showLeadModal('all')">
-                    <div class="stat-number">141</div>
-                    <div class="stat-label">All Leads</div>
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body py-3">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="searchInput" placeholder="Search employees..." onkeyup="filterEmployees()">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="officeFilter" onchange="filterEmployees()">
+                                    <option value="">All Offices</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="roleFilter" onchange="filterEmployees()">
+                                    <option value="">All Roles</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card" onclick="showLeadModal('md')">
-                    <div class="stat-number">34</div>
-                    <div class="stat-label">Maryland</div>
-                </div>
-                <div class="stat-card" onclick="showLeadModal('nj')">
-                    <div class="stat-number">31</div>
-                    <div class="stat-label">New Jersey</div>
-                </div>
-                <div class="stat-card" onclick="showLeadModal('pa')">
-                    <div class="stat-number">26</div>
-                    <div class="stat-label">Pennsylvania</div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-sync text-success"></i> Data Management</h5>
+                        <button class="btn btn-success" onclick="importFromGoogleSheets()">
+                            <i class="fas fa-download"></i> Sync Google Sheets
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Campaigns Tab -->
-        <div id="campaigns" class="tab-content">
-            <h2>📧📱 Campaign Segmentation</h2>
-            
-            <div class="stats-grid">
-                <div class="stat-card" onclick="showCampaignModal('email')">
-                    <div class="stat-number">70</div>
-                    <div class="stat-label">Email Only</div>
-                </div>
-                <div class="stat-card" onclick="showCampaignModal('mixed')">
-                    <div class="stat-number">71</div>
-                    <div class="stat-label">Mixed Campaign</div>
-                </div>
-                <div class="stat-card" onclick="showCampaignModal('sms')">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">SMS Only</div>
-                </div>
-                <div class="stat-card" onclick="showCampaignModal('invalid')">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Invalid</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Validation Tab -->
-        <div id="validation" class="tab-content">
-            <h2>✅ Contact Validation</h2>
-            
-            <div class="stats-grid">
-                <div>
-                    <label for="testEmail">Email Address</label>
-                    <input type="email" id="testEmail" placeholder="test@example.com" value="angelicaann99@gmail.com">
-                    <button class="btn" onclick="validateEmail()">Validate Email</button>
-                </div>
-                <div>
-                    <label for="testPhone">Phone Number</label>
-                    <input type="tel" id="testPhone" placeholder="(555) 123-4567" value="(717) 406-4768">
-                    <button class="btn" onclick="validatePhone()">Validate Phone</button>
-                </div>
-            </div>
-            <div id="validationResults" style="display: none; margin-top: 20px;">
-                <div id="emailResults"></div>
-                <div id="phoneResults"></div>
-            </div>
-        </div>
-        
-        <!-- Enrichment Tab -->
-        <div id="enrichment" class="tab-content">
-            <h2>🔍 Data Enrichment Options</h2>
-            
-            <div class="stats-grid">
-                <div>
-                    <label for="addressLine">Street Address</label>
-                    <input type="text" id="addressLine" placeholder="555 Marco Way" value="555 Marco Way">
-                    <label for="city">City</label>
-                    <input type="text" id="city" placeholder="East Stroudsburg" value="East Stroudsburg">
-                </div>
-                <div>
-                    <label for="state">State</label>
-                    <input type="text" id="state" placeholder="PA" value="PA" maxlength="2">
-                    <label for="zipCode">ZIP Code</label>
-                    <input type="text" id="zipCode" placeholder="18302" value="18302" maxlength="5">
-                </div>
-            </div>
-            <button class="btn" onclick="validateAddress()">Validate Address</button>
-            <div id="addressResults" style="display: none; margin-top: 20px;">
-                <div id="uspsResults"></div>
-            </div>
-        </div>
-        
-        <!-- Active Employees Tab -->
-        <div id="employees" class="tab-content">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalEmployees">0</div>
-                    <div class="stat-label">Active Employees</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="newHires">0</div>
-                    <div class="stat-label">New Hires (90 days)</div>
-                </div>
-            </div>
-            
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Department</th>
-                            <th>Position</th>
-                            <th>Employment Date</th>
-                            <th>Years of Service</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Merch Requested</th>
-                            <th>Merch Sent</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="employeeTableBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- Duplicates Tab -->
-        <div id="duplicates" class="tab-content">
-            <h2>🔍 Duplicate Management</h2>
-            <p>Employees matched by email (priority), last name, or full name.</p>
-            
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Group</th>
-                            <th>Match Type</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Department</th>
-                            <th>Employment Date</th>
-                            <th>Email</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="duplicateTableBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- Terminated Employees Tab -->
-        <div id="terminated" class="tab-content">
-            <h2>❌ Terminated Employees</h2>
-            
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Department</th>
-                            <th>Position</th>
-                            <th>Employment Date</th>
-                            <th>Termination Date</th>
-                            <th>Email</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="terminatedTableBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- Smart Import Tab -->
-        <div id="upload" class="tab-content">
-            <div class="upload-area">
-                <h3>📤 Smart Import Employee Data</h3>
-                <p><strong>Smart Import Rules:</strong></p>
-                <p>• Anyone NOT on the new list will be terminated</p>
-                <p>• Anyone NEW will be added as active employee</p>
-                <p>• Anyone already in database remains unchanged</p>
-                <p><strong>Supported Formats:</strong> CSV, Excel (.xlsx, .xls)</p>
-                <p><strong>Google Sheets:</strong> <a href="https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/edit" target="_blank">View Current Data</a></p>
-                <input type="file" id="fileInput" style="display: none;" accept=".csv,.xlsx,.xls" />
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    Choose File
+        <ul class="nav nav-pills nav-fill mb-4" id="employeeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="active-employees-tab" data-bs-toggle="tab" data-bs-target="#active-employees" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Active Employees <span class="badge bg-success ms-2" id="activeTabCount">0</span>
                 </button>
-                <button class="upload-btn" onclick="downloadFromGoogleSheets()" style="background: #28a745;">
-                    Import from Google Sheets
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="terminated-employees-tab" data-bs-toggle="tab" data-bs-target="#terminated-employees" type="button" role="tab">
+                    <i class="fas fa-user-times me-2"></i>Terminated Employees <span class="badge bg-danger ms-2" id="terminatedTabCount">0</span>
                 </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="employeeTabContent">
+            <!-- Active Employees Tab -->
+            <div class="tab-pane fade show active" id="active-employees" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Active Employees</h5>
+                        <div>
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="clearFilters()">Clear Filters</button>
+                            <a href="/admin.html" class="btn btn-light btn-sm">Admin Console</a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="importResults" class="p-3"></div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('supervisor')">Supervisor <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('department')">Department <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold">Panda Points</th>
+                                        <th class="fw-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activeEmployeesTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div id="uploadStatus"></div>
+            <!-- Terminated Employees Tab -->
+            <div class="tab-pane fade" id="terminated-employees" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-times me-2"></i>Terminated Employees</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="terminatedEmployeesTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
         let employees = [];
-        let terminatedEmployees = [];
-        let backupData = null;
-        
+        let filteredEmployees = [];
+        let sortColumn = '';
+        let sortDirection = 'asc';
+
         // Static employee data from Google Sheets
-        const staticEmployeeData = [
-            {"First Name":"Bryan","Last Name":"Abel","Department":"Finance & Accounting","Position":"Director of Finance","Employment Date":"2023-11-13","Email":"bryan.abel@pandaexteriors.com","Phone":"(555) 123-4567","Terminated":"No","Years of Service":"1.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"George","Last Name":"Aggelis","Department":"Insurance Sales","Position":"Sales Representative","Employment Date":"2025-08-28","Email":"george.aggelis@pandaexteriors.com","Phone":"(555) 234-5678","Terminated":"No","Years of Service":"0.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Bryan","Last Name":"Andrade","Department":"Call Center","Position":"Call Center Sales Representative","Employment Date":"2024-07-30","Email":"bryan.andrade@pandaexteriors.com","Phone":"(555) 345-6789","Terminated":"No","Years of Service":"0.4","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Camila","Last Name":"Arango","Department":"Talent Acquisition","Position":"Junior Recruiter","Employment Date":"2025-02-24","Email":"camila.arango@pandaexteriors.com","Phone":"(555) 456-7890","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"J.","Last Name":"Arpan","Department":"Insurance Sales","Position":"Director of Sales - Insurance Division","Employment Date":"2023-06-12","Email":"j.arpan@pandaexteriors.com","Phone":"(555) 567-8901","Terminated":"No","Years of Service":"1.5","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Dan","Last Name":"Atias","Department":"Insurance Sales","Position":"Sales Representative","Employment Date":"2021-10-01","Email":"dan.atias@pandaexteriors.com","Phone":"(555) 678-9012","Terminated":"No","Years of Service":"3.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Chris","Last Name":"Atkinson","Department":"Insurance Sales","Position":"Sales Representative","Employment Date":"2024-07-08","Email":"chris.atkinson@pandaexteriors.com","Phone":"(555) 789-0123","Terminated":"No","Years of Service":"0.4","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Spencer","Last Name":"Auletto","Department":"Operations","Position":"Roofing Project Manager","Employment Date":"2025-07-07","Email":"spencer.auletto@pandaexteriors.com","Phone":"(555) 890-1234","Terminated":"No","Years of Service":"0.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Christopher","Last Name":"Ayala Lovo","Department":"Operations","Position":"Project Manager","Employment Date":"2023-03-06","Email":"christopher.ayalalovo@pandaexteriors.com","Phone":"(555) 901-2345","Terminated":"No","Years of Service":"1.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Brian","Last Name":"Ayers","Department":"Insurance Sales","Position":"DE Sales Manager - Insurance Division","Employment Date":"2024-01-03","Email":"brian.ayers@pandaexteriors.com","Phone":"(555) 012-3456","Terminated":"No","Years of Service":"1.0","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Christian","Last Name":"Curry","Department":"Business Operations","Position":"President","Employment Date":"2021-09-24","Email":"christian.curry@pandaexteriors.com","Phone":"(555) 123-4567","Terminated":"No","Years of Service":"3.3","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Jason","Last Name":"Daniel","Department":"Finance & Accounting","Position":"Chief Financial Officer","Employment Date":"2020-12-01","Email":"jason.daniel@pandaexteriors.com","Phone":"(555) 234-5678","Terminated":"No","Years of Service":"4.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Cheyne","Last Name":"Kilbourne","Department":"Business Operations","Position":"Chief Operations Officer","Employment Date":"2021-01-01","Email":"cheyne.kilbourne@pandaexteriors.com","Phone":"(555) 345-6789","Terminated":"No","Years of Service":"4.0","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Scott","Last Name":"Tucker","Department":"Business Operations","Position":"Chief Executive Officer","Employment Date":"2020-12-01","Email":"scott.tucker@pandaexteriors.com","Phone":"(555) 456-7890","Terminated":"No","Years of Service":"4.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Rob","Last Name":"Winters","Department":"Business Operations","Position":"Digital Marketing Director","Employment Date":"2025-03-03","Email":"rob.winters@pandaexteriors.com","Phone":"(555) 567-8901","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Trevor","Last Name":"Johnson","Department":"Operations","Position":"Director of Operations","Employment Date":"2022-06-13","Email":"trevor.johnson@pandaexteriors.com","Phone":"(555) 678-9012","Terminated":"No","Years of Service":"2.5","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Valerie","Last Name":"Liebno","Department":"Human Resources","Position":"Director of Human Resources","Employment Date":"2022-12-05","Email":"valerie.liebno@pandaexteriors.com","Phone":"(555) 789-0123","Terminated":"No","Years of Service":"2.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Joe","Last Name":"LaRose Jr","Department":"Retail/Solar Sales","Position":"Director of Sales - Retail Division","Employment Date":"2023-10-30","Email":"joe.larosejr@pandaexteriors.com","Phone":"(555) 890-1234","Terminated":"No","Years of Service":"1.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Sutton","Last Name":"Gasper","Department":"Call Center","Position":"Service Center Manager","Employment Date":"2023-10-30","Email":"sutton.gasper@pandaexteriors.com","Phone":"(555) 901-2345","Terminated":"No","Years of Service":"1.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Andreas","Last Name":"Georgiou","Department":"Assets","Position":"Asset Manager","Employment Date":"2023-11-08","Email":"andreas.georgiou@pandaexteriors.com","Phone":"(555) 012-3456","Terminated":"No","Years of Service":"1.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Nicholas","Last Name":"Gessler","Department":"Talent Acquisition","Position":"Director of Talent Acquisition","Employment Date":"2025-02-03","Email":"nicholas.gessler@pandaexteriors.com","Phone":"(555) 123-4567","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"David","Last Name":"McGinnis","Department":"Retail Business Development","Position":"Director of Retail Business Development","Employment Date":"2025-03-04","Email":"david.mcginnis@pandaexteriors.com","Phone":"(555) 234-5678","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Todd","Last Name":"Sandberg","Department":"Business Operations","Position":"Director of Business Operations","Employment Date":"2025-02-10","Email":"todd.sandberg@pandaexteriors.com","Phone":"(555) 345-6789","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Jason","Last Name":"Wooten","Department":"Estimating","Position":"Director of Sales Operations","Employment Date":"2022-04-27","Email":"jason.wooten@pandaexteriors.com","Phone":"(555) 456-7890","Terminated":"No","Years of Service":"2.7","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Thomas","Last Name":"Hallwig","Department":"Commercial","Position":"Director of Operations - Commercial Division","Employment Date":"2022-01-17","Email":"thomas.hallwig@pandaexteriors.com","Phone":"(555) 567-8901","Terminated":"No","Years of Service":"2.9","Merch Requested":"","Merch Sent":"No"}
+        const staticEmployees = [
+            {"employee_id":"10427","last_name":"Abel","first_name":"Bryan","name":"Bryan Abel","email":"bryan.abel@pandaexteriors.com","role":"Director of Finance","department":"Finance & Accounting","office":"Maryland Office","supervisor":"Daniel, Jason","hire_date":"11/13/2023","status":"active","points_balance":125,"points_lifetime":250,"phone":"(555) 123-4567"},
+            {"employee_id":"11254","last_name":"Aggelis","first_name":"George","name":"George Aggelis","email":"george.aggelis@pandaexteriors.com","role":"Sales Representative","department":"Insurance Sales","office":"Maryland Office","supervisor":"Konstandinidis, Joshua","hire_date":"08/28/2025","status":"active","points_balance":0,"points_lifetime":0,"phone":"(555) 234-5678"},
+            {"employee_id":"10702","last_name":"Andrade","first_name":"Bryan","name":"Bryan Andrade","email":"bryan.andrade@pandaexteriors.com","role":"Call Center Sales Representative","department":"Call Center","office":"Maryland Office","supervisor":"Gasper, Sutton","hire_date":"07/30/2024","status":"active","points_balance":75,"points_lifetime":150,"phone":"(555) 345-6789"},
+            {"employee_id":"10955","last_name":"Arango","first_name":"Camila","name":"Camila Arango","email":"camila.arango@pandaexteriors.com","role":"Junior Recruiter","department":"Talent Acquisition","office":"Maryland Office","supervisor":"Gessler, Nicholas","hire_date":"02/24/2025","status":"active","points_balance":50,"points_lifetime":100,"phone":"(555) 456-7890"},
+            {"employee_id":"10311","last_name":"Arpan","first_name":"J.","name":"J. Arpan","email":"j.arpan@pandaexteriors.com","role":"Director of Sales - Insurance Division","department":"Insurance Sales","office":"Maryland Office","supervisor":"Tucker, Christopher","hire_date":"06/12/2023","status":"active","points_balance":200,"points_lifetime":400,"phone":"(555) 567-8901"},
+            {"employee_id":"10221","last_name":"Atias","first_name":"Dan","name":"Dan Atias","email":"dan.atias@pandaexteriors.com","role":"Sales Representative","department":"Insurance Sales","office":"Maryland Office","supervisor":"Konstandinidis, Joshua","hire_date":"10/01/2021","status":"active","points_balance":300,"points_lifetime":600,"phone":"(555) 678-9012"},
+            {"employee_id":"10679","last_name":"Atkinson","first_name":"Chris","name":"Chris Atkinson","email":"chris.atkinson@pandaexteriors.com","role":"Sales Representative","department":"Insurance Sales","office":"Maryland Office","supervisor":"Konstandinidis, Joshua","hire_date":"07/08/2024","status":"active","points_balance":100,"points_lifetime":200,"phone":"(555) 789-0123"},
+            {"employee_id":"11128","last_name":"Auletto","first_name":"Spencer","name":"Spencer Auletto","email":"spencer.auletto@pandaexteriors.com","role":"Roofing Project Manager","department":"Operations","office":"New Jersey Office","supervisor":"Johnson, Trevor","hire_date":"07/07/2025","status":"active","points_balance":25,"points_lifetime":50,"phone":"(555) 890-1234"},
+            {"employee_id":"10240","last_name":"Ayala Lovo","first_name":"Christopher","name":"Christopher Ayala Lovo","email":"christopher.ayalalovo@pandaexteriors.com","role":"Project Manager","department":"Operations","office":"Maryland Office","supervisor":"Johnson, Trevor","hire_date":"03/06/2023","status":"active","points_balance":175,"points_lifetime":350,"phone":"(555) 901-2345"},
+            {"employee_id":"10452","last_name":"Ayers","first_name":"Brian","name":"Brian Ayers","email":"brian.ayers@pandaexteriors.com","role":"DE Sales Manager - Insurance Division","department":"Insurance Sales","office":"Delaware Office","supervisor":"Arpan, Justin","hire_date":"01/03/2024","status":"active","points_balance":150,"points_lifetime":300,"phone":"(555) 012-3456"},
+            {"employee_id":"10008","last_name":"Curry","first_name":"Christian","name":"Christian Curry","email":"christian.curry@pandaexteriors.com","role":"President","department":"Business Operations","office":"Maryland Office","supervisor":"Tucker, Christopher","hire_date":"09/24/2021","status":"active","points_balance":500,"points_lifetime":1000,"phone":"(555) 123-4567"},
+            {"employee_id":"10112","last_name":"Daniel","first_name":"Jason","name":"Jason Daniel","email":"jason.daniel@pandaexteriors.com","role":"Chief Financial Officer","department":"Finance & Accounting","office":"Maryland Office","supervisor":"","hire_date":"12/01/2020","status":"active","points_balance":400,"points_lifetime":800,"phone":"(555) 234-5678"},
+            {"employee_id":"10140","last_name":"Kilbourne","first_name":"Cheyne","name":"Cheyne Kilbourne","email":"cheyne.kilbourne@pandaexteriors.com","role":"Chief Operations Officer","department":"Business Operations","office":"Maryland Office","supervisor":"","hire_date":"01/01/2021","status":"active","points_balance":450,"points_lifetime":900,"phone":"(555) 345-6789"},
+            {"employee_id":"10110","last_name":"Tucker","first_name":"Scott","name":"Scott Tucker","email":"scott.tucker@pandaexteriors.com","role":"Chief Executive Officer","department":"Business Operations","office":"Maryland Office","supervisor":"","hire_date":"12/01/2020","status":"active","points_balance":500,"points_lifetime":1000,"phone":"(555) 456-7890"},
+            {"employee_id":"10980","last_name":"Winters","first_name":"Rob","name":"Rob Winters","email":"rob.winters@pandaexteriors.com","role":"Digital Marketing Director","department":"Business Operations","office":"Maryland Office","supervisor":"Curry, Christian","hire_date":"03/03/2025","status":"active","points_balance":500,"points_lifetime":500,"phone":"(555) 567-8901"},
+            {"employee_id":"10026","last_name":"Johnson","first_name":"Trevor","name":"Trevor Johnson","email":"trevor.johnson@pandaexteriors.com","role":"Director of Operations","department":"Operations","office":"Maryland Office","supervisor":"Hallwig, Thomas","hire_date":"06/13/2022","status":"active","points_balance":350,"points_lifetime":700,"phone":"(555) 678-9012"},
+            {"employee_id":"10037","last_name":"Liebno","first_name":"Valerie","name":"Valerie Liebno","email":"valerie.liebno@pandaexteriors.com","role":"Director of Human Resources","department":"Human Resources","office":"Maryland Office","supervisor":"Daniel, Jason","hire_date":"12/05/2022","status":"active","points_balance":275,"points_lifetime":550,"phone":"(555) 789-0123"},
+            {"employee_id":"10412","last_name":"LaRose Jr","first_name":"Joe","name":"Joe LaRose Jr","email":"joe.larosejr@pandaexteriors.com","role":"Director of Sales - Retail Division","department":"Retail/Solar Sales","office":"New Jersey Office","supervisor":"Curry, Christian","hire_date":"10/30/2023","status":"active","points_balance":225,"points_lifetime":450,"phone":"(555) 890-1234"},
+            {"employee_id":"10414","last_name":"Gasper","first_name":"Sutton","name":"Sutton Gasper","email":"sutton.gasper@pandaexteriors.com","role":"Service Center Manager","department":"Call Center","office":"Maryland Office","supervisor":"Sandberg, Todd","hire_date":"10/30/2023","status":"active","points_balance":200,"points_lifetime":400,"phone":"(555) 901-2345"},
+            {"employee_id":"10423","last_name":"Georgiou","first_name":"Andreas","name":"Andreas Georgiou","email":"andreas.georgiou@pandaexteriors.com","role":"Asset Manager","department":"Assets","office":"Maryland Office","supervisor":"Daniel, Jason","hire_date":"11/08/2023","status":"active","points_balance":175,"points_lifetime":350,"phone":"(555) 012-3456"},
+            {"employee_id":"10915","last_name":"Gessler","first_name":"Nicholas","name":"Nicholas Gessler","email":"nicholas.gessler@pandaexteriors.com","role":"Director of Talent Acquisition","department":"Talent Acquisition","office":"Maryland Office","supervisor":"Liebno, Valerie","hire_date":"02/03/2025","status":"active","points_balance":100,"points_lifetime":200,"phone":"(555) 123-4567"},
+            {"employee_id":"10981","last_name":"McGinnis","first_name":"David","name":"David McGinnis","email":"david.mcginnis@pandaexteriors.com","role":"Director of Retail Business Development","department":"Retail Business Development","office":"New Jersey Office","supervisor":"Curry, Christian","hire_date":"03/04/2025","status":"active","points_balance":125,"points_lifetime":250,"phone":"(555) 234-5678"},
+            {"employee_id":"10923","last_name":"Sandberg","first_name":"Todd","name":"Todd Sandberg","email":"todd.sandberg@pandaexteriors.com","role":"Director of Business Operations","department":"Business Operations","office":"Maryland Office","supervisor":"Curry, Christian","hire_date":"02/10/2025","status":"active","points_balance":150,"points_lifetime":300,"phone":"(555) 345-6789"},
+            {"employee_id":"10022","last_name":"Wooten","first_name":"Jason","name":"Jason Wooten","email":"jason.wooten@pandaexteriors.com","role":"Director of Sales Operations","department":"Estimating","office":"Maryland Office","supervisor":"Tucker, Christopher","hire_date":"04/27/2022","status":"active","points_balance":275,"points_lifetime":550,"phone":"(555) 456-7890"},
+            {"employee_id":"10014","last_name":"Hallwig","first_name":"Thomas","name":"Thomas Hallwig","email":"thomas.hallwig@pandaexteriors.com","role":"Director of Operations - Commercial Division","department":"Commercial","office":"Maryland Office","supervisor":"Tucker, Christopher","hire_date":"01/17/2022","status":"active","points_balance":300,"points_lifetime":600,"phone":"(555) 567-8901"}
         ];
-        
-        // Initialize with static data
-        employees = staticEmployeeData.filter(emp => emp.Terminated !== 'Yes');
-        terminatedEmployees = staticEmployeeData.filter(emp => emp.Terminated === 'Yes');
-        
-        function parseName(fullName) {
-            if (!fullName) return { firstName: '', lastName: '' };
-            
-            const name = fullName.replace(/"/g, '').trim();
-            const parts = name.split(' ');
-            
-            if (parts.length === 1) {
-                return { firstName: parts[0], lastName: '' };
-            } else if (parts.length === 2) {
-                return { firstName: parts[0], lastName: parts[1] };
-            } else {
-                return {
-                    firstName: parts[0],
-                    lastName: parts.slice(1).join(' ')
-                };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Use static data for presentation
+            employees = staticEmployees;
+            filteredEmployees = [...employees];
+            displayEmployees();
+            populateFilters();
+        });
+
+        async function loadEmployees() {
+            try {
+                const response = await fetch(`${API_URL}/employees`);
+                employees = await response.json();
+                filteredEmployees = [...employees];
+                displayEmployees();
+                populateFilters();
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-danger">Failed to load employees. Using static data for presentation.</div>';
             }
         }
-        
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n');
-            const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-            const data = [];
-            
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim()) {
-                    const values = parseCSVLine(lines[i]);
-                    const row = {};
-                    
-                    headers.forEach((header, index) => {
-                        row[header] = values[index] || '';
-                    });
-                    
-                    if (row.Name) {
-                        const nameInfo = parseName(row.Name);
-                        row['First Name'] = nameInfo.firstName;
-                        row['Last Name'] = nameInfo.lastName;
-                        delete row.Name;
-                    }
-                    
-                    data.push(row);
-                }
-            }
-            
-            return data;
-        }
-        
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
+
+        async function importFromGoogleSheets() {
+            try {
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-info">Importing from Google Sheets...</div>';
                 
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            
-            result.push(current.trim());
-            return result;
-        }
-        
-        function smartImport(newEmployees) {
-            const today = new Date().toISOString().split('T')[0];
-            let added = 0, terminated = 0, unchanged = 0;
-            
-            // Create lookup for new employees by email and name
-            const newLookup = new Map();
-            newEmployees.forEach(emp => {
-                const email = (emp.Email || '').toLowerCase().trim();
-                const name = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-                
-                if (email) newLookup.set(email, emp);
-                if (name) newLookup.set(name, emp);
-            });
-            
-            // Check existing active employees
-            const toTerminate = [];
-            employees.forEach((emp, index) => {
-                const email = (emp.Email || '').toLowerCase().trim();
-                const name = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-                
-                const found = newLookup.has(email) || newLookup.has(name);
-                
-                if (!found) {
-                    toTerminate.push(index);
-                }
-            });
-            
-            // Terminate employees not in new list
-            toTerminate.reverse().forEach(index => {
-                const emp = employees[index];
-                emp['Termination Date'] = today;
-                emp['Terminated'] = 'Yes';
-                terminatedEmployees.push(emp);
-                employees.splice(index, 1);
-                terminated++;
-            });
-            
-            // Add new employees
-            newEmployees.forEach(newEmp => {
-                const email = (newEmp.Email || '').toLowerCase().trim();
-                const name = `${newEmp['First Name'] || ''} ${newEmp['Last Name'] || ''}`.toLowerCase().trim();
-                
-                const existsActive = employees.some(emp => {
-                    const empEmail = (emp.Email || '').toLowerCase().trim();
-                    const empName = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-                    return (email && empEmail === email) || (name && empName === name);
+                const response = await fetch(`${API_URL}/import`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
                 });
                 
-                const existsTerminated = terminatedEmployees.some(emp => {
-                    const empEmail = (emp.Email || '').toLowerCase().trim();
-                    const empName = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-                    return (email && empEmail === email) || (name && empName === name);
-                });
+                const result = await response.json();
                 
-                if (!existsActive && !existsTerminated) {
-                    // New employee - set as new hire with today's date if no employment date
-                    if (!newEmp['Employment Date']) {
-                        newEmp['Employment Date'] = today;
-                    }
-                    newEmp['Terminated'] = 'No';
-                    employees.push(newEmp);
-                    added++;
+                if (response.ok) {
+                    document.getElementById('importResults').innerHTML = 
+                        `<div class="alert alert-success">${result.message}</div>`;
+                    await loadEmployees();
                 } else {
-                    unchanged++;
+                    throw new Error(result.error);
                 }
-            });
-            
-            return { added, terminated, unchanged };
-        }
-        
-        function undoImport() {
-            if (!backupData) {
-                alert('No backup data available to undo.');
-                return;
+            } catch (error) {
+                document.getElementById('importResults').innerHTML = 
+                    `<div class="alert alert-danger">Import failed: ${error.message}</div>`;
             }
-            
-            employees = [...backupData.employees];
-            terminatedEmployees = [...backupData.terminatedEmployees];
-            
-            renderEmployeeTable();
-            renderTerminatedTable();
-            
-            document.getElementById('uploadStatus').innerHTML = 
-                `<div style="color: blue; margin-top: 10px;">✓ Import undone - data restored to previous state</div>`;
-            
-            backupData = null;
         }
-        
-        function renderEmployeeTable() {
-            const tbody = document.getElementById('employeeTableBody');
-            tbody.innerHTML = '';
+
+        function displayEmployees() {
+            const activeTableBody = document.getElementById('activeEmployeesTableBody');
+            const terminatedTableBody = document.getElementById('terminatedEmployeesTableBody');
             
-            let newHireCount = 0;
-            const today = new Date();
-            const ninetyDaysAgo = new Date(today.getTime() - (90 * 24 * 60 * 60 * 1000));
+            activeTableBody.innerHTML = '';
+            terminatedTableBody.innerHTML = '';
             
-            employees.forEach((emp, index) => {
-                const row = document.createElement('tr');
+            let activeCount = 0;
+            let terminatedCount = 0;
+            
+            filteredEmployees.forEach(employee => {
+                const row = createEmployeeRow(employee);
                 
-                const empDate = new Date(emp['Employment Date']);
-                if (empDate > ninetyDaysAgo && empDate <= today) {
-                    newHireCount++;
-                }
-                
-                row.innerHTML = `
-                    <td><a href="#" class="name-link" onclick="editEmployee(${index})">${emp['First Name'] || ''}</a></td>
-                    <td>${emp['Last Name'] || ''}</td>
-                    <td>${emp.Department || ''}</td>
-                    <td>${emp.Position || ''}</td>
-                    <td>${emp['Employment Date'] || ''}</td>
-                    <td>${emp['Years of Service'] || ''}</td>
-                    <td>${emp.Email || ''}</td>
-                    <td>${emp.Phone || ''}</td>
-                    <td>${emp['Merch Requested'] || ''}</td>
-                    <td>${emp['Merch Sent'] || 'No'}</td>
-                    <td><button class="action-btn delete-btn" onclick="terminateEmployee(${index})">Terminate</button></td>
-                `;
-                
-                tbody.appendChild(row);
-            });
-            
-            document.getElementById('totalEmployees').textContent = employees.length;
-            document.getElementById('newHires').textContent = newHireCount;
-            document.getElementById('overviewEmployees').textContent = employees.length;
-        }
-        
-        function renderTerminatedTable() {
-            const tbody = document.getElementById('terminatedTableBody');
-            tbody.innerHTML = '';
-            
-            terminatedEmployees.forEach((emp, index) => {
-                const row = document.createElement('tr');
-                
-                row.innerHTML = `
-                    <td>${emp['First Name'] || ''}</td>
-                    <td>${emp['Last Name'] || ''}</td>
-                    <td>${emp.Department || ''}</td>
-                    <td>${emp.Position || ''}</td>
-                    <td>${emp['Employment Date'] || ''}</td>
-                    <td>${emp['Termination Date'] || 'N/A'}</td>
-                    <td>${emp.Email || ''}</td>
-                    <td><button class="action-btn merge-btn" onclick="reactivateEmployee(${index})">Reactivate</button></td>
-                `;
-                
-                tbody.appendChild(row);
-            });
-        }
-        
-        function terminateEmployee(index) {
-            const employee = employees[index];
-            const today = new Date().toISOString().split('T')[0];
-            employee['Termination Date'] = today;
-            employee['Terminated'] = 'Yes';
-            
-            terminatedEmployees.push(employee);
-            employees.splice(index, 1);
-            
-            renderEmployeeTable();
-            renderTerminatedTable();
-        }
-        
-        function reactivateEmployee(index) {
-            const employee = terminatedEmployees[index];
-            delete employee['Termination Date'];
-            employee['Terminated'] = 'No';
-            
-            employees.push(employee);
-            terminatedEmployees.splice(index, 1);
-            
-            renderEmployeeTable();
-            renderTerminatedTable();
-        }
-        
-        function editEmployee(index) {
-            const emp = employees[index];
-            const newFirstName = prompt('First Name:', emp['First Name'] || '');
-            if (newFirstName !== null) emp['First Name'] = newFirstName;
-            
-            const newLastName = prompt('Last Name:', emp['Last Name'] || '');
-            if (newLastName !== null) emp['Last Name'] = newLastName;
-            
-            const newEmail = prompt('Email:', emp.Email || '');
-            if (newEmail !== null) emp.Email = newEmail;
-            
-            const newPhone = prompt('Phone:', emp.Phone || '');
-            if (newPhone !== null) emp.Phone = newPhone;
-            
-            const newMerch = prompt('Merch Requested:', emp['Merch Requested'] || '');
-            if (newMerch !== null) emp['Merch Requested'] = newMerch;
-            
-            const newMerchSent = confirm('Merch Sent?') ? 'Yes' : 'No';
-            emp['Merch Sent'] = newMerchSent;
-            
-            renderEmployeeTable();
-        }
-        
-        function findDuplicates() {
-            const duplicates = [];
-            const seen = new Map();
-            
-            [...employees, ...terminatedEmployees].forEach((emp, index) => {
-                const email = (emp.Email || '').toLowerCase().trim();
-                const lastName = (emp['Last Name'] || '').toLowerCase().trim();
-                const fullName = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.toLowerCase().trim();
-                
-                // Check email duplicates (highest priority)
-                if (email && seen.has(`email:${email}`)) {
-                    duplicates.push({ ...emp, matchType: 'Email', group: seen.get(`email:${email}`) });
-                } else if (email) {
-                    seen.set(`email:${email}`, duplicates.length + 1);
-                }
-                
-                // Check last name duplicates
-                if (lastName && seen.has(`lastName:${lastName}`)) {
-                    duplicates.push({ ...emp, matchType: 'Last Name', group: seen.get(`lastName:${lastName}`) });
-                } else if (lastName) {
-                    seen.set(`lastName:${lastName}`, duplicates.length + 1);
-                }
-                
-                // Check full name duplicates
-                if (fullName && seen.has(`fullName:${fullName}`)) {
-                    duplicates.push({ ...emp, matchType: 'Full Name', group: seen.get(`fullName:${fullName}`) });
-                } else if (fullName) {
-                    seen.set(`fullName:${fullName}`, duplicates.length + 1);
+                if (employee.status === 'active') {
+                    activeTableBody.appendChild(row);
+                    activeCount++;
+                } else {
+                    terminatedTableBody.appendChild(row);
+                    terminatedCount++;
                 }
             });
             
-            return duplicates;
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('activeTabCount').textContent = activeCount;
+            document.getElementById('terminatedTabCount').textContent = terminatedCount;
+            document.getElementById('totalCount').textContent = activeCount + terminatedCount;
         }
-        
-        function renderDuplicateTable() {
-            const tbody = document.getElementById('duplicateTableBody');
-            tbody.innerHTML = '';
+
+        function createEmployeeRow(employee) {
+            const row = document.createElement('tr');
             
-            const duplicates = findDuplicates();
-            
-            duplicates.forEach((emp, index) => {
-                const row = document.createElement('tr');
-                
+            if (employee.status === 'active') {
                 row.innerHTML = `
-                    <td>${emp.group}</td>
-                    <td>${emp.matchType}</td>
-                    <td>${emp['First Name'] || ''}</td>
-                    <td>${emp['Last Name'] || ''}</td>
-                    <td>${emp.Department || ''}</td>
-                    <td>${emp['Employment Date'] || ''}</td>
-                    <td>${emp.Email || ''}</td>
                     <td>
-                        <button class="action-btn merge-btn" onclick="mergeDuplicate(${index})">Merge</button>
-                        <button class="action-btn delete-btn" onclick="deleteDuplicate(${index})">Delete</button>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <strong>${employee.name || ''}</strong>
+                                <br><small class="text-muted">${employee.email || ''}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-light text-dark">${employee.employee_id || ''}</span></td>
+                    <td>${employee.role || ''}</td>
+                    <td>${employee.supervisor || ''}</td>
+                    <td>${employee.office || ''}</td>
+                    <td>${employee.department || ''}</td>
+                    <td>${employee.hire_date || ''}</td>
+                    <td>
+                        <span class="badge points-badge">${employee.points_balance || 0} pts</span>
+                        <br><small class="text-muted">Lifetime: ${employee.points_lifetime || 0}</small>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="awardPoints('${employee.email}')" title="Award Points">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        </div>
                     </td>
                 `;
-                
-                tbody.appendChild(row);
-            });
-        }
-        
-        function mergeDuplicate(index) {
-            alert('Merge functionality - combine duplicate records');
-        }
-        
-        function deleteDuplicate(index) {
-            if (confirm('Delete this duplicate record?')) {
-                alert('Delete functionality - remove duplicate');
-            }
-        }
-        
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-            
-            // Render duplicates when switching to duplicates tab
-            if (tabName === 'duplicates') {
-                renderDuplicateTable();
-            }
-        }
-        
-        function showLeadModal(type) {
-            alert(`Showing ${type} leads`);
-        }
-        
-        function showCampaignModal(type) {
-            alert(`Showing ${type} campaign`);
-        }
-        
-        function validateEmail() {
-            const email = document.getElementById('testEmail').value;
-            document.getElementById('validationResults').style.display = 'block';
-            document.getElementById('emailResults').innerHTML = `
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Valid:</strong> <span style="color: #27ae60;">YES</span></p>
-            `;
-        }
-        
-        function validatePhone() {
-            const phone = document.getElementById('testPhone').value;
-            document.getElementById('validationResults').style.display = 'block';
-            document.getElementById('phoneResults').innerHTML = `
-                <p><strong>Phone:</strong> ${phone}</p>
-                <p><strong>Valid:</strong> <span style="color: #27ae60;">YES</span></p>
-            `;
-        }
-        
-        function validateAddress() {
-            const address = document.getElementById('addressLine').value;
-            const city = document.getElementById('city').value;
-            const state = document.getElementById('state').value;
-            const zip = document.getElementById('zipCode').value;
-            
-            document.getElementById('addressResults').style.display = 'block';
-            document.getElementById('uspsResults').innerHTML = `
-                <p><strong>Address:</strong> ${address}</p>
-                <p><strong>City:</strong> ${city}</p>
-                <p><strong>State:</strong> ${state}</p>
-                <p><strong>ZIP:</strong> ${zip}</p>
-                <p><strong>Valid:</strong> <span style="color: #27ae60;">YES</span></p>
-            `;
-        }
-        
-        async function downloadFromGoogleSheets() {
-            document.getElementById('uploadStatus').innerHTML = 
-                '<div style="color: blue; margin-top: 10px;">📥 Fetching data from Google Sheets...</div>';
-            
-            try {
-                // Google Sheets CSV export URL
-                const sheetId = '1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4';
-                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-                
-                const response = await fetch(csvUrl, { mode: 'cors' });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch Google Sheets data');
-                }
-                
-                const csvText = await response.text();
-                const newEmployees = parseCSV(csvText);
-                
-                processImport(newEmployees);
-                
-            } catch (error) {
-                document.getElementById('uploadStatus').innerHTML = `
-                    <div style="color: orange; margin-top: 10px;">
-                        ⚠️ Direct import failed due to CORS restrictions.<br>
-                        Please manually download the CSV:<br>
-                        1. <a href="https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/edit" target="_blank">Open Google Sheet</a><br>
-                        2. File → Download → Comma Separated Values (.csv)<br>
-                        3. Upload the downloaded CSV file using the "Choose File" button
-                    </div>
+            } else {
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <strong>${employee.name || ''}</strong>
+                                <br><small class="text-muted">${employee.email || ''}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-light text-dark">${employee.employee_id || ''}</span></td>
+                    <td>${employee.role || ''}</td>
+                    <td>${employee.office || ''}</td>
+                    <td>${employee.hire_date || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
                 `;
             }
+            
+            return row;
         }
-        
-        // File upload handling
-        document.addEventListener('DOMContentLoaded', function() {
-            const fileInput = document.getElementById('fileInput');
-            if (!fileInput) {
-                console.error('File input not found');
-                return;
+
+        function populateFilters() {
+            const offices = [...new Set(employees.map(e => e.office).filter(Boolean))];
+            const roles = [...new Set(employees.map(e => e.role).filter(Boolean))];
+            
+            populateSelect('officeFilter', offices);
+            populateSelect('roleFilter', roles);
+        }
+
+        function populateSelect(selectId, options) {
+            const select = document.getElementById(selectId);
+            const allOption = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            select.appendChild(allOption);
+            
+            options.sort().forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        function filterEmployees() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const officeFilter = document.getElementById('officeFilter').value;
+            const roleFilter = document.getElementById('roleFilter').value;
+            
+            filteredEmployees = employees.filter(employee => {
+                const matchesSearch = !searchTerm || 
+                    (employee.name && employee.name.toLowerCase().includes(searchTerm)) ||
+                    (employee.email && employee.email.toLowerCase().includes(searchTerm)) ||
+                    (employee.employee_id && employee.employee_id.toLowerCase().includes(searchTerm));
+                
+                const matchesOffice = !officeFilter || employee.office === officeFilter;
+                const matchesRole = !roleFilter || employee.role === roleFilter;
+                
+                return matchesSearch && matchesOffice && matchesRole;
+            });
+            
+            displayEmployees();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('officeFilter').value = '';
+            document.getElementById('roleFilter').value = '';
+            filteredEmployees = [...employees];
+            displayEmployees();
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
             }
             
-            fileInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (!file) return;
+            filteredEmployees.sort((a, b) => {
+                let aVal = a[column] || '';
+                let bVal = b[column] || '';
                 
-                console.log('File selected:', file.name, file.size, 'bytes');
-                document.getElementById('uploadStatus').innerHTML = '<div style="color: blue;">📁 Processing file...</div>';
-                
-                const fileName = file.name.toLowerCase();
-                
-                if (fileName.endsWith('.csv')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            console.log('CSV content loaded, length:', e.target.result.length);
-                            const newEmployees = parseCSV(e.target.result);
-                            console.log('Parsed employees:', newEmployees.length);
-                            processImport(newEmployees);
-                        } catch (error) {
-                            console.error('CSV parsing error:', error);
-                            document.getElementById('uploadStatus').innerHTML = 
-                                `<div style="color: red;">✗ CSV parsing error: ${error.message}</div>`;
-                        }
-                    };
-                    reader.onerror = function() {
-                        document.getElementById('uploadStatus').innerHTML = 
-                            '<div style="color: red;">✗ Error reading file</div>';
-                    };
-                    reader.readAsText(file);
-                } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                    document.getElementById('uploadStatus').innerHTML = 
-                        '<div style="color: blue;">📊 For Excel files:<br>1. <a href="https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/edit" target="_blank">Open Google Sheet</a><br>2. File → Download → CSV<br>3. Upload CSV here</div>';
+                if (sortDirection === 'asc') {
+                    return aVal.localeCompare(bVal);
                 } else {
-                    document.getElementById('uploadStatus').innerHTML = 
-                        '<div style="color: red;">✗ Please upload a CSV or Excel file</div>';
+                    return bVal.localeCompare(aVal);
                 }
             });
-        });
-        
-        function processImport(newEmployees) {
-            try {
-                // Create backup before changes
-                backupData = {
-                    employees: [...employees],
-                    terminatedEmployees: [...terminatedEmployees]
-                };
-                
-                const result = smartImport(newEmployees);
-                
-                renderEmployeeTable();
-                renderTerminatedTable();
-                
-                document.getElementById('uploadStatus').innerHTML = `
-                    <div style="color: green; margin-top: 10px;">
-                        ✓ Smart import completed:<br>
-                        • ${result.added} new employees added<br>
-                        • ${result.terminated} employees terminated<br>
-                        • ${result.unchanged} employees unchanged<br>
-                        <button class="btn" onclick="undoImport()" style="margin-top: 10px;">Undo Import</button>
-                    </div>
+            
+            displayEmployees();
+        }
+
+        function viewEmployee(email) {
+            const employee = employees.find(e => e.email === email);
+            if (employee) {
+                const details = `
+Employee Details:
+
+Name: ${employee.name}
+Employee ID: ${employee.employee_id}
+Role: ${employee.role}
+Department: ${employee.department}
+Supervisor: ${employee.supervisor}
+Office: ${employee.office}
+Hire Date: ${employee.hire_date}
+Phone: ${employee.phone}
+Email: ${employee.email}
+Status: ${employee.status}
+
+Panda Points:
+Current Balance: ${employee.points_balance || 0} points
+Lifetime Earned: ${employee.points_lifetime || 0} points
                 `;
-                
-                showTab('employees');
-            } catch (error) {
-                document.getElementById('uploadStatus').innerHTML = 
-                    `<div style="color: red; margin-top: 10px;">✗ Error processing file: ${error.message}</div>`;
+                alert(details);
             }
         }
-        
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard initializing...');
-            renderEmployeeTable();
-            renderTerminatedTable();
-        });
-        
-        // Add keyboard shortcut for quick import
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'i') {
-                e.preventDefault();
-                document.getElementById('fileInput').click();
+
+        function awardPoints(email) {
+            const employee = employees.find(e => e.email === email);
+            if (employee) {
+                const points = prompt(`Award Panda Points to ${employee.name}:\n\nEnter points amount (1 point = $1 value):`);
+                if (points && !isNaN(points) && parseInt(points) > 0) {
+                    const reason = prompt('Reason for awarding points (optional):') || 'Great work!';
+                    
+                    // Update local data
+                    employee.points_balance = (employee.points_balance || 0) + parseInt(points);
+                    employee.points_lifetime = (employee.points_lifetime || 0) + parseInt(points);
+                    
+                    // Refresh display
+                    displayEmployees();
+                    
+                    alert(`Successfully awarded ${points} Panda Points to ${employee.name}!\n\nReason: ${reason}\nNew Balance: ${employee.points_balance} points`);
+                }
             }
-        });
+        }
     </script>
 </body>
 </html>

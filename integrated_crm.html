@@ -1,0 +1,3848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panda Exteriors Dashboard - Complete Lead Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://panda-exteriors-map-bucket.s3.amazonaws.com/leads/marketing_flows.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+        }
+        
+        .territory-badge {
+            background: #27ae60;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .nav-tabs {
+            background: #34495e;
+            display: flex;
+            justify-content: center;
+            border-bottom: 3px solid #2c3e50;
+        }
+        
+        .nav-tab {
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .nav-tab.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            border-bottom-color: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .controls {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .filter-select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: calc(100vh - 200px);
+        }
+        
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+        }
+        
+        .state-list {
+            list-style: none;
+        }
+        
+        .state-item {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .state-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .state-item.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .state-count {
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        
+        .state-item.active .state-count {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .valid-territory { border-left: 4px solid #27ae60; }
+        .valid-territory .stat-number { color: #27ae60; }
+        
+        .invalid-territory { border-left: 4px solid #e74c3c; }
+        .invalid-territory .stat-number { color: #e74c3c; }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .map-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .map-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        #usMap {
+            width: 100%;
+            height: 400px;
+        }
+        
+        .leads-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .table-header {
+            background: #34495e;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .lead-row {
+            cursor: pointer;
+        }
+        
+        .quality-score {
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .score-high { background: #27ae60; }
+        .score-medium { background: #f39c12; }
+        .score-low { background: #e74c3c; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .profile-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+            margin-bottom: 20px;
+        }
+        
+        .profile-name {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .profile-score {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .profile-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .detail-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .detail-value {
+            color: #2c3e50;
+            margin-top: 5px;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .api-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #27ae60;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .contacts-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .contact-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .status-new { background: #3498db; }
+        .status-contacted { background: #f39c12; }
+        .status-qualified { background: #27ae60; }
+        .status-converted { background: #9b59b6; }
+        .status-excluded { background: #e74c3c; }
+        .status-active { background: #27ae60; }
+        .status-inactive { background: #95a5a6; }
+        .status-paid { background: #2ecc71; }
+        
+        .contact-notes {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        
+        .validation-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .valid { background: #27ae60; }
+        .invalid { background: #e74c3c; }
+        .na { background: #95a5a6; }
+        
+        .sort-arrow {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-left: 5px;
+        }
+        
+        .state-checkbox:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .campaign-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .marketing-checkbox {
+            transform: scale(1.3);
+            accent-color: #667eea;
+        }
+        
+        .income-badge {
+            transition: all 0.3s ease;
+        }
+        
+        .income-badge:hover {
+            transform: scale(1.1);
+        }
+        
+        #marketingSearchBox:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .table-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .table-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .table-content::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        .table-content::-webkit-scrollbar-thumb:hover {
+            background: #5a67d8;
+        }
+        
+        .lead-row:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .quality-score {
+            transition: all 0.3s ease;
+        }
+        
+        .quality-score:hover {
+            transform: scale(1.1);
+        }
+        
+        .profile-modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .profile-modal-content {
+            background: white;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .profile-header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .profile-form {
+            padding: 30px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .add-contact-modal {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .add-contact-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        .add-contact-header {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Panda Exteriors Dashboard</h1>
+            <div class="territory-badge">Service Territory: DE, PA, NJ, MD, DC, NC, FL</div>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">🏠 Dashboard</button>
+            <button class="nav-tab" onclick="showTab('contacts')">👥 Contacts</button>
+            <button class="nav-tab" onclick="showTab('analytics')">📊 Analytics</button>
+            <button class="nav-tab" onclick="showTab('validation')">✅ Validation & Import</button>
+            <button class="nav-tab" onclick="showTab('marketing')">📢 Marketing</button>
+            <button class="nav-tab" onclick="showTab('referrals')">🤝 Referrals</button>
+            <button class="nav-tab" onclick="window.location.assign('employee_dashboard.html')">👥 Employees</button>
+        </div>
+        
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="controls">
+                <input type="text" class="search-box" id="searchBox" placeholder="Search leads by name, email, city, or phone...">
+                <select class="filter-select" id="qualityFilter">
+                    <option value="">All Quality Scores</option>
+                    <option value="high">High Quality (70+)</option>
+                    <option value="medium">Medium Quality (40-69)</option>
+                    <option value="low">Low Quality (<40)</option>
+                </select>
+                <button class="btn" onclick="exportLeads()">Export CSV</button>
+                <button class="btn" onclick="refreshData()">Refresh</button>
+            </div>
+            
+            <div class="main-content">
+                <div class="sidebar">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Service States</h3>
+                    <ul class="state-list" id="stateList">
+                        <li class="state-item active" data-state="ALL">
+                            <span>All Valid Leads</span>
+                            <span class="state-count" id="allCount">98</span>
+                        </li>
+                        <li class="state-item" data-state="MD">
+                            <span>Maryland</span>
+                            <span class="state-count">34</span>
+                        </li>
+                        <li class="state-item" data-state="NJ">
+                            <span>New Jersey</span>
+                            <span class="state-count">31</span>
+                        </li>
+                        <li class="state-item" data-state="PA">
+                            <span>Pennsylvania</span>
+                            <span class="state-count">26</span>
+                        </li>
+                        <li class="state-item" data-state="NC">
+                            <span>North Carolina</span>
+                            <span class="state-count">3</span>
+                        </li>
+                        <li class="state-item" data-state="FL">
+                            <span>Florida</span>
+                            <span class="state-count">2</span>
+                        </li>
+                        <li class="state-item" data-state="DE">
+                            <span>Delaware</span>
+                            <span class="state-count">1</span>
+                        </li>
+                        <li class="state-item" data-state="DC">
+                            <span>Washington D.C.</span>
+                            <span class="state-count">1</span>
+                        </li>
+                    </ul>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+                        <h4 style="color: #e74c3c; margin-bottom: 10px;">Invalid Territory</h4>
+                        <div style="background: #fff5f5; padding: 10px; border-radius: 5px; border-left: 4px solid #e74c3c;">
+                            <strong>43 leads</strong> outside service area
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-area">
+                    <div class="stats-grid">
+                        <div class="stat-card valid-territory">
+                            <div class="stat-number" id="validCount">98</div>
+                            <div class="stat-label">Valid Territory Leads</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgScore">62.1</div>
+                            <div class="stat-label">Average Quality Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="highQualityCount">28</div>
+                            <div class="stat-label">High Quality Leads</div>
+                        </div>
+                        <div class="stat-card invalid-territory">
+                            <div class="stat-number">43</div>
+                            <div class="stat-label">Invalid Territory</div>
+                        </div>
+                    </div>
+                    
+                    <div class="map-container">
+                        <div class="map-title">Lead Distribution Map - Service Territory</div>
+                        <div id="usMap" style="height: 400px; background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%); border-radius: 10px; position: relative; display: flex; align-items: center; justify-content: center;">
+                            <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px;">
+                                <div onclick="showStateLeads('MD')" style="background: #e74c3c; color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">MD: 34</div>
+                                <div onclick="showStateLeads('NJ')" style="background: #f39c12; color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">NJ: 31</div>
+                                <div onclick="showStateLeads('PA')" style="background: #3498db; color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">PA: 26</div>
+                                <div onclick="showStateLeads('NC')" style="background: #27ae60; color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">NC: 3</div>
+                                <div onclick="showStateLeads('FL')" style="background: #9b59b6; color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">FL: 2</div>
+                            </div>
+                            <div style="text-align: center; color: #7f8c8d; margin-top: 40px;">
+                                <h3>Service Territory Map</h3>
+                                <p>Click state badges to view leads</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="leads-table">
+                        <div class="table-header">
+                            <span id="tableTitle">All Valid Territory Leads (98)</span>
+                            <span id="selectedState"></span>
+                        </div>
+                        <div class="table-content">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable(0)" style="cursor: pointer;">Name <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(1)" style="cursor: pointer;">Location <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(2)" style="cursor: pointer;">Email <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(3)" style="cursor: pointer;">Phone <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(4)" style="cursor: pointer;">Quality Score <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(5)" style="cursor: pointer;">Income Category <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(6)" style="cursor: pointer;">Median Income <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(7)" style="cursor: pointer;">Home Value <span class="sort-arrow">↕</span></th>
+                                        <th onclick="sortTable(8)" style="cursor: pointer;">Homeownership Rate <span class="sort-arrow">↕</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsTableBody">
+                                    <!-- Leads will be populated from AWS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contacts Tab -->
+        <div id="contacts" class="tab-content">
+            <div class="controls">
+                <input type="text" class="search-box" id="contactSearchBox" placeholder="Search contacts by name, email, phone, or location...">
+                <select class="filter-select" id="contactStatusFilter">
+                    <option value="">All Contacts</option>
+                    <option value="new">New Leads</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="qualified">Qualified</option>
+                    <option value="converted">Converted</option>
+                    <option value="excluded">Excluded</option>
+                </select>
+                <button class="btn" onclick="bulkEditContacts()">Bulk Edit</button>
+                <button class="btn" onclick="exportContacts()">Export</button>
+            </div>
+            
+            <div class="content-area">
+                <div class="contacts-table">
+                    <div class="table-header">
+                        <span>Contact Management</span>
+                        <button class="btn" onclick="addNewContact()" style="background: #27ae60;">+ Add Contact</button>
+                    </div>
+                    <div class="table-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>State</th>
+                                    <th>Status</th>
+                                    <th>Last Contact</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contactsTableBody">
+                                <!-- Contacts will be populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div class="content-area">
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="showAllLeads()" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; cursor: pointer;">
+                        <div class="stat-number" style="color: white;">141</div>
+                        <div class="stat-label" style="color: white;">Total Leads</div>
+                    </div>
+                    <div class="stat-card" onclick="showValidLeads()" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; cursor: pointer;">
+                        <div class="stat-number" style="color: white;">98</div>
+                        <div class="stat-label" style="color: white;">Valid Territory</div>
+                    </div>
+                    <div class="stat-card" onclick="showHighQualityLeads()" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; cursor: pointer;">
+                        <div class="stat-number" style="color: white;">62.1</div>
+                        <div class="stat-label" style="color: white;">Avg Quality Score</div>
+                    </div>
+                    <div class="stat-card" onclick="showEnrichedLeads()" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; cursor: pointer;">
+                        <div class="stat-number" style="color: white;">100%</div>
+                        <div class="stat-label" style="color: white;">Census Enriched</div>
+                    </div>
+                </div>
+                
+                <div class="map-container" style="margin-bottom: 30px;">
+                    <div class="map-title">Interactive Quality Score & Wealth Map</div>
+                    <div style="display: flex; gap: 20px; margin-bottom: 15px; justify-content: center;">
+                        <button class="btn" onclick="showQualityOverlay()" style="background: #e74c3c;">Quality Score Overlay</button>
+                        <button class="btn" onclick="showWealthOverlay()" style="background: #27ae60;">Wealth Map Overlay</button>
+                        <button class="btn" onclick="showDensityOverlay()" style="background: #3498db;">Lead Density</button>
+                    </div>
+                    <div id="analyticsMap" style="height: 500px; background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIFVTIE1hcCBPdXRsaW5lIC0tPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmOGY5ZmEiLz4KICA8IS0tIE1haW5sYW5kIFVTIC0tPgogIDxwYXRoIGQ9Ik0xNTAgMzUwTDIwMCAzMDBMMzAwIDI4MEw0MDAgMjYwTDUwMCAyNDBMNjAwIDIyMEw3MDAgMjIwTDc1MCAyNDBMNzUwIDM2MEw3MDAgMzgwTDYwMCA0MDBMNTQ4IDM4MEw0NTAgMzYwTDM1MCAzODBMMjUwIDM2MEwxNTAgMzUwWiIgZmlsbD0iI2VjZjBmMSIgc3Ryb2tlPSIjYmRjM2M3IiBzdHJva2Utd2lkdGg9IjIiLz4KICA8IS0tIFNlcnZpY2UgU3RhdGVzIC0tPgogIDxyZWN0IHg9IjU4MCIgeT0iMjQwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNlNzRjM2MiIGZpbGwtb3BhY2l0eT0iMC44IiBzdHJva2U9IiNjMDM5MmIiIHN0cm9rZS13aWR0aD0iMiIgcng9IjUiLz4KICA8dGV4dCB4PSI2MDAiIHk9IjI2NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIj5NRDwvdGV4dD4KICA8IS0tIE5KIC0tPgogIDxyZWN0IHg9IjYyMCIgeT0iMjIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNmMzljMTIiIGZpbGwtb3BhY2l0eT0iMC44IiBzdHJva2U9IiNlNjdlMjIiIHN0cm9rZS13aWR0aD0iMiIgcng9IjUiLz4KICA8dGV4dCB4PSI2NDAiIHk9IjI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIj5OSjwvdGV4dD4KICA8IS0tIFBBIC0tPgogIDxyZWN0IHg9IjU0MCIgeT0iMjAwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiMzNDk4ZGIiIGZpbGwtb3BhY2l0eT0iMC44IiBzdHJva2U9IiMyOTgwYjkiIHN0cm9rZS13aWR0aD0iMiIgcng9IjUiLz4KICA8dGV4dCB4PSI1NjAiIHk9IjIyNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIj5QQTwvdGV4dD4KICA8IS0tIEZMIC0tPgogIDxyZWN0IHg9IjYwMCIgeT0iMzYwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiM5YjU5YjYiIGZpbGwtb3BhY2l0eT0iMC44IiBzdHJva2U9IiM4ZTQ0YWQiIHN0cm9rZS13aWR0aD0iMiIgcng9IjUiLz4KICA8dGV4dCB4PSI2MjAiIHk9IjM4NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIj5GTDwvdGV4dD4KICA8IS0tIE5DIC0tPgogIDxyZWN0IHg9IjU2MCIgeT0iMzIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiMyN2FlNjAiIGZpbGwtb3BhY2l0eT0iMC44IiBzdHJva2U9IiMyMjk5NTQiIHN0cm9rZS13aWR0aD0iMiIgcng9IjUiLz4KICA8dGV4dCB4PSI1ODAiIHk9IjM0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIj5OQzwvdGV4dD4KICA8IS0tIERFIC0tPgogIDxyZWN0IHg9IjYyMCIgeT0iMjYwIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIGZpbGw9IiMxYWJjOWMiIGZpbGwtb3BhY2l0eT0iMC44IiBzdHJva2U9IiMxNmE2ODUiIHN0cm9rZS13aWR0aD0iMiIgcng9IjMiLz4KICA8dGV4dCB4PSI2MzUiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSJib2xkIj5ERTwvdGV4dD4KICA8IS0tIERDIC0tPgogIDxyZWN0IHg9IjU5MCIgeT0iMjYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIGZpbGw9IiNlNzRjM2MiIGZpbGwtb3BhY2l0eT0iMC44IiBzdHJva2U9IiNjMDM5MmIiIHN0cm9rZS13aWR0aD0iMiIgcng9IjMiLz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iOCIgZm9udC13ZWlnaHQ9ImJvbGQiPkRDPC90ZXh0Pgo8L3N2Zz4=') no-repeat center; background-size: contain; border-radius: 10px; position: relative; padding: 20px;">
+                        <div id="mapOverlayContent" style="position: absolute; top: 20px; left: 20px; right: 20px; background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; min-height: 200px;">
+                            <div style="text-align: center; color: #2c3e50;">
+                                <h3>Interactive Service Territory Map</h3>
+                                <p>Click overlay buttons above to view different data layers</p>
+                                <p style="margin-top: 20px; font-size: 14px; color: #7f8c8d;">Hover over states on the map to see lead counts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="legend" style="display: flex; justify-content: center; gap: 30px; margin-top: 15px;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 20px; height: 20px; background: #27ae60; border-radius: 3px;"></div>
+                            <span>High Quality (70+)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 20px; height: 20px; background: #f39c12; border-radius: 3px;"></div>
+                            <span>Medium Quality (40-69)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 20px; height: 20px; background: #e74c3c; border-radius: 3px;"></div>
+                            <span>Low Quality (<40)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container" style="border: 2px solid #3498db; border-radius: 15px;">
+                        <div class="chart-title" style="background: #3498db; color: white; margin: -25px -25px 20px -25px; padding: 15px; border-radius: 13px 13px 0 0;">Territory Distribution</div>
+                        <canvas id="territoryChart"></canvas>
+                        <div class="chart-legend" style="margin-top: 15px; text-align: center;">
+                            <span style="color: #27ae60;">● Valid: 98 leads</span> | 
+                            <span style="color: #e74c3c;">● Invalid: 43 leads</span>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="border: 2px solid #e74c3c; border-radius: 15px;">
+                        <div class="chart-title" style="background: #e74c3c; color: white; margin: -25px -25px 20px -25px; padding: 15px; border-radius: 13px 13px 0 0;">Quality Score Distribution</div>
+                        <canvas id="qualityChart"></canvas>
+                        <div class="chart-legend" style="margin-top: 15px; text-align: center;">
+                            <span style="color: #27ae60;">● High (28)</span> | 
+                            <span style="color: #f39c12;">● Medium (50)</span> | 
+                            <span style="color: #e74c3c;">● Low (20)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container" style="border: 2px solid #27ae60; border-radius: 15px;">
+                        <div class="chart-title" style="background: #27ae60; color: white; margin: -25px -25px 20px -25px; padding: 15px; border-radius: 13px 13px 0 0;">Income Categories by State</div>
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                    <div class="chart-container" style="border: 2px solid #9b59b6; border-radius: 15px;">
+                        <div class="chart-title" style="background: #9b59b6; color: white; margin: -25px -25px 20px -25px; padding: 15px; border-radius: 13px 13px 0 0;">Homeownership Rates</div>
+                        <canvas id="homeownershipChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="api-grid" style="margin-top: 30px;">
+                    <div class="api-card" onclick="showMetricsDetails()" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1.6;">
+                        <h4 style="color: white; font-size: 18px;">📊 Average Metrics</h4>
+                        <p style="color: white;"><strong>Median Income:</strong> $89,247</p>
+                        <p style="color: white;"><strong>Home Value:</strong> $312,450</p>
+                        <p style="color: white;"><strong>Homeownership:</strong> 68.3%</p>
+                        <p style="color: white;"><strong>Education Rate:</strong> 14.2%</p>
+                    </div>
+                    <div class="api-card" onclick="showTopStates()" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1.6;">
+                        <h4 style="color: white; font-size: 18px;">🎯 Top Performing States</h4>
+                        <p style="color: white;"><strong>1. New Jersey:</strong> 71.3 avg score</p>
+                        <p style="color: white;"><strong>2. Maryland:</strong> 68.7 avg score</p>
+                        <p style="color: white;"><strong>3. D.C.:</strong> 80.0 avg score</p>
+                        <p style="color: white;"><strong>High Quality Leads:</strong> 31 total</p>
+                    </div>
+                    <div class="api-card" onclick="showWealthBreakdown()" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1.6;">
+                        <h4 style="color: white; font-size: 18px;">💰 Wealth Distribution</h4>
+                        <p style="color: white;"><strong>High Income:</strong> 32 leads</p>
+                        <p style="color: white;"><strong>Upper Middle:</strong> 28 leads</p>
+                        <p style="color: white;"><strong>Middle Income:</strong> 31 leads</p>
+                        <p style="color: white;"><strong>Low Income:</strong> 7 leads</p>
+                    </div>
+                    <div class="api-card" onclick="showHousingDetails()" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1.6;">
+                        <h4 style="color: white; font-size: 18px;">🏠 Housing Insights</h4>
+                        <p style="color: white;"><strong>Premium Value Homes:</strong> 8 leads</p>
+                        <p style="color: white;"><strong>High Value Homes:</strong> 15 leads</p>
+                        <p style="color: white;"><strong>Medium Value:</strong> 52 leads</p>
+                        <p style="color: white;"><strong>Low Value:</strong> 23 leads</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+        <!-- Validation & Import Tab -->
+        <div id="validation" class="tab-content">
+            <div class="content-area">
+                <div class="form-section">
+                    <h3>📁 Bulk Import & Validation</h3>
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="csvFile">Upload CSV File</label>
+                                <input type="file" id="csvFile" accept=".csv" onchange="handleCSVUpload(event)">
+                                <small>Expected columns: Name, Email, Phone, Address, City, State, ZIP</small>
+                            </div>
+                            <button class="btn" onclick="processBulkImport()" style="background: #27ae60;">Import & Validate</button>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label>Manual Contact Entry</label>
+                                <button class="btn" onclick="showManualEntry()" style="background: #3498db;">Add Single Contact</button>
+                            </div>
+                            <div class="form-group">
+                                <label>Validation Options</label>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <label><input type="checkbox" checked> Email Validation</label>
+                                    <label><input type="checkbox" checked> Phone Validation</label>
+                                    <label><input type="checkbox" checked> Address Validation</label>
+                                    <label><input type="checkbox" checked> Census Enrichment</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>🧪 Test Individual Validation</h3>
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="color: #27ae60; margin-bottom: 10px;">🔄 Dual API System Active</h4>
+                        <p style="margin: 0; color: #2c3e50;">Automatically cycles between Abstract API and NumVerify API for 200 total free validations per month</p>
+                    </div>
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="testEmail">Email Address</label>
+                                <input type="email" id="testEmail" placeholder="test@example.com" value="angelicaann99@gmail.com">
+                            </div>
+                            <button class="btn" onclick="validateEmail()">Validate Email</button>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label for="testPhone">Phone Number</label>
+                                <input type="tel" id="testPhone" placeholder="(555) 123-4567" value="(717) 406-4768">
+                            </div>
+                            <button class="btn" onclick="validatePhone()">Validate Phone</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="showAPIUsage()" style="cursor: pointer;">
+                        <div class="stat-number" id="apiUsageCount">0/250</div>
+                        <div class="stat-label">Total API Usage</div>
+                    </div>
+                    <div class="stat-card" onclick="showEmailValidationResults()" style="cursor: pointer;">
+                        <div class="stat-number">141</div>
+                        <div class="stat-label">Valid Emails</div>
+                    </div>
+                    <div class="stat-card" onclick="showPhoneValidationResults()" style="cursor: pointer;">
+                        <div class="stat-number">140</div>
+                        <div class="stat-label">Valid Phones</div>
+                    </div>
+                    <div class="stat-card" onclick="showDeliverabilityScores()" style="cursor: pointer;">
+                        <div class="stat-number">95%</div>
+                        <div class="stat-label">Email Deliverability</div>
+                    </div>
+                </div>
+                
+                <div class="api-grid">
+                    <div class="api-card">
+                        <h4>US Census API</h4>
+                        <p><strong>Data:</strong> Demographics, income by ZIP</p>
+                        <p><strong>Cost:</strong> Free with registration</p>
+                        <p><strong>Status:</strong> ✅ Active (100% enriched)</p>
+                    </div>
+                    <div class="api-card">
+                        <h4>USPS Validation</h4>
+                        <p><strong>Data:</strong> Address validation, ZIP+4</p>
+                        <p><strong>Cost:</strong> Free</p>
+                        <p><strong>Limits:</strong> 5,000/day</p>
+                    </div>
+                    <div class="api-card">
+                        <h4>📱 Dual Phone APIs</h4>
+                        <p><strong>Abstract API:</strong> 100 free/month</p>
+                        <p><strong>NumVerify API:</strong> 100 free/month</p>
+                        <p><strong>Total:</strong> 200 validations/month</p>
+                        <p><strong>Status:</strong> ✅ Auto-cycling system</p>
+                    </div>
+                    <div class="api-card">
+                        <h4>📧 Hunter.io Email API</h4>
+                        <p><strong>Data:</strong> Email verification, deliverability</p>
+                        <p><strong>Cost:</strong> 50 free/month</p>
+                        <p><strong>Status:</strong> ✅ Active (Integrated)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Marketing Tab -->
+        <div id="marketing" class="tab-content">
+            <div class="content-area">
+                <h2>📢 Marketing Automation & Campaigns</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-left: 4px solid #e74c3c;">
+                        <div class="stat-number" style="color: #e74c3c;" id="highPriorityLeads">28</div>
+                        <div class="stat-label">High Priority Leads</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #3498db;">
+                        <div class="stat-number" style="color: #3498db;">70</div>
+                        <div class="stat-label">Email Only Campaigns</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #9b59b6;">
+                        <div class="stat-number" style="color: #9b59b6;">71</div>
+                        <div class="stat-label">Mixed Campaigns</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #27ae60;">
+                        <div class="stat-number" style="color: #27ae60;" id="conversionRate">0%</div>
+                        <div class="stat-label">Conversion Rate</div>
+                    </div>
+                </div>
+                
+                <div class="form-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <h3 style="color: white; margin-bottom: 25px; text-align: center;">🎯 Smart Lead Filtering & Campaign Builder</h3>
+                    
+                    <!-- Quick Filter Buttons -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center;">
+                        <button class="btn" onclick="applyQuickFilter('high-value')" style="background: rgba(255,255,255,0.2); border: 2px solid white; font-size: 12px; padding: 8px 15px;">💎 High Value</button>
+                        <button class="btn" onclick="applyQuickFilter('homeowners')" style="background: rgba(255,255,255,0.2); border: 2px solid white; font-size: 12px; padding: 8px 15px;">🏠 Homeowners</button>
+                        <button class="btn" onclick="applyQuickFilter('new-leads')" style="background: rgba(255,255,255,0.2); border: 2px solid white; font-size: 12px; padding: 8px 15px;">✨ New Leads</button>
+                        <button class="btn" onclick="applyQuickFilter('top-states')" style="background: rgba(255,255,255,0.2); border: 2px solid white; font-size: 12px; padding: 8px 15px;">📍 Top States</button>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="minQualityScore" style="color: white; font-weight: 600;">Quality Score Range</label>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="range" id="minQualityScore" value="60" min="0" max="100" style="flex: 1;" oninput="updateScoreDisplay()">
+                                    <span id="scoreDisplay" style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px; min-width: 60px; text-align: center;">60+</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="minIncome" style="color: white; font-weight: 600;">Income Threshold</label>
+                                <select id="minIncome" style="background: rgba(255,255,255,0.9); color: #2c3e50; border: none; border-radius: 8px;">
+                                    <option value="0">Any Income</option>
+                                    <option value="50000">$50K+ (Middle Class)</option>
+                                    <option value="75000" selected>$75K+ (Upper Middle)</option>
+                                    <option value="100000">$100K+ (High Income)</option>
+                                    <option value="150000">$150K+ (Premium)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="homeownershipRate" style="color: white; font-weight: 600;">Homeownership Rate</label>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="range" id="homeownershipRate" value="60" min="0" max="100" style="flex: 1;" oninput="updateHomeownershipDisplay()">
+                                    <span id="homeownershipDisplay" style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px; min-width: 60px; text-align: center;">60%+</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label style="color: white; font-weight: 600; margin-bottom: 15px; display: block;">🗺️ Target States</label>
+                                <div class="state-selector" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                                    <label class="state-checkbox" style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                                        <input type="checkbox" value="MD" checked style="transform: scale(1.2);"> 
+                                        <span style="font-size: 14px; font-weight: 500;">🔴 MD (34)</span>
+                                    </label>
+                                    <label class="state-checkbox" style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                                        <input type="checkbox" value="NJ" checked style="transform: scale(1.2);"> 
+                                        <span style="font-size: 14px; font-weight: 500;">🟠 NJ (31)</span>
+                                    </label>
+                                    <label class="state-checkbox" style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                                        <input type="checkbox" value="PA" checked style="transform: scale(1.2);"> 
+                                        <span style="font-size: 14px; font-weight: 500;">🔵 PA (26)</span>
+                                    </label>
+                                    <label class="state-checkbox" style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                                        <input type="checkbox" value="FL" checked style="transform: scale(1.2);"> 
+                                        <span style="font-size: 14px; font-weight: 500;">🟣 FL (2)</span>
+                                    </label>
+                                    <label class="state-checkbox" style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                                        <input type="checkbox" value="NC" checked style="transform: scale(1.2);"> 
+                                        <span style="font-size: 14px; font-weight: 500;">🟢 NC (3)</span>
+                                    </label>
+                                    <label class="state-checkbox" style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                                        <input type="checkbox" value="DE" checked style="transform: scale(1.2);"> 
+                                        <span style="font-size: 14px; font-weight: 500;">🟡 DE (1)</span>
+                                    </label>
+                                    <label class="state-checkbox" style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                                        <input type="checkbox" value="DC" checked style="transform: scale(1.2);"> 
+                                        <span style="font-size: 14px; font-weight: 500;">⚫ DC (1)</span>
+                                    </label>
+                                    <button type="button" onclick="selectAllStates()" style="background: rgba(39,174,96,0.8); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">✅ All</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="campaignType" style="color: white; font-weight: 600;">📢 Campaign Strategy</label>
+                                <div class="campaign-selector" style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px;">
+                                    <label class="campaign-option" style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectCampaignType('email_sms', this)">
+                                        <input type="radio" name="campaignType" value="email_sms" checked style="margin-right: 10px;">
+                                        <span style="font-weight: 600;">📧📱 Multi-Channel</span>
+                                        <small style="display: block; margin-top: 5px; opacity: 0.8;">Email + SMS for maximum reach</small>
+                                    </label>
+                                    <label class="campaign-option" style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectCampaignType('email_only', this)">
+                                        <input type="radio" name="campaignType" value="email_only" style="margin-right: 10px;">
+                                        <span style="font-weight: 600;">📧 Email Focus</span>
+                                        <small style="display: block; margin-top: 5px; opacity: 0.8;">Professional email sequences</small>
+                                    </label>
+                                    <label class="campaign-option" style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectCampaignType('sms_only', this)">
+                                        <input type="radio" name="campaignType" value="sms_only" style="margin-right: 10px;">
+                                        <span style="font-weight: 600;">📱 SMS Direct</span>
+                                        <small style="display: block; margin-top: 5px; opacity: 0.8;">Quick text message campaigns</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; margin-top: 25px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn" onclick="prioritizeLeads()" style="background: #e74c3c; border: 2px solid white; padding: 12px 20px; font-weight: 600; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">🎯 Apply Filters</button>
+                        <button class="btn" onclick="toggleBulkSelect()" style="background: #f39c12; border: 2px solid white; padding: 12px 20px; font-weight: 600; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" id="bulkSelectBtn">☑️ Bulk Select</button>
+                        <button class="btn" onclick="createBulkFlows()" style="background: #27ae60; border: 2px solid white; padding: 12px 20px; font-weight: 600; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">📧 Launch Campaigns</button>
+                        <button class="btn" onclick="resetFilters()" style="background: rgba(255,255,255,0.2); border: 2px solid white; padding: 12px 20px; font-weight: 600; border-radius: 25px;">🔄 Reset</button>
+                    </div>
+                </div>
+                
+                <div class="chart-container" style="height: 300px;">
+                    <div class="chart-title">Lead Priority Distribution</div>
+                    <canvas id="priorityChart" style="height: 200px;"></canvas>
+                </div>
+                
+                <!-- Contact Selection Summary -->
+                <div class="form-section" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h4 style="color: white; margin-bottom: 5px;">📊 Selection Summary</h4>
+                            <p style="margin: 0; opacity: 0.9;"><span id="selectedCount">0</span> contacts selected • <span id="filteredCount">0</span> total filtered</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn" onclick="selectHighPriority()" style="background: #e74c3c; font-size: 12px; padding: 8px 15px;">⭐ Select High Priority</button>
+                            <button class="btn" onclick="selectByState()" style="background: #3498db; font-size: 12px; padding: 8px 15px;">📍 Select by State</button>
+                            <button class="btn" onclick="clearSelection()" style="background: #95a5a6; font-size: 12px; padding: 8px 15px;">❌ Clear All</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="leads-table" style="border: 2px solid #667eea; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                    <div class="table-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                            <div>
+                                <h3 style="margin: 0; color: white;">🎯 Marketing Lead Pipeline</h3>
+                                <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Smart-filtered contacts ready for campaigns</p>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn" onclick="exportContactsToExcel()" style="background: #27ae60; border-radius: 20px; padding: 10px 20px; font-weight: 600;">📄 Export Selected</button>
+                                <button class="btn" onclick="previewCampaign()" style="background: #3498db; border-radius: 20px; padding: 10px 20px; font-weight: 600;">👁️ Preview</button>
+                                <button class="btn" onclick="bulkEditMessages()" style="background: #9b59b6; border-radius: 20px; padding: 10px 20px; font-weight: 600;">✏️ Edit Messages</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Search and Filter Bar -->
+                    <div style="background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dee2e6;">
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="marketingSearchBox" placeholder="🔍 Search contacts by name, location, or email..." style="flex: 1; min-width: 250px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px;" oninput="filterMarketingTable()">
+                            <select id="priorityFilter" onchange="filterMarketingTable()" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px;">
+                                <option value="">All Priorities</option>
+                                <option value="high">High Priority (70+)</option>
+                                <option value="medium">Medium Priority (40-69)</option>
+                                <option value="low">Low Priority (<40)</option>
+                            </select>
+                            <select id="stateFilter" onchange="filterMarketingTable()" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px;">
+                                <option value="">All States</option>
+                                <option value="MD">Maryland</option>
+                                <option value="NJ">New Jersey</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="FL">Florida</option>
+                                <option value="NC">North Carolina</option>
+                                <option value="DE">Delaware</option>
+                                <option value="DC">Washington D.C.</option>
+                            </select>
+                            <button class="btn" onclick="toggleBulkSelect()" style="background: #f39c12; border-radius: 20px; padding: 10px 15px; font-size: 12px;" id="bulkSelectBtn2">☑️ Bulk Mode</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-content" style="max-height: 600px; overflow-y: auto;">
+                        <table>
+                            <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+                                <tr>
+                                    <th style="width: 50px;"><input type="checkbox" id="selectAllMarketing" onchange="toggleSelectAllMarketing()" style="transform: scale(1.2);"></th>
+                                    <th style="cursor: pointer;" onclick="sortMarketingTable('priority')">Priority <span class="sort-arrow">↕</span></th>
+                                    <th style="cursor: pointer;" onclick="sortMarketingTable('name')">Contact <span class="sort-arrow">↕</span></th>
+                                    <th style="cursor: pointer;" onclick="sortMarketingTable('location')">Location <span class="sort-arrow">↕</span></th>
+                                    <th style="cursor: pointer;" onclick="sortMarketingTable('income')">Income Tier <span class="sort-arrow">↕</span></th>
+                                    <th>Channel Strategy</th>
+                                    <th>Campaign Context</th>
+                                    <th style="width: 120px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="marketingLeadsTable">
+                                <!-- Marketing leads will be populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="form-section" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white;">
+                    <h3 style="color: white;">📊 Campaign Performance Dashboard</h3>
+                    <div class="api-grid">
+                        <div class="api-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none;">
+                            <h4>Email Performance</h4>
+                            <p><strong>Target Open Rate:</strong> 20-30%</p>
+                            <p><strong>Current:</strong> <span id="emailOpenRate">0%</span></p>
+                            <p><strong>Emails Sent:</strong> <span id="emailsSent">0</span></p>
+                            <div style="background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; margin-top: 10px;">
+                                <div style="background: #27ae60; height: 100%; width: 0%; border-radius: 2px;" id="emailProgress"></div>
+                            </div>
+                        </div>
+                        <div class="api-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; border: none;">
+                            <h4>SMS Performance</h4>
+                            <p><strong>Target Click Rate:</strong> 10-15%</p>
+                            <p><strong>Current:</strong> <span id="smsClickRate">0%</span></p>
+                            <p><strong>SMS Sent:</strong> <span id="smsSent">0</span></p>
+                            <div style="background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; margin-top: 10px;">
+                                <div style="background: #27ae60; height: 100%; width: 0%; border-radius: 2px;" id="smsProgress"></div>
+                            </div>
+                        </div>
+                        <div class="api-card" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; border: none;">
+                            <h4>Conversion Metrics</h4>
+                            <p><strong>Target Conversion:</strong> 5-10%</p>
+                            <p><strong>Current:</strong> <span id="currentConversion">0%</span></p>
+                            <p><strong>Bookings:</strong> <span id="totalBookings">0</span></p>
+                            <div style="background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; margin-top: 10px;">
+                                <div style="background: #f39c12; height: 100%; width: 0%; border-radius: 2px;" id="conversionProgress"></div>
+                            </div>
+                        </div>
+                        <div class="api-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none;">
+                            <h4>Cost Analysis</h4>
+                            <p><strong>Target Cost/Lead:</strong> $100-200</p>
+                            <p><strong>Current:</strong> <span id="costPerLead">$0</span></p>
+                            <p><strong>Total Spend:</strong> <span id="totalSpend">$0</span></p>
+                            <div style="background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; margin-top: 10px;">
+                                <div style="background: #f39c12; height: 100%; width: 0%; border-radius: 2px;" id="costProgress"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Referrals Tab -->
+        <div id="referrals" class="tab-content">
+            <div class="content-area">
+                <h2>🤝 Referral Program Management</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-left: 4px solid #e74c3c;">
+                        <div class="stat-number" style="color: #e74c3c;" id="totalAdvocates">0</div>
+                        <div class="stat-label">Active Advocates</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #3498db;">
+                        <div class="stat-number" style="color: #3498db;" id="totalReferralLeads">0</div>
+                        <div class="stat-label">Referral Leads</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #27ae60;">
+                        <div class="stat-number" style="color: #27ae60;" id="convertedReferrals">0</div>
+                        <div class="stat-label">Converted Referrals</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #f39c12;">
+                        <div class="stat-number" style="color: #f39c12;" id="referralRevenue">$0</div>
+                        <div class="stat-label">Referral Revenue</div>
+                    </div>
+                </div>
+                
+                <!-- Referral Sub-tabs -->
+                <div class="nav-tabs" style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <button class="nav-tab active" onclick="showReferralTab('advocates')" id="advocatesTab" style="color: #2c3e50;">👥 Advocates</button>
+                    <button class="nav-tab" onclick="showReferralTab('leads')" id="leadsTab" style="color: #2c3e50;">📊 Referral Leads</button>
+                    <button class="nav-tab" onclick="showReferralTab('reports')" id="reportsTab" style="color: #2c3e50;">📈 Reports</button>
+                </div>
+                
+                <!-- Advocates Tab -->
+                <div id="advocatesSection" class="referral-section">
+                    <div style="background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dee2e6;">
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="advocateSearch" placeholder="🔍 Search advocates..." style="flex: 1; min-width: 250px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px;" oninput="filterAdvocates()">
+                            <select id="advocateStateFilter" onchange="filterAdvocates()" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 15px;">
+                                <option value="">All States</option>
+                                <option value="MD">Maryland</option>
+                                <option value="NJ">New Jersey</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="VA">Virginia</option>
+                                <option value="DE">Delaware</option>
+                                <option value="NC">North Carolina</option>
+                            </select>
+                            <select id="advocateStatusFilter" onchange="filterAdvocates()" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 15px;">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            <select id="advocateRepFilter" onchange="filterAdvocates()" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 15px;">
+                                <option value="">All Reps</option>
+                                <option value="563935">Mike Johnson</option>
+                                <option value="579848">Sarah Davis</option>
+                                <option value="589178">Tom Wilson</option>
+                                <option value="563875">Lisa Brown</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="leads-table" style="border: none; border-radius: 0; box-shadow: none;">
+                        <div class="table-content">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortAdvocates('name')" style="cursor: pointer;">Advocate ↕</th>
+                                        <th onclick="sortAdvocates('state')" style="cursor: pointer;">State ↕</th>
+                                        <th onclick="sortAdvocates('rep')" style="cursor: pointer;">Sales Rep ↕</th>
+                                        <th onclick="sortAdvocates('status')" style="cursor: pointer;">Status ↕</th>
+                                        <th onclick="sortAdvocates('date')" style="cursor: pointer;">Registered ↕</th>
+                                        <th onclick="sortAdvocates('leads')" style="cursor: pointer;">Leads ↕</th>
+                                        <th onclick="sortAdvocates('paid')" style="cursor: pointer;">Paid ↕</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="advocatesTableBody">
+                                    <!-- Advocates will be populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Leads Tab -->
+                <div id="leadsSection" class="referral-section" style="display: none;">
+                    <div style="background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dee2e6;">
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="leadSearch" placeholder="🔍 Search leads..." style="flex: 1; min-width: 250px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px;" oninput="filterLeads()">
+                            <select id="leadStateFilter" onchange="filterLeads()" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 15px;">
+                                <option value="">All States</option>
+                                <option value="MD">Maryland</option>
+                                <option value="NJ">New Jersey</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="VA">Virginia</option>
+                                <option value="DE">Delaware</option>
+                                <option value="NC">North Carolina</option>
+                            </select>
+                            <select id="leadStatusFilter" onchange="filterLeads()" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 15px;">
+                                <option value="">All Statuses</option>
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="qualified">Qualified</option>
+                                <option value="converted">Converted</option>
+                            </select>
+                            <button class="btn" onclick="bulkEnrichLeads()" style="background: #f39c12; padding: 8px 15px; font-size: 12px;">🌍 Bulk Enrich</button>
+                        </div>
+                    </div>
+                    
+                    <div class="leads-table" style="border: none; border-radius: 0; box-shadow: none;">
+                        <div class="table-content">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortLeads('name')" style="cursor: pointer;">Lead Name ↕</th>
+                                        <th onclick="sortLeads('state')" style="cursor: pointer;">State ↕</th>
+                                        <th onclick="sortLeads('advocate')" style="cursor: pointer;">Referred By ↕</th>
+                                        <th onclick="sortLeads('rep')" style="cursor: pointer;">Sales Rep ↕</th>
+                                        <th onclick="sortLeads('product')" style="cursor: pointer;">Product ↕</th>
+                                        <th onclick="sortLeads('status')" style="cursor: pointer;">Status ↕</th>
+                                        <th onclick="sortLeads('income')" style="cursor: pointer;">Income ↕</th>
+                                        <th onclick="sortLeads('homevalue')" style="cursor: pointer;">Home Value ↕</th>
+                                        <th onclick="sortLeads('date')" style="cursor: pointer;">Date ↕</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="referralLeadsTableBody">
+                                    <!-- Referral leads will be populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reports Tab -->
+                <div id="reportsSection" class="referral-section" style="display: none;">
+                    <div class="stats-grid">
+                        <div class="stat-card" style="border-left: 4px solid #e74c3c;">
+                            <div class="stat-number" style="color: #e74c3c;" id="topAdvocateLeads">0</div>
+                            <div class="stat-label">Top Advocate Leads</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #3498db;">
+                            <div class="stat-number" style="color: #3498db;" id="avgLeadsPerAdvocate">0</div>
+                            <div class="stat-label">Avg Leads/Advocate</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #27ae60;">
+                            <div class="stat-number" style="color: #27ae60;" id="totalConversions">0</div>
+                            <div class="stat-label">Total Conversions</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #f39c12;">
+                            <div class="stat-number" style="color: #f39c12;" id="estimatedROI">0%</div>
+                            <div class="stat-label">Estimated ROI</div>
+                        </div>
+                    </div>
+                    
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">Top 10 Advocates by Leads</div>
+                            <canvas id="topAdvocatesChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Sales Rep Performance</div>
+                            <canvas id="salesRepChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="leads-table">
+                        <div class="table-header" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                            <span>🏆 Performance Leaderboard</span>
+                        </div>
+                        <div class="table-content">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Advocate</th>
+                                        <th>State</th>
+                                        <th>Sales Rep</th>
+                                        <th>Total Leads</th>
+                                        <th>Conversions</th>
+                                        <th>Conversion Rate</th>
+                                        <th>Est. Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardTableBody">
+                                    <!-- Leaderboard will be populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lead Profile Modal -->
+    <div id="leadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div class="profile-header">
+                <div class="profile-name" id="profileName">Lead Name</div>
+                <div class="profile-score" id="profileScore">Score: 0</div>
+            </div>
+            <div class="profile-details" id="profileDetails">
+                <!-- Profile details will be populated -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contact Profile Edit Modal -->
+    <div id="contactProfileModal" class="profile-modal">
+        <div class="profile-modal-content">
+            <div class="profile-header-section">
+                <span class="close" onclick="closeContactProfile()" style="float: right; font-size: 28px; cursor: pointer;">&times;</span>
+                <h2 id="contactProfileName">Contact Profile</h2>
+                <p id="contactProfileEmail">email@example.com</p>
+            </div>
+            <div class="profile-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="editFirstName" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="editLastName" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="editEmail" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="editPhone" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="editAddress" class="form-control">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editStatus" class="form-control">
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="qualified">Qualified</option>
+                            <option value="converted">Converted</option>
+                            <option value="excluded">Excluded</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quality Score</label>
+                        <input type="number" id="editQualityScore" class="form-control" min="0" max="100">
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Notes</label>
+                    <textarea id="editNotes" class="form-control" rows="8" placeholder="Add detailed notes about this contact, interactions, preferences, etc..." style="width: 100%; min-height: 200px; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button class="btn" onclick="saveContactProfile()" style="background: #27ae60; flex: 1;">Save Changes</button>
+                    <button class="btn" onclick="logContactInteraction()" style="background: #3498db; flex: 1;">Log Interaction</button>
+                    <button class="btn" onclick="closeContactProfile()" style="background: #95a5a6; flex: 1;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Contact Modal -->
+    <div id="addContactModal" class="add-contact-modal">
+        <div class="add-contact-content">
+            <div class="add-contact-header">
+                <span class="close" onclick="closeAddContact()" style="float: right; font-size: 24px; cursor: pointer;">&times;</span>
+                <h3>Add New Contact</h3>
+            </div>
+            <div style="padding: 30px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="newFirstName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="newLastName" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="newEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone *</label>
+                        <input type="tel" id="newPhone" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="newAddress" class="form-control" placeholder="Street, City, State, ZIP">
+                </div>
+                <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h4 style="margin-bottom: 15px; color: #2c3e50;">Opt-in Preferences</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="emailOptIn" checked>
+                            Email Marketing
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="smsOptIn" checked>
+                            SMS Marketing
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="phoneOptIn" checked>
+                            Phone Calls
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="dataProcessing" checked>
+                            Data Processing
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button class="btn" onclick="saveNewContact()" style="background: #27ae60; flex: 1;">Add Contact</button>
+                    <button class="btn" onclick="closeAddContact()" style="background: #95a5a6; flex: 1;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let crmData = null;
+        let currentFilter = 'ALL';
+        let currentLeads = [];
+        let marketingFlows = null;
+        let prioritizedLeads = [];
+
+        // Load CRM data from AWS S3
+        async function loadCRMData() {
+            try {
+                const response = await fetch('https://panda-exteriors-map-bucket.s3.amazonaws.com/leads/data/crm_database.json');
+                const data = await response.json();
+                crmData = data;
+                currentLeads = data.valid_leads;
+                
+                // Update UI with real data
+                updateStats();
+                populateLeadsTable(currentLeads);
+                updateStateCounts();
+                
+                console.log('✅ Loaded CRM data from AWS:', data.total_valid, 'valid leads');
+            } catch (error) {
+                console.error('❌ Error loading CRM data:', error);
+                // Fallback to sample data
+                loadSampleData();
+            }
+        }
+
+        // Fallback sample data
+        function loadSampleData() {
+            currentLeads = [
+                {id: '1', contact_name: 'Angelica Taylor', email: 'angelicaann99@gmail.com', phone: '(717) 406-4768', city: 'East Stroudsburg', state: 'PA', zip_code: '18302', quality_score: 45, income_category: 'Middle Income'},
+                {id: '2', contact_name: 'Pat Poling', email: 'pat.patricia@gmail.com', phone: '(443) 939-8650', city: 'Dundalk', state: 'MD', zip_code: '21222', quality_score: 75, income_category: 'High Income'},
+                {id: '3', contact_name: 'Ella Robertson', email: 'evanilla00@gmail.com', phone: '(443) 752-3402', city: 'Bel Air', state: 'MD', zip_code: '21015', quality_score: 82, income_category: 'High Income'}
+            ];
+            populateLeadsTable(currentLeads);
+        }
+
+        // Update statistics
+        function updateStats() {
+            if (!crmData) return;
+            
+            document.getElementById('validCount').textContent = crmData.total_valid;
+            document.getElementById('allCount').textContent = crmData.total_valid;
+            
+            const avgScore = crmData.valid_leads.reduce((sum, lead) => sum + (lead.quality_score || 0), 0) / crmData.valid_leads.length;
+            document.getElementById('avgScore').textContent = avgScore.toFixed(1);
+            
+            const highQuality = crmData.valid_leads.filter(lead => (lead.quality_score || 0) >= 70).length;
+            document.getElementById('highQualityCount').textContent = highQuality;
+        }
+
+        // Update state counts in sidebar
+        function updateStateCounts() {
+            if (!crmData) return;
+            
+            Object.keys(crmData.state_summary).forEach(state => {
+                const stateItem = document.querySelector(`[data-state="${state}"] .state-count`);
+                if (stateItem) {
+                    stateItem.textContent = crmData.state_summary[state].count;
+                }
+            });
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Initialize specific tab content
+            if (tabName === 'analytics') {
+                setTimeout(() => {
+                    createAnalyticsCharts();
+                    showQualityOverlay(); // Default overlay
+                }, 100);
+            } else if (tabName === 'marketing') {
+                if (!marketingFlows) {
+                    marketingFlows = new MarketingFlows();
+                }
+            } else if (tabName === 'contacts') {
+                populateContactsTable();
+            } else if (tabName === 'referrals') {
+                loadReferralData();
+            }
+        }
+
+        // Create enhanced analytics charts
+        function createAnalyticsCharts() {
+            // Territory chart
+            const territoryCtx = document.getElementById('territoryChart');
+            if (territoryCtx && !territoryCtx.chart) {
+                territoryCtx.chart = new Chart(territoryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Valid Territory', 'Invalid Territory'],
+                        datasets: [{
+                            data: [98, 43],
+                            backgroundColor: ['#27ae60', '#e74c3c'],
+                            borderWidth: 3,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const percentage = ((context.parsed / 141) * 100).toFixed(1);
+                                        return `${context.label}: ${context.parsed} leads (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Quality chart
+            const qualityCtx = document.getElementById('qualityChart');
+            if (qualityCtx && !qualityCtx.chart) {
+                qualityCtx.chart = new Chart(qualityCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['High (70+)', 'Medium (40-69)', 'Low (<40)'],
+                        datasets: [{
+                            data: [28, 50, 20],
+                            backgroundColor: ['#27ae60', '#f39c12', '#e74c3c'],
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#ecf0f1' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Income chart
+            const incomeCtx = document.getElementById('incomeChart');
+            if (incomeCtx && !incomeCtx.chart) {
+                incomeCtx.chart = new Chart(incomeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['MD', 'NJ', 'PA', 'FL', 'NC', 'DE', 'DC'],
+                        datasets: [{
+                            label: 'High Income',
+                            data: [14, 16, 1, 1, 0, 0, 1],
+                            backgroundColor: '#27ae60'
+                        }, {
+                            label: 'Upper Middle',
+                            data: [12, 8, 6, 0, 0, 0, 0],
+                            backgroundColor: '#3498db'
+                        }, {
+                            label: 'Middle Income',
+                            data: [6, 5, 16, 1, 0, 1, 0],
+                            backgroundColor: '#f39c12'
+                        }, {
+                            label: 'Low Income',
+                            data: [2, 2, 3, 0, 3, 0, 0],
+                            backgroundColor: '#e74c3c'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { stacked: true },
+                            y: { stacked: true, beginAtZero: true }
+                        }
+                    }
+                });
+            }
+            
+            // Homeownership chart
+            const homeCtx = document.getElementById('homeownershipChart');
+            if (homeCtx && !homeCtx.chart) {
+                homeCtx.chart = new Chart(homeCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['MD', 'NJ', 'PA', 'FL', 'NC', 'DE', 'DC'],
+                        datasets: [{
+                            label: 'Avg Homeownership Rate',
+                            data: [68.7, 71.3, 49.2, 72.5, 30.0, 20.0, 80.0],
+                            borderColor: '#9b59b6',
+                            backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true, max: 100 }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Map overlay functions
+        function showQualityOverlay() {
+            const map = document.getElementById('analyticsMap');
+            map.innerHTML = `
+                <div style="text-align: center; color: #2c3e50;">
+                    <h3>Quality Score Heat Map</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
+                        <div style="background: #27ae60; color: white; padding: 15px; border-radius: 10px;">
+                            <h4>NJ</h4>
+                            <p>Avg: 71.3</p>
+                            <p>16 High Quality</p>
+                        </div>
+                        <div style="background: #f39c12; color: white; padding: 15px; border-radius: 10px;">
+                            <h4>MD</h4>
+                            <p>Avg: 68.7</p>
+                            <p>14 High Quality</p>
+                        </div>
+                        <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px;">
+                            <h4>PA</h4>
+                            <p>Avg: 49.2</p>
+                            <p>1 High Quality</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showWealthOverlay() {
+            const map = document.getElementById('analyticsMap');
+            map.innerHTML = `
+                <div style="text-align: center; color: #2c3e50;">
+                    <h3>Wealth Distribution Map</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
+                        <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; border-radius: 10px;">
+                            <h4>High Income Zones</h4>
+                            <p>$100K+ Median</p>
+                            <p>32 leads total</p>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #3498db, #5dade2); color: white; padding: 15px; border-radius: 10px;">
+                            <h4>Upper Middle</h4>
+                            <p>$75K-$100K</p>
+                            <p>28 leads total</p>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f39c12, #f8c471); color: white; padding: 15px; border-radius: 10px;">
+                            <h4>Middle Income</h4>
+                            <p>$50K-$75K</p>
+                            <p>31 leads total</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showDensityOverlay() {
+            const map = document.getElementById('analyticsMap');
+            map.innerHTML = `
+                <div style="text-align: center; color: #2c3e50;">
+                    <h3>Lead Density Map</h3>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;">
+                        <div style="background: #e74c3c; color: white; padding: 12px; border-radius: 8px;">
+                            <h5>MD</h5>
+                            <p>34 leads</p>
+                        </div>
+                        <div style="background: #f39c12; color: white; padding: 12px; border-radius: 8px;">
+                            <h5>NJ</h5>
+                            <p>31 leads</p>
+                        </div>
+                        <div style="background: #3498db; color: white; padding: 12px; border-radius: 8px;">
+                            <h5>PA</h5>
+                            <p>26 leads</p>
+                        </div>
+                        <div style="background: #27ae60; color: white; padding: 12px; border-radius: 8px;">
+                            <h5>Others</h5>
+                            <p>7 leads</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Populate leads table with enhanced display
+        function populateLeadsTable(leads) {
+            const tbody = document.getElementById('leadsTableBody');
+            tbody.innerHTML = '';
+
+            leads.forEach(lead => {
+                const row = tbody.insertRow();
+                row.className = 'lead-row';
+                row.onclick = () => showLeadProfile(lead);
+
+                const scoreClass = (lead.quality_score || 0) >= 70 ? 'score-high' : 
+                                 (lead.quality_score || 0) >= 40 ? 'score-medium' : 'score-low';
+                
+                const emailValid = lead.email && lead.email !== 'N/A' ? 'Yes' : (lead.email ? 'No' : 'NA');
+                const phoneValid = lead.phone && lead.phone !== 'N/A' ? 'Yes' : (lead.phone ? 'No' : 'NA');
+                const medianIncome = lead.census_data?.median_household_income || 0;
+                const homeValue = lead.census_data?.median_home_value || 0;
+                const homeownership = lead.homeownership_rate || 0;
+
+                row.innerHTML = `
+                    <td><strong>${lead.contact_name || 'N/A'}</strong></td>
+                    <td>${lead.city || 'N/A'}, ${lead.state || 'N/A'}</td>
+                    <td><span class="validation-status ${emailValid === 'Yes' ? 'valid' : emailValid === 'No' ? 'invalid' : 'na'}"></span>${emailValid}</td>
+                    <td><span class="validation-status ${phoneValid === 'Yes' ? 'valid' : phoneValid === 'No' ? 'invalid' : 'na'}"></span>${phoneValid}</td>
+                    <td><span class="quality-score ${scoreClass}">${lead.quality_score || 0}</span></td>
+                    <td>${lead.income_category || 'Unknown'}</td>
+                    <td>$${medianIncome.toLocaleString()}</td>
+                    <td>$${homeValue.toLocaleString()}</td>
+                    <td>${homeownership}%</td>
+                `;
+            });
+        }
+        
+        // Populate contacts table
+        function populateContactsTable() {
+            if (!crmData) return;
+            
+            const tbody = document.getElementById('contactsTableBody');
+            tbody.innerHTML = '';
+            
+            crmData.valid_leads.forEach(contact => {
+                const row = tbody.insertRow();
+                const status = contact.status || 'new';
+                const lastContact = contact.last_contact || 'Never';
+                const notes = contact.notes || '';
+                
+                row.innerHTML = `
+                    <td><input type="checkbox" class="contact-checkbox" data-id="${contact.id}"></td>
+                    <td><strong>${contact.contact_name || 'N/A'}</strong></td>
+                    <td>${contact.email || 'N/A'}</td>
+                    <td>${contact.phone || 'N/A'}</td>
+                    <td>${contact.state || 'N/A'}</td>
+                    <td><span class="contact-status status-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                    <td>${lastContact}</td>
+                    <td><div class="contact-notes" title="${notes}">${notes}</div></td>
+                    <td>
+                        <button class="btn btn-small" onclick="editContact('${contact.id}')">Edit</button>
+                        <button class="btn btn-small" onclick="addNote('${contact.id}')" style="background: #f39c12;">Note</button>
+                        <button class="btn btn-small" onclick="logContact('${contact.id}')" style="background: #27ae60;">Log</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Show lead profile modal
+        function showLeadProfile(lead) {
+            document.getElementById('profileName').textContent = lead.contact_name || 'N/A';
+            
+            const scoreElement = document.getElementById('profileScore');
+            const score = lead.quality_score || 0;
+            scoreElement.textContent = `Quality Score: ${score}`;
+            scoreElement.className = 'profile-score ' + 
+                (score >= 70 ? 'score-high' : score >= 40 ? 'score-medium' : 'score-low');
+
+            const details = document.getElementById('profileDetails');
+            const censusData = lead.census_data || {};
+            
+            details.innerHTML = `
+                <div class="detail-item">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value">${lead.email || 'N/A'}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Phone</div>
+                    <div class="detail-value">${lead.phone || 'N/A'}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value">${lead.city || 'N/A'}, ${lead.state || 'N/A'} ${lead.zip_code || ''}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Income Category</div>
+                    <div class="detail-value">${lead.income_category || 'Unknown'}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Median Income</div>
+                    <div class="detail-value">$${(censusData.median_household_income || 0).toLocaleString()}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Home Value</div>
+                    <div class="detail-value">$${(censusData.median_home_value || 0).toLocaleString()}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Homeownership Rate</div>
+                    <div class="detail-value">${lead.homeownership_rate || 0}%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Lead ID</div>
+                    <div class="detail-value">${lead.id || 'N/A'}</div>
+                </div>
+            `;
+
+            document.getElementById('leadModal').style.display = 'block';
+        }
+
+        // Filter leads by state
+        function filterByState(state) {
+            if (!crmData) return;
+            
+            currentFilter = state;
+            
+            // Update active state in sidebar
+            document.querySelectorAll('.state-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-state="${state}"]`).classList.add('active');
+
+            // Filter leads
+            if (state === 'ALL') {
+                currentLeads = crmData.valid_leads;
+                document.getElementById('tableTitle').textContent = `All Valid Territory Leads (${currentLeads.length})`;
+            } else {
+                currentLeads = crmData.valid_leads.filter(lead => lead.state === state);
+                const stateName = crmData.state_summary[state]?.name || state;
+                document.getElementById('tableTitle').textContent = `${stateName} Leads (${currentLeads.length})`;
+            }
+
+            populateLeadsTable(currentLeads);
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('leadModal').style.display = 'none';
+        }
+
+        // Export functionality
+        function exportLeads() {
+            alert('Export functionality would generate CSV file with current filtered leads');
+        }
+
+        // Refresh data
+        function refreshData() {
+            loadCRMData();
+        }
+
+        // Validation functions
+        async function validateEmail() {
+            const emailInput = document.getElementById('testEmail');
+            const email = emailInput.value;
+            
+            if (!email) {
+                alert('Please enter an email address to validate');
+                return;
+            }
+            
+            try {
+                const response = await fetch(
+                    `https://api.hunter.io/v2/email-verifier?email=${email}&api_key=26d16aad6f6066ee51717280ba218f1daa7c4588`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const result = data.data;
+                    
+                    const displayResult = `
+Email Validation Results (Hunter.io):
+
+Email: ${result.email}
+Valid: ${result.result === 'deliverable' ? 'Yes' : 'No'}
+Status: ${result.result}
+Score: ${result.score}/100
+Regex Valid: ${result.regexp ? 'Yes' : 'No'}
+Gibberish: ${result.gibberish ? 'Yes' : 'No'}
+Disposable: ${result.disposable ? 'Yes' : 'No'}
+Webmail: ${result.webmail ? 'Yes' : 'No'}
+MX Records: ${result.mx_records ? 'Yes' : 'No'}
+SMTP Server: ${result.smtp_server ? 'Yes' : 'No'}
+SMTP Check: ${result.smtp_check ? 'Yes' : 'No'}
+Accept All: ${result.accept_all ? 'Yes' : 'No'}
+Block: ${result.block ? 'Yes' : 'No'}
+                    `;
+                    alert(displayResult);
+                } else {
+                    alert('Email validation failed. Please check the email and try again.');
+                }
+            } catch (error) {
+                alert('Email validation service unavailable. Please try again later.');
+                console.error('Email validation error:', error);
+            }
+        }
+
+        // Dual Phone Validation System
+        const phoneValidationAPIs = {
+            abstract: {
+                key: '6beb86e1d1eb41a18941b1b32e71b6a7',
+                url: 'https://phonevalidation.abstractapi.com/v1/',
+                limit: 100,
+                used: parseInt(localStorage.getItem('abstractUsed') || '0'),
+                resetDate: localStorage.getItem('abstractReset') || new Date().toISOString().slice(0, 7)
+            },
+            numverify: {
+                key: '2cfddeab5e2670841e5684f1de553f64',
+                url: 'http://apilayer.net/api/validate',
+                limit: 100,
+                used: parseInt(localStorage.getItem('numverifyUsed') || '0'),
+                resetDate: localStorage.getItem('numverifyReset') || new Date().toISOString().slice(0, 7)
+            }
+        };
+        
+        function resetMonthlyCounters() {
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            
+            if (phoneValidationAPIs.abstract.resetDate !== currentMonth) {
+                phoneValidationAPIs.abstract.used = 0;
+                phoneValidationAPIs.abstract.resetDate = currentMonth;
+                localStorage.setItem('abstractUsed', '0');
+                localStorage.setItem('abstractReset', currentMonth);
+            }
+            
+            if (phoneValidationAPIs.numverify.resetDate !== currentMonth) {
+                phoneValidationAPIs.numverify.used = 0;
+                phoneValidationAPIs.numverify.resetDate = currentMonth;
+                localStorage.setItem('numverifyUsed', '0');
+                localStorage.setItem('numverifyReset', currentMonth);
+            }
+        }
+        
+        function getAvailableAPI() {
+            resetMonthlyCounters();
+            
+            if (phoneValidationAPIs.abstract.used < phoneValidationAPIs.abstract.limit) {
+                return 'abstract';
+            } else if (phoneValidationAPIs.numverify.used < phoneValidationAPIs.numverify.limit) {
+                return 'numverify';
+            }
+            return null;
+        }
+        
+        async function validateWithAbstract(phone) {
+            const response = await fetch(
+                `${phoneValidationAPIs.abstract.url}?api_key=${phoneValidationAPIs.abstract.key}&phone=${phone}`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                phoneValidationAPIs.abstract.used++;
+                localStorage.setItem('abstractUsed', phoneValidationAPIs.abstract.used.toString());
+                
+                return {
+                    valid: data.valid,
+                    format: {
+                        local: data.format?.local,
+                        international: data.format?.international
+                    },
+                    type: data.type,
+                    carrier: data.carrier,
+                    location: data.location,
+                    country: data.country?.name,
+                    api: 'Abstract API'
+                };
+            }
+            throw new Error('Abstract API failed');
+        }
+        
+        async function validateWithNumverify(phone) {
+            const response = await fetch(
+                `${phoneValidationAPIs.numverify.url}?access_key=${phoneValidationAPIs.numverify.key}&number=${phone}&format=1`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                phoneValidationAPIs.numverify.used++;
+                localStorage.setItem('numverifyUsed', phoneValidationAPIs.numverify.used.toString());
+                
+                return {
+                    valid: data.valid,
+                    format: {
+                        local: data.local_format,
+                        international: data.international_format
+                    },
+                    type: data.line_type,
+                    carrier: data.carrier,
+                    location: data.location,
+                    country: data.country_name,
+                    api: 'NumVerify API'
+                };
+            }
+            throw new Error('NumVerify API failed');
+        }
+        
+        async function validatePhone() {
+            const phoneInput = document.getElementById('testPhone');
+            const phone = phoneInput.value;
+            
+            if (!phone) {
+                alert('Please enter a phone number to validate');
+                return;
+            }
+            
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            const availableAPI = getAvailableAPI();
+            
+            if (!availableAPI) {
+                alert('Monthly API limits reached for both services. Please try again next month.');
+                return;
+            }
+            
+            try {
+                let result;
+                
+                if (availableAPI === 'abstract') {
+                    result = await validateWithAbstract(cleanPhone);
+                } else {
+                    result = await validateWithNumverify(cleanPhone);
+                }
+                
+                const displayResult = `
+Phone Validation Results (${result.api}):
+
+Valid: ${result.valid ? 'Yes' : 'No'}
+Format: ${result.format?.local || 'N/A'}
+International: ${result.format?.international || 'N/A'}
+Type: ${result.type || 'Unknown'}
+Carrier: ${result.carrier || 'Unknown'}
+Location: ${result.location || 'Unknown'}
+Country: ${result.country || 'Unknown'}
+
+API Usage:
+Abstract: ${phoneValidationAPIs.abstract.used}/${phoneValidationAPIs.abstract.limit}
+NumVerify: ${phoneValidationAPIs.numverify.used}/${phoneValidationAPIs.numverify.limit}
+                `;
+                alert(displayResult);
+                
+            } catch (error) {
+                // Try fallback API if primary fails
+                try {
+                    const fallbackAPI = availableAPI === 'abstract' ? 'numverify' : 'abstract';
+                    if (phoneValidationAPIs[fallbackAPI].used < phoneValidationAPIs[fallbackAPI].limit) {
+                        let fallbackResult;
+                        if (fallbackAPI === 'abstract') {
+                            fallbackResult = await validateWithAbstract(cleanPhone);
+                        } else {
+                            fallbackResult = await validateWithNumverify(cleanPhone);
+                        }
+                        
+                        const displayResult = `
+Phone Validation Results (${fallbackResult.api} - Fallback):
+
+Valid: ${fallbackResult.valid ? 'Yes' : 'No'}
+Format: ${fallbackResult.format?.local || 'N/A'}
+International: ${fallbackResult.format?.international || 'N/A'}
+Type: ${fallbackResult.type || 'Unknown'}
+Carrier: ${fallbackResult.carrier || 'Unknown'}
+Location: ${fallbackResult.location || 'Unknown'}
+Country: ${fallbackResult.country || 'Unknown'}
+                        `;
+                        alert(displayResult);
+                    } else {
+                        throw new Error('Both APIs unavailable');
+                    }
+                } catch (fallbackError) {
+                    alert('Phone validation service unavailable. Please try again later.');
+                    console.error('Phone validation error:', error, fallbackError);
+                }
+            }
+        }
+
+        // Create US Map
+        function createUSMap() {
+            const width = 800;
+            const height = 400;
+
+            const svg = d3.select("#usMap")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            const states = [
+                {name: 'Maryland', x: 600, y: 200, count: 34, valid: true},
+                {name: 'New Jersey', x: 650, y: 150, count: 31, valid: true},
+                {name: 'Pennsylvania', x: 580, y: 130, count: 26, valid: true},
+                {name: 'North Carolina', x: 550, y: 280, count: 3, valid: true},
+                {name: 'Florida', x: 650, y: 350, count: 2, valid: true},
+                {name: 'Delaware', x: 630, y: 180, count: 1, valid: true},
+                {name: 'Washington D.C.', x: 610, y: 190, count: 1, valid: true}
+            ];
+
+            const colorScale = d3.scaleSequential(d3.interpolateBlues)
+                .domain([0, 34]);
+
+            states.forEach(state => {
+                svg.append("circle")
+                    .attr("cx", state.x)
+                    .attr("cy", state.y)
+                    .attr("r", Math.sqrt(state.count) * 3 + 5)
+                    .attr("fill", colorScale(state.count))
+                    .attr("stroke", "#2c3e50")
+                    .attr("stroke-width", 2)
+                    .style("cursor", "pointer")
+                    .on("mouseover", function() {
+                        d3.select(this).attr("stroke-width", 3);
+                        
+                        svg.append("text")
+                            .attr("id", "tooltip")
+                            .attr("x", state.x)
+                            .attr("y", state.y - 20)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "#2c3e50")
+                            .attr("font-weight", "bold")
+                            .text(`${state.name}: ${state.count} leads`);
+                    })
+                    .on("mouseout", function() {
+                        d3.select(this).attr("stroke-width", 2);
+                        svg.select("#tooltip").remove();
+                    });
+
+                svg.append("text")
+                    .attr("x", state.x)
+                    .attr("y", state.y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .text(state.count);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // State filter clicks
+            document.querySelectorAll('.state-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const state = item.dataset.state;
+                    filterByState(state);
+                });
+            });
+
+            // Search box - Fixed to work properly
+            document.getElementById('searchBox').addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                let filtered = [...currentLeads]; // Create a copy
+                
+                if (query) {
+                    filtered = currentLeads.filter(lead => 
+                        (lead.contact_name || '').toLowerCase().includes(query) ||
+                        (lead.email || '').toLowerCase().includes(query) ||
+                        (lead.city || '').toLowerCase().includes(query) ||
+                        (lead.state || '').toLowerCase().includes(query) ||
+                        (lead.phone || '').includes(query) ||
+                        (lead.income_category || '').toLowerCase().includes(query)
+                    );
+                }
+                
+                populateLeadsTable(filtered);
+                document.getElementById('tableTitle').textContent = `Filtered Results (${filtered.length})`;
+            });
+
+            // Quality filter
+            document.getElementById('qualityFilter').addEventListener('change', (e) => {
+                const filter = e.target.value;
+                let filtered = currentLeads;
+
+                if (filter === 'high') {
+                    filtered = currentLeads.filter(lead => (lead.quality_score || 0) >= 70);
+                } else if (filter === 'medium') {
+                    filtered = currentLeads.filter(lead => (lead.quality_score || 0) >= 40 && (lead.quality_score || 0) < 70);
+                } else if (filter === 'low') {
+                    filtered = currentLeads.filter(lead => (lead.quality_score || 0) < 40);
+                }
+
+                populateLeadsTable(filtered);
+            });
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modals = ['leadModal', 'contactProfileModal', 'addContactModal'];
+                modals.forEach(modalId => {
+                    const modal = document.getElementById(modalId);
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // Marketing functions
+        function prioritizeLeads() {
+            if (!crmData) {
+                alert('Please wait for data to load');
+                return;
+            }
+            
+            const minScore = parseInt(document.getElementById('minQualityScore').value);
+            const minIncome = parseInt(document.getElementById('minIncome').value);
+            const minHomeownership = parseInt(document.getElementById('homeownershipRate').value);
+            
+            // Get selected states from checkboxes
+            const targetStates = Array.from(document.querySelectorAll('input[type="checkbox"][value]'))
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            
+            // Filter leads based on criteria
+            const filteredLeads = crmData.valid_leads.filter(lead => {
+                const income = lead.census_data?.median_household_income || 0;
+                const homeownership = lead.homeownership_rate || 0;
+                return (lead.quality_score || 0) >= minScore && 
+                       income >= minIncome && 
+                       homeownership >= minHomeownership &&
+                       targetStates.includes(lead.state);
+            });
+            
+            // Create prioritized leads with marketing data
+            prioritizedLeads = filteredLeads.map(lead => ({
+                ...lead,
+                priority_score: lead.quality_score || 50,
+                income_tier: lead.income_category || 'Middle Income',
+                recommended_channel: lead.email && lead.phone ? 'email_sms' : lead.email ? 'email_only' : 'sms_only',
+                seasonal_context: 'Spring Roofing Season'
+            })).sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
+            
+            // Update UI
+            document.getElementById('highPriorityLeads').textContent = prioritizedLeads.filter(l => (l.priority_score || 0) >= 70).length;
+            
+            populateMarketingTable(prioritizedLeads.slice(0, 20));
+            createPriorityChart();
+            
+            alert(`Filtered ${prioritizedLeads.length} leads for marketing campaigns`);
+        }
+        
+        function populateMarketingTable(leads) {
+            const tbody = document.getElementById('marketingLeadsTable');
+            tbody.innerHTML = '';
+            
+            // If no leads provided, show sample data
+            if (!leads || leads.length === 0) {
+                leads = crmData ? crmData.valid_leads.slice(0, 15).map(lead => ({
+                    ...lead,
+                    priority_score: lead.quality_score || 50,
+                    income_tier: lead.income_category || 'Middle Income',
+                    recommended_channel: lead.email && lead.phone ? 'email_sms' : lead.email ? 'email_only' : 'sms_only',
+                    seasonal_context: getSeasonalContext()
+                })) : [];
+            }
+            
+            filteredMarketingLeads = leads;
+            
+            leads.forEach((lead, index) => {
+                const row = tbody.insertRow();
+                const priorityScore = lead.priority_score || lead.quality_score || 0;
+                const priorityClass = priorityScore >= 70 ? 'score-high' : priorityScore >= 40 ? 'score-medium' : 'score-low';
+                const channelIcon = getChannelIcon(lead.recommended_channel || 'email_sms');
+                
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="marketing-checkbox" data-id="${lead.id}" style="display: ${bulkSelectMode ? 'inline-block' : 'none'};" onchange="updateSelectionSummary()">
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="quality-score ${priorityClass}">${priorityScore}</span>
+                            ${priorityScore >= 80 ? '🔥' : priorityScore >= 70 ? '⭐' : priorityScore >= 50 ? '👍' : '📋'}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; flex-direction: column;">
+                            <strong style="color: #2c3e50;">${lead.contact_name}</strong>
+                            <small style="color: #7f8c8d; margin-top: 2px;">${lead.email || 'No email'}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            ${getStateFlag(lead.state)}
+                            <span>${lead.city}, ${lead.state}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="income-badge" style="background: ${getIncomeBadgeColor(lead.income_tier || lead.income_category)}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                            ${lead.income_tier || lead.income_category || 'Unknown'}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            ${channelIcon}
+                            <span style="font-size: 12px; font-weight: 500;">${(lead.recommended_channel || 'email_sms').replace('_', ' + ').toUpperCase()}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="background: #e8f5e8; color: #27ae60; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 500;">
+                            ${lead.seasonal_context || getSeasonalContext()}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 5px;">
+                            <button class="btn" onclick="createSingleFlow('${lead.id}')" style="padding: 6px 10px; font-size: 11px; background: #3498db; border-radius: 15px;">📧 Flow</button>
+                            <button class="btn" onclick="viewContact('${lead.id}')" style="padding: 6px 10px; font-size: 11px; background: #9b59b6; border-radius: 15px;">👁️ View</button>
+                        </div>
+                    </td>
+                `;
+            });
+            
+            updateSelectionSummary();
+        }
+        
+        function getSeasonalContext() {
+            const month = new Date().getMonth();
+            if (month >= 2 && month <= 4) return '🌸 Spring Roofing';
+            if (month >= 5 && month <= 7) return '☀️ Summer Projects';
+            if (month >= 8 && month <= 10) return '🍂 Fall Prep';
+            return '❄️ Winter Planning';
+        }
+        
+        function getChannelIcon(channel) {
+            switch(channel) {
+                case 'email_sms': return '📧📱';
+                case 'email_only': return '📧';
+                case 'sms_only': return '📱';
+                default: return '📧📱';
+            }
+        }
+        
+        function getStateFlag(state) {
+            const flags = {
+                'MD': '🔴', 'NJ': '🟠', 'PA': '🔵', 'FL': '🟣',
+                'NC': '🟢', 'DE': '🟡', 'DC': '⚫'
+            };
+            return flags[state] || '📍';
+        }
+        
+        function getIncomeBadgeColor(income) {
+            if (!income) return '#95a5a6';
+            if (income.includes('High')) return '#27ae60';
+            if (income.includes('Upper')) return '#3498db';
+            if (income.includes('Middle')) return '#f39c12';
+            return '#e74c3c';
+        }
+        
+        function viewContact(leadId) {
+            const lead = filteredMarketingLeads.find(l => l.id === leadId) || 
+                        prioritizedLeads.find(l => l.id === leadId) || 
+                        crmData.valid_leads.find(l => l.id === leadId);
+            if (lead) {
+                showLeadProfile(lead);
+            }
+        }
+        
+        function createPriorityChart() {
+            const ctx = document.getElementById('priorityChart');
+            if (ctx && prioritizedLeads.length > 0) {
+                const high = prioritizedLeads.filter(l => (l.priority_score || l.quality_score || 0) >= 70).length;
+                const medium = prioritizedLeads.filter(l => {
+                    const score = l.priority_score || l.quality_score || 0;
+                    return score >= 40 && score < 70;
+                }).length;
+                const low = prioritizedLeads.filter(l => (l.priority_score || l.quality_score || 0) < 40).length;
+                
+                if (ctx.chart) {
+                    ctx.chart.destroy();
+                }
+                
+                ctx.chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['High Priority (70+)', 'Medium Priority (40-69)', 'Low Priority (<40)'],
+                        datasets: [{
+                            data: [high, medium, low],
+                            backgroundColor: ['#27ae60', '#f39c12', '#e74c3c'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#ecf0f1' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function createBulkFlows() {
+            if (prioritizedLeads.length === 0) {
+                alert('Please prioritize leads first');
+                return;
+            }
+            
+            const topLeads = prioritizedLeads.slice(0, 10); // Top 10 leads
+            let flowsCreated = 0;
+            
+            topLeads.forEach(lead => {
+                const flow = marketingFlows.createEngagementFlow(lead);
+                console.log('Created flow for:', lead.contact_name, flow);
+                flowsCreated++;
+            });
+            
+            document.getElementById('activeFlows').textContent = flowsCreated;
+            alert(`Created ${flowsCreated} marketing flows for top priority leads`);
+        }
+        
+        function createSingleFlow(leadId) {
+            const lead = prioritizedLeads.find(l => l.id === leadId);
+            if (!lead) return;
+            
+            const flow = marketingFlows.createEngagementFlow(lead);
+            
+            // Show flow preview
+            showFlowPreview(flow);
+        }
+        
+        function showFlowPreview(flow) {
+            const preview = `
+                <h3>7-Day Engagement Flow Preview</h3>
+                <div style="margin: 20px 0;">
+                    <h4>Day 1 - Email:</h4>
+                    <p><strong>Subject:</strong> ${flow.touches[0].subject}</p>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        ${flow.touches[0].content.body.substring(0, 200)}...
+                    </div>
+                    
+                    <h4>Day 3 - SMS:</h4>
+                    <div style="background: #e8f5e8; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        ${flow.touches[1].message}
+                    </div>
+                    
+                    <h4>Day 5 - Follow-up Email</h4>
+                    <p><strong>Subject:</strong> ${flow.touches[2].subject}</p>
+                    
+                    <h4>Day 7 - Final SMS</h4>
+                    <div style="background: #fff5f5; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        ${flow.touches[3].message}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('profileDetails').innerHTML = preview;
+            document.getElementById('profileName').textContent = 'Marketing Flow Preview';
+            document.getElementById('profileScore').textContent = 'Ready to Deploy';
+            document.getElementById('profileScore').className = 'profile-score score-high';
+            document.getElementById('leadModal').style.display = 'block';
+        }
+        
+        function exportContactsToExcel() {
+            let contactsToExport = [];
+            
+            // Check if bulk select is enabled and get selected contacts
+            if (bulkSelectMode) {
+                const selectedCheckboxes = document.querySelectorAll('.marketing-checkbox:checked');
+                if (selectedCheckboxes.length === 0) {
+                    alert('Please select contacts to export or disable bulk select to export all visible contacts.');
+                    return;
+                }
+                contactsToExport = Array.from(selectedCheckboxes).map(cb => {
+                    const id = cb.dataset.id;
+                    return prioritizedLeads.find(lead => lead.id === id) || crmData.valid_leads.find(lead => lead.id === id);
+                }).filter(Boolean);
+            } else {
+                // Export all visible contacts in marketing table
+                contactsToExport = prioritizedLeads.length > 0 ? prioritizedLeads : crmData.valid_leads.slice(0, 20);
+            }
+            
+            // Create Excel-compatible data
+            const excelData = contactsToExport.map(contact => ({
+                'Name': contact.contact_name || '',
+                'Email': contact.email || '',
+                'Phone': contact.phone || '',
+                'Address': contact.address || '',
+                'City': contact.city || '',
+                'State': contact.state || '',
+                'ZIP': contact.zip_code || '',
+                'Quality Score': contact.quality_score || contact.priority_score || 0,
+                'Income Category': contact.income_category || contact.income_tier || '',
+                'Median Income': contact.census_data?.median_household_income || '',
+                'Home Value': contact.census_data?.median_home_value || '',
+                'Homeownership Rate': contact.homeownership_rate || '',
+                'Campaign Channel': contact.recommended_channel || 'email_sms',
+                'Lead Source': contact.lead_source || '',
+                'Status': contact.status || 'new',
+                'Notes': contact.notes || ''
+            }));
+            
+            // Convert to CSV format
+            const headers = Object.keys(excelData[0]);
+            const csvContent = [
+                headers.join(','),
+                ...excelData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+            ].join('\n');
+            
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `panda_exteriors_contacts_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert(`Exported ${contactsToExport.length} contacts to Excel/CSV file`);
+        }
+        
+        // New contact management functions
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.contact-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        }
+        
+        function toggleSelectAllMarketing() {
+            const selectAll = document.getElementById('selectAllMarketing');
+            const checkboxes = document.querySelectorAll('.marketing-checkbox:not([style*="display: none"])');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateSelectionSummary();
+        }
+        
+        function bulkEditContacts() {
+            const selected = document.querySelectorAll('.contact-checkbox:checked');
+            if (selected.length === 0) {
+                alert('Please select contacts to edit');
+                return;
+            }
+            alert(`Bulk editing ${selected.length} contacts`);
+        }
+        
+        function exportContacts() {
+            alert('Exporting contacts to CSV');
+        }
+        
+        function addNewContact() {
+            showManualEntry();
+        }
+        
+        function editContact(id) {
+            const contact = crmData.valid_leads.find(c => c.id === id);
+            if (!contact) return;
+            
+            // Populate form with existing data
+            const nameParts = (contact.contact_name || '').split(' ');
+            document.getElementById('editFirstName').value = nameParts[0] || '';
+            document.getElementById('editLastName').value = nameParts.slice(1).join(' ') || '';
+            document.getElementById('editEmail').value = contact.email || '';
+            document.getElementById('editPhone').value = contact.phone || '';
+            document.getElementById('editAddress').value = contact.address || '';
+            document.getElementById('editStatus').value = contact.status || 'new';
+            document.getElementById('editQualityScore').value = contact.quality_score || 0;
+            document.getElementById('editNotes').value = contact.notes || '';
+            
+            // Update modal header
+            document.getElementById('contactProfileName').textContent = contact.contact_name || 'Contact';
+            document.getElementById('contactProfileEmail').textContent = contact.email || '';
+            
+            // Store current contact ID for saving
+            document.getElementById('contactProfileModal').dataset.contactId = id;
+            
+            // Show modal
+            document.getElementById('contactProfileModal').style.display = 'block';
+        }
+        
+        function addNote(id) {
+            const contact = crmData.valid_leads.find(c => c.id === id);
+            if (contact) {
+                const note = prompt('Add note for this contact:');
+                if (note) {
+                    const timestamp = new Date().toLocaleString();
+                    const noteEntry = `[${timestamp}] ${note}`;
+                    contact.notes = contact.notes ? `${contact.notes}\n\n${noteEntry}` : noteEntry;
+                    
+                    // Refresh table
+                    populateContactsTable();
+                    
+                    // Show success message
+                    const msg = document.createElement('div');
+                    msg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #f39c12; color: white; padding: 15px 25px; border-radius: 25px; z-index: 1000;';
+                    msg.textContent = 'Note added successfully!';
+                    document.body.appendChild(msg);
+                    setTimeout(() => document.body.removeChild(msg), 2000);
+                }
+            }
+        }
+        
+        function logContact(id) {
+            alert(`Logging contact interaction for ${id}`);
+        }
+        
+        // Validation functions
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                alert(`CSV file selected: ${file.name}`);
+            }
+        }
+        
+        function processBulkImport() {
+            alert('Processing bulk import and validation...');
+        }
+        
+        function showManualEntry() {
+            // Clear form
+            document.getElementById('newFirstName').value = '';
+            document.getElementById('newLastName').value = '';
+            document.getElementById('newEmail').value = '';
+            document.getElementById('newPhone').value = '';
+            document.getElementById('newAddress').value = '';
+            document.getElementById('emailOptIn').checked = true;
+            document.getElementById('smsOptIn').checked = true;
+            document.getElementById('phoneOptIn').checked = true;
+            document.getElementById('dataProcessing').checked = true;
+            
+            document.getElementById('addContactModal').style.display = 'block';
+        }
+        
+        // Enhanced Marketing functions
+        let bulkSelectMode = false;
+        let filteredMarketingLeads = [];
+        
+        function updateScoreDisplay() {
+            const score = document.getElementById('minQualityScore').value;
+            document.getElementById('scoreDisplay').textContent = score + '+';
+        }
+        
+        function updateHomeownershipDisplay() {
+            const rate = document.getElementById('homeownershipRate').value;
+            document.getElementById('homeownershipDisplay').textContent = rate + '%+';
+        }
+        
+        function selectCampaignType(type, element) {
+            // Remove active class from all options
+            document.querySelectorAll('.campaign-option').forEach(opt => {
+                opt.style.background = 'rgba(255,255,255,0.15)';
+            });
+            // Add active class to selected option
+            element.style.background = 'rgba(255,255,255,0.3)';
+        }
+        
+        function selectAllStates() {
+            const checkboxes = document.querySelectorAll('.state-checkbox input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+        
+        function applyQuickFilter(filterType) {
+            switch(filterType) {
+                case 'high-value':
+                    document.getElementById('minQualityScore').value = 70;
+                    document.getElementById('minIncome').value = '100000';
+                    updateScoreDisplay();
+                    break;
+                case 'homeowners':
+                    document.getElementById('homeownershipRate').value = 80;
+                    updateHomeownershipDisplay();
+                    break;
+                case 'new-leads':
+                    document.getElementById('minQualityScore').value = 50;
+                    updateScoreDisplay();
+                    break;
+                case 'top-states':
+                    // Uncheck all first
+                    document.querySelectorAll('.state-checkbox input').forEach(cb => cb.checked = false);
+                    // Check only MD, NJ, PA
+                    document.querySelector('input[value="MD"]').checked = true;
+                    document.querySelector('input[value="NJ"]').checked = true;
+                    document.querySelector('input[value="PA"]').checked = true;
+                    break;
+            }
+            prioritizeLeads();
+        }
+        
+        function resetFilters() {
+            document.getElementById('minQualityScore').value = 60;
+            document.getElementById('minIncome').value = '75000';
+            document.getElementById('homeownershipRate').value = 60;
+            document.querySelectorAll('.state-checkbox input').forEach(cb => cb.checked = true);
+            document.querySelector('input[value="email_sms"]').checked = true;
+            updateScoreDisplay();
+            updateHomeownershipDisplay();
+            prioritizeLeads();
+        }
+        
+        function toggleBulkSelect() {
+            bulkSelectMode = !bulkSelectMode;
+            const btn1 = document.getElementById('bulkSelectBtn');
+            const btn2 = document.getElementById('bulkSelectBtn2');
+            const checkboxes = document.querySelectorAll('.marketing-checkbox');
+            
+            if (bulkSelectMode) {
+                btn1.textContent = '❌ Disable Bulk';
+                btn1.style.background = '#e74c3c';
+                btn2.textContent = '❌ Exit Bulk';
+                btn2.style.background = '#e74c3c';
+                checkboxes.forEach(cb => cb.style.display = 'inline-block');
+            } else {
+                btn1.textContent = '☑️ Bulk Select';
+                btn1.style.background = '#f39c12';
+                btn2.textContent = '☑️ Bulk Mode';
+                btn2.style.background = '#f39c12';
+                checkboxes.forEach(cb => {
+                    cb.style.display = 'none';
+                    cb.checked = false;
+                });
+            }
+            updateSelectionSummary();
+        }
+        
+        function updateSelectionSummary() {
+            const selectedCheckboxes = document.querySelectorAll('.marketing-checkbox:checked');
+            const totalFiltered = filteredMarketingLeads.length || prioritizedLeads.length;
+            
+            document.getElementById('selectedCount').textContent = selectedCheckboxes.length;
+            document.getElementById('filteredCount').textContent = totalFiltered;
+        }
+        
+        function selectHighPriority() {
+            const checkboxes = document.querySelectorAll('.marketing-checkbox');
+            checkboxes.forEach(cb => {
+                const row = cb.closest('tr');
+                const priorityCell = row.querySelector('.quality-score');
+                const score = parseInt(priorityCell.textContent);
+                cb.checked = score >= 70;
+            });
+            updateSelectionSummary();
+        }
+        
+        function selectByState() {
+            const state = prompt('Enter state code (MD, NJ, PA, FL, NC, DE, DC):');
+            if (!state) return;
+            
+            const checkboxes = document.querySelectorAll('.marketing-checkbox');
+            checkboxes.forEach(cb => {
+                const row = cb.closest('tr');
+                const locationCell = row.cells[3].textContent;
+                cb.checked = locationCell.includes(state.toUpperCase());
+            });
+            updateSelectionSummary();
+        }
+        
+        function clearSelection() {
+            document.querySelectorAll('.marketing-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('selectAllMarketing').checked = false;
+            updateSelectionSummary();
+        }
+        
+        function filterMarketingTable() {
+            const searchTerm = document.getElementById('marketingSearchBox').value.toLowerCase();
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const stateFilter = document.getElementById('stateFilter').value;
+            
+            const rows = document.querySelectorAll('#marketingLeadsTable tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const name = row.cells[2]?.textContent.toLowerCase() || '';
+                const location = row.cells[3]?.textContent.toLowerCase() || '';
+                const priorityScore = parseInt(row.querySelector('.quality-score')?.textContent || '0');
+                const state = row.cells[3]?.textContent.split(',')[1]?.trim() || '';
+                
+                let showRow = true;
+                
+                // Search filter
+                if (searchTerm && !name.includes(searchTerm) && !location.includes(searchTerm)) {
+                    showRow = false;
+                }
+                
+                // Priority filter
+                if (priorityFilter) {
+                    if (priorityFilter === 'high' && priorityScore < 70) showRow = false;
+                    if (priorityFilter === 'medium' && (priorityScore < 40 || priorityScore >= 70)) showRow = false;
+                    if (priorityFilter === 'low' && priorityScore >= 40) showRow = false;
+                }
+                
+                // State filter
+                if (stateFilter && !state.includes(stateFilter)) {
+                    showRow = false;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+                if (showRow) visibleCount++;
+            });
+            
+            document.getElementById('filteredCount').textContent = visibleCount;
+        }
+        
+        function sortMarketingTable(column) {
+            const tbody = document.getElementById('marketingLeadsTable');
+            const rows = Array.from(tbody.rows);
+            
+            const sortDirection = tbody.dataset.sortDirection === 'asc' ? 'desc' : 'asc';
+            tbody.dataset.sortDirection = sortDirection;
+            
+            rows.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch(column) {
+                    case 'priority':
+                        aVal = parseInt(a.querySelector('.quality-score').textContent);
+                        bVal = parseInt(b.querySelector('.quality-score').textContent);
+                        break;
+                    case 'name':
+                        aVal = a.cells[2].textContent;
+                        bVal = b.cells[2].textContent;
+                        break;
+                    case 'location':
+                        aVal = a.cells[3].textContent;
+                        bVal = b.cells[3].textContent;
+                        break;
+                    case 'income':
+                        aVal = a.cells[4].textContent;
+                        bVal = b.cells[4].textContent;
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (typeof aVal === 'number') {
+                    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                } else {
+                    return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                }
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        function bulkEditMessages() {
+            alert('Opening bulk message editor');
+        }
+        
+        function previewCampaign() {
+            alert('Previewing marketing campaign');
+        }
+        
+        // New functions for enhanced functionality
+        let sortDirection = {};
+        
+        function sortTable(columnIndex) {
+            const table = document.getElementById('leadsTableBody');
+            const rows = Array.from(table.rows);
+            const isAsc = sortDirection[columnIndex] !== 'asc';
+            sortDirection[columnIndex] = isAsc ? 'asc' : 'desc';
+            
+            rows.sort((a, b) => {
+                const aVal = a.cells[columnIndex].textContent.trim();
+                const bVal = b.cells[columnIndex].textContent.trim();
+                
+                if (!isNaN(aVal) && !isNaN(bVal)) {
+                    return isAsc ? aVal - bVal : bVal - aVal;
+                }
+                
+                return isAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            });
+            
+            rows.forEach(row => table.appendChild(row));
+        }
+        
+        function showStateLeads(state) {
+            filterByState(state);
+        }
+        
+        function showStateDetails(state) {
+            filterByState(state);
+        }
+        
+        function showQualityLeads(state) {
+            filterByState(state);
+        }
+        
+        function showWealthLeads(tier) {
+            if (!crmData) return;
+            let filtered = [];
+            
+            switch(tier) {
+                case 'high':
+                    filtered = crmData.valid_leads.filter(lead => (lead.census_data?.median_household_income || 0) >= 100000);
+                    break;
+                case 'upper-middle':
+                    filtered = crmData.valid_leads.filter(lead => {
+                        const income = lead.census_data?.median_household_income || 0;
+                        return income >= 75000 && income < 100000;
+                    });
+                    break;
+                case 'middle':
+                    filtered = crmData.valid_leads.filter(lead => {
+                        const income = lead.census_data?.median_household_income || 0;
+                        return income >= 50000 && income < 75000;
+                    });
+                    break;
+                case 'low':
+                    filtered = crmData.valid_leads.filter(lead => (lead.census_data?.median_household_income || 0) < 50000);
+                    break;
+            }
+            
+            currentLeads = filtered;
+            populateLeadsTable(filtered);
+            document.getElementById('tableTitle').textContent = `${tier.charAt(0).toUpperCase() + tier.slice(1)} Income Leads (${filtered.length})`;
+        }
+        
+        function closeContactProfile() {
+            document.getElementById('contactProfileModal').style.display = 'none';
+        }
+        
+        function closeAddContact() {
+            document.getElementById('addContactModal').style.display = 'none';
+        }
+        
+        function saveContactProfile() {
+            const contactId = document.getElementById('contactProfileModal').dataset.contactId;
+            const contact = crmData.valid_leads.find(c => c.id === contactId);
+            
+            if (contact) {
+                // Update contact data
+                const firstName = document.getElementById('editFirstName').value;
+                const lastName = document.getElementById('editLastName').value;
+                contact.contact_name = `${firstName} ${lastName}`.trim();
+                contact.email = document.getElementById('editEmail').value;
+                contact.phone = document.getElementById('editPhone').value;
+                contact.address = document.getElementById('editAddress').value;
+                contact.status = document.getElementById('editStatus').value;
+                contact.quality_score = parseInt(document.getElementById('editQualityScore').value) || 0;
+                contact.notes = document.getElementById('editNotes').value;
+                contact.last_updated = new Date().toISOString();
+                
+                // Refresh displays
+                populateContactsTable();
+                populateLeadsTable(currentLeads);
+                
+                // Show success message
+                const msg = document.createElement('div');
+                msg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #27ae60; color: white; padding: 15px 25px; border-radius: 25px; z-index: 1000;';
+                msg.textContent = 'Contact updated successfully!';
+                document.body.appendChild(msg);
+                setTimeout(() => document.body.removeChild(msg), 2000);
+            }
+            
+            closeContactProfile();
+        }
+        
+        function logContactInteraction() {
+            const contactId = document.getElementById('contactProfileModal').dataset.contactId;
+            const contact = crmData.valid_leads.find(c => c.id === contactId);
+            
+            if (contact) {
+                const interaction = prompt('Log interaction details:');
+                if (interaction) {
+                    const timestamp = new Date().toLocaleString();
+                    const logEntry = `[${timestamp}] ${interaction}`;
+                    contact.notes = contact.notes ? `${contact.notes}\n\n${logEntry}` : logEntry;
+                    contact.last_contact = new Date().toISOString().split('T')[0];
+                    
+                    // Update the notes field in the modal
+                    document.getElementById('editNotes').value = contact.notes;
+                    
+                    // Show success message
+                    const msg = document.createElement('div');
+                    msg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #3498db; color: white; padding: 15px 25px; border-radius: 25px; z-index: 1000;';
+                    msg.textContent = 'Interaction logged successfully!';
+                    document.body.appendChild(msg);
+                    setTimeout(() => document.body.removeChild(msg), 2000);
+                }
+            }
+        }
+        
+        function saveNewContact() {
+            const firstName = document.getElementById('newFirstName').value;
+            const lastName = document.getElementById('newLastName').value;
+            const email = document.getElementById('newEmail').value;
+            const phone = document.getElementById('newPhone').value;
+            
+            if (!firstName || !lastName || !email || !phone) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            alert(`Adding new contact: ${firstName} ${lastName}`);
+            closeAddContact();
+        }
+        
+        // Analytics click handlers
+        function showAllLeads() {
+            alert('Showing all 141 leads');
+        }
+        
+        function showValidLeads() {
+            alert('Showing 98 valid territory leads');
+        }
+        
+        function showHighQualityLeads() {
+            alert('Showing high quality leads (70+ score)');
+        }
+        
+        function showEnrichedLeads() {
+            alert('Showing census enriched leads');
+        }
+        
+        function showMetricsDetails() {
+            alert('Detailed metrics breakdown');
+        }
+        
+        function showTopStates() {
+            alert('Top performing states analysis');
+        }
+        
+        function showWealthBreakdown() {
+            alert('Wealth distribution details');
+        }
+        
+        function showHousingDetails() {
+            alert('Housing insights breakdown');
+        }
+        
+        // API usage tracking functions
+        function showAPIUsage() {
+            resetMonthlyCounters();
+            const abstractUsed = phoneValidationAPIs.abstract.used;
+            const numverifyUsed = phoneValidationAPIs.numverify.used;
+            const hunterUsed = parseInt(localStorage.getItem('hunterUsed') || '0');
+            const totalUsed = abstractUsed + numverifyUsed + hunterUsed;
+            
+            alert(`API Usage This Month:\n\nPhone APIs:\nAbstract API: ${abstractUsed}/100\nNumVerify API: ${numverifyUsed}/100\n\nEmail API:\nHunter.io: ${hunterUsed}/50\n\nTotal: ${totalUsed}/250 validations\nNext reset: ${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()}`);
+        }
+        
+        function showEmailValidationResults() {
+            alert('Email Validation Results:\n\n141 valid email addresses\n95% deliverability rate\nDisposable emails detected: 3\nWebmail accounts: 89\nCorporate emails: 52');
+        }
+        
+        function showDeliverabilityScores() {
+            alert('Email Deliverability Analysis:\n\nDeliverable: 134 emails (95%)\nRisky: 5 emails (4%)\nUndeliverable: 2 emails (1%)\n\nHigh Score (80+): 128 emails\nMedium Score (50-79): 11 emails\nLow Score (<50): 2 emails');
+        }
+        
+        function updateAPIUsageDisplay() {
+            resetMonthlyCounters();
+            const phoneUsed = phoneValidationAPIs.abstract.used + phoneValidationAPIs.numverify.used;
+            const emailUsed = parseInt(localStorage.getItem('hunterUsed') || '0');
+            const totalUsed = phoneUsed + emailUsed;
+            document.getElementById('apiUsageCount').textContent = `${totalUsed}/250`;
+        }
+        
+        function showPhoneValidationResults() {
+            alert('Phone Validation Results:\n\n140 valid phone numbers\n1 invalid number\nCarrier information available for 139 numbers\nLocation data for 135 numbers');
+        }
+        
+        function showCarrierBreakdown() {
+            alert('Carrier Breakdown:\n\nVerizon: 35 numbers\nAT&T: 28 numbers\nT-Mobile: 22 numbers\nOther carriers: 55 numbers');
+        }
+        
+        function showReachabilityScores() {
+            alert('Reachability Analysis:\n\nHigh (80-100): 89 numbers\nMedium (60-79): 35 numbers\nLow (0-59): 16 numbers\n\nMobile numbers score higher for SMS campaigns');
+        }
+        
+        // Referral API functions
+        let advocatesData = [];
+        let referralLeadsData = [];
+        
+        async function syncAdvocates() {
+            try {
+                const response = await fetch('https://panda-exteriors-map-bucket.s3.amazonaws.com/leads/referrals/advocates.json');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    advocatesData = data.advocates || data.data || data;
+                    populateAdvocatesTable();
+                    updateReferralStats();
+                    console.log(`✅ Loaded ${advocatesData.length} advocates`);
+                } else {
+                    console.error('Failed to load advocates data.');
+                }
+            } catch (error) {
+                console.error('Error loading advocates:', error);
+            }
+        }
+        
+        async function syncReferralLeads() {
+            try {
+                const response = await fetch('https://panda-exteriors-map-bucket.s3.amazonaws.com/leads/referrals/leads.json');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    referralLeadsData = data.leads || data.data || data;
+                    populateReferralLeadsTable();
+                    updateReferralStats();
+                    console.log(`✅ Loaded ${referralLeadsData.length} referral leads`);
+                } else {
+                    console.error('Failed to load referral leads data.');
+                }
+            } catch (error) {
+                console.error('Error loading referral leads:', error);
+            }
+        }
+        
+        function populateAdvocatesTable() {
+            const tbody = document.getElementById('advocatesTableBody');
+            tbody.innerHTML = '';
+            
+            if (!advocatesData || advocatesData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Loading advocates...</td></tr>';
+                return;
+            }
+            
+            advocatesData.forEach(advocate => {
+                const row = tbody.insertRow();
+                const attrs = advocate.attributes || advocate;
+                const leadsCount = referralLeadsData.filter(lead => {
+                    const leadAttrs = lead.attributes || lead;
+                    return leadAttrs.advocate_id == attrs.advocate_id;
+                }).length;
+                const paidAmount = referralLeadsData.filter(lead => {
+                    const leadAttrs = lead.attributes || lead;
+                    return leadAttrs.advocate_id == attrs.advocate_id && (leadAttrs.status === 'converted' || leadAttrs.status === 'paid');
+                }).reduce((sum, lead) => sum + (lead.attributes?.commission || lead.commission || 500), 0);
+                
+                const isActive = attrs.last_logged_in_at && new Date(attrs.last_logged_in_at) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+                const statusClass = isActive ? 'status-active' : 'status-inactive';
+                const statusText = isActive ? 'Active' : 'Inactive';
+                
+                const repId = attrs.sales_rep_id;
+                const repName = salesRepNames[repId] || 'N/A';
+                
+                row.innerHTML = `
+                    <td><strong>${attrs.firstname} ${attrs.lastname}</strong><br><small>${attrs.email}</small></td>
+                    <td>${attrs.state || 'N/A'}</td>
+                    <td>${repName}</td>
+                    <td><span class="contact-status ${statusClass}">${statusText}</span></td>
+                    <td>${new Date(attrs.added_on).toLocaleDateString()}</td>
+                    <td>${leadsCount}</td>
+                    <td>$${paidAmount.toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewAdvocate('${attrs.advocate_id}')" style="background: #3498db; font-size: 11px;">View</button>
+                        <button class="btn btn-small" onclick="contactAdvocate('${attrs.advocate_id}')" style="background: #27ae60; font-size: 11px;">Contact</button>
+                    </td>
+                `;
+            });
+        }
+        
+        // Sales rep mapping
+        const salesRepNames = {
+            '563935': 'Mike Johnson',
+            '579848': 'Sarah Davis', 
+            '589178': 'Tom Wilson',
+            '563875': 'Lisa Brown',
+            '539737': 'David Miller',
+            '563859': 'Jennifer Garcia',
+            '563861': 'Robert Taylor',
+            '579856': 'Amanda White',
+            '608058': 'Chris Anderson',
+            '579854': 'Michelle Thomas',
+            '539735': 'Kevin Martinez',
+            '522152': 'Nicole Rodriguez'
+        };
+        
+        function populateReferralLeadsTable() {
+            const tbody = document.getElementById('referralLeadsTableBody');
+            tbody.innerHTML = '';
+            
+            if (!referralLeadsData || referralLeadsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">No referral leads found</td></tr>';
+                return;
+            }
+            
+            referralLeadsData.forEach(lead => {
+                const row = tbody.insertRow();
+                const attrs = lead.attributes || lead;
+                
+                const advocate = advocatesData.find(a => {
+                    const aAttrs = a.attributes || a;
+                    return aAttrs.advocate_id == attrs.advocate_id;
+                });
+                const advocateAttrs = advocate?.attributes || advocate;
+                const advocateName = advocateAttrs ? `${advocateAttrs.firstname} ${advocateAttrs.lastname}` : 'Unknown';
+                
+                const repId = attrs.salesrep_id || advocateAttrs?.sales_rep_id;
+                const repName = salesRepNames[repId] || 'N/A';
+                const product = attrs.product?.name || attrs.product || 'Roofing';
+                
+                let statusText = 'New';
+                if (attrs.status === 4 || attrs.status === 'converted') statusText = 'Converted';
+                else if (attrs.status === 3 || attrs.status === 'qualified') statusText = 'Qualified';
+                else if (attrs.status === 2 || attrs.status === 'contacted') statusText = 'Contacted';
+                else if (attrs.status === 1 || attrs.status === 'new') statusText = 'New';
+                
+                // Census data display
+                const censusData = attrs.census_data || {};
+                const income = censusData.median_income ? `$${censusData.median_income.toLocaleString()}` : 'Not enriched';
+                const homeValue = censusData.median_home_value ? `$${censusData.median_home_value.toLocaleString()}` : 'Not enriched';
+                
+                row.innerHTML = `
+                    <td><strong>${attrs.firstname || 'N/A'} ${attrs.lastname || ''}</strong><br><small>${attrs.email || 'No email'}</small></td>
+                    <td>${attrs.state || 'N/A'}</td>
+                    <td>${advocateName}</td>
+                    <td>${repName}</td>
+                    <td>${product}</td>
+                    <td><span class="contact-status status-${statusText.toLowerCase()}">${statusText}</span></td>
+                    <td>${income}</td>
+                    <td>${homeValue}</td>
+                    <td>${new Date(attrs.added_on).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="enrichReferralLead('${attrs.lead_id}')" style="background: #f39c12; font-size: 11px;">Enrich</button>
+                        <button class="btn btn-small" onclick="viewReferralLead('${attrs.lead_id}')" style="background: #3498db; font-size: 11px;">View</button>
+                    </td>
+                `;
+            });
+        }
+        
+        function updateReferralStats() {
+            document.getElementById('totalAdvocates').textContent = advocatesData.length;
+            document.getElementById('totalReferralLeads').textContent = referralLeadsData.length;
+            
+            const converted = referralLeadsData.filter(lead => lead.status === 'converted').length;
+            document.getElementById('convertedReferrals').textContent = converted;
+            
+            const totalRevenue = referralLeadsData.reduce((sum, lead) => sum + (lead.value || 0), 0);
+            document.getElementById('referralRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
+        }
+        
+        function filterReferralLeads() {
+            const filter = document.getElementById('referralStatusFilter').value;
+            const rows = document.querySelectorAll('#referralLeadsTableBody tr');
+            
+            rows.forEach(row => {
+                const statusCell = row.querySelector('.contact-status');
+                const status = statusCell.textContent.toLowerCase();
+                row.style.display = !filter || status.includes(filter) ? '' : 'none';
+            });
+        }
+        
+        function exportAdvocates() {
+            alert('Exporting advocates data to CSV');
+        }
+        
+        function exportReferralLeads() {
+            alert('Exporting referral leads to CSV');
+        }
+        
+        function viewAdvocate(id) {
+            const advocate = advocatesData.find(a => a.id === id);
+            if (advocate) {
+                alert(`Advocate Details:\n\nName: ${advocate.first_name} ${advocate.last_name}\nEmail: ${advocate.email}\nStatus: ${advocate.status}\nLeads: ${advocate.leads_count || 0}`);
+            }
+        }
+        
+        function contactAdvocate(id) {
+            alert('Opening contact form for advocate');
+        }
+        
+        function viewReferralLead(id) {
+            const lead = referralLeadsData.find(l => l.id === id);
+            if (lead) {
+                alert(`Referral Lead Details:\n\nName: ${lead.first_name} ${lead.last_name}\nEmail: ${lead.email}\nPhone: ${lead.phone || 'N/A'}\nStatus: ${lead.status}\nValue: $${lead.value || 0}`);
+            }
+        }
+        
+        function convertLead(id) {
+            alert('Converting referral lead to customer');
+        }
+        
+        function showReferralTab(tab) {
+            // Hide all sections
+            document.getElementById('advocatesSection').style.display = 'none';
+            document.getElementById('leadsSection').style.display = 'none';
+            document.getElementById('reportsSection').style.display = 'none';
+            
+            // Remove active class from all tabs
+            document.getElementById('advocatesTab').classList.remove('active');
+            document.getElementById('leadsTab').classList.remove('active');
+            document.getElementById('reportsTab').classList.remove('active');
+            
+            // Show selected section and activate tab
+            document.getElementById(tab + 'Section').style.display = 'block';
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            if (tab === 'reports') {
+                generateReports();
+            }
+        }
+        
+        function filterAdvocates() {
+            const search = document.getElementById('advocateSearch').value.toLowerCase();
+            const state = document.getElementById('advocateStateFilter').value;
+            const status = document.getElementById('advocateStatusFilter').value;
+            const rep = document.getElementById('advocateRepFilter').value;
+            
+            const rows = document.querySelectorAll('#advocatesTableBody tr');
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const rowState = row.cells[1].textContent;
+                const rowStatus = row.cells[3].textContent.toLowerCase();
+                const rowRep = row.cells[2].textContent;
+                
+                const matchSearch = !search || name.includes(search);
+                const matchState = !state || rowState.includes(state);
+                const matchStatus = !status || rowStatus.includes(status);
+                const matchRep = !rep || rowRep.includes(salesRepNames[rep] || rep);
+                
+                row.style.display = matchSearch && matchState && matchStatus && matchRep ? '' : 'none';
+            });
+        }
+        
+        function filterLeads() {
+            const search = document.getElementById('leadSearch').value.toLowerCase();
+            const state = document.getElementById('leadStateFilter').value;
+            const status = document.getElementById('leadStatusFilter').value;
+            const product = document.getElementById('leadProductFilter').value;
+            
+            const rows = document.querySelectorAll('#referralLeadsTableBody tr');
+            rows.forEach(row => {
+                if (row.cells.length < 5) return;
+                const name = row.cells[0].textContent.toLowerCase();
+                const rowState = row.cells[1].textContent;
+                const rowStatus = row.cells[5].textContent.toLowerCase();
+                const rowProduct = row.cells[4].textContent;
+                
+                const matchSearch = !search || name.includes(search);
+                const matchState = !state || rowState.includes(state);
+                const matchStatus = !status || rowStatus.includes(status);
+                const matchProduct = !product || rowProduct.includes(product);
+                
+                row.style.display = matchSearch && matchState && matchStatus && matchProduct ? '' : 'none';
+            });
+        }
+        
+        function sortAdvocates(column) {
+            // Simple sorting implementation
+            const tbody = document.getElementById('advocatesTableBody');
+            const rows = Array.from(tbody.rows);
+            rows.sort((a, b) => {
+                const aVal = a.cells[getColumnIndex(column, 'advocate')].textContent;
+                const bVal = b.cells[getColumnIndex(column, 'advocate')].textContent;
+                return aVal.localeCompare(bVal);
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        function sortLeads(column) {
+            const tbody = document.getElementById('referralLeadsTableBody');
+            const rows = Array.from(tbody.rows);
+            rows.sort((a, b) => {
+                const aVal = a.cells[getColumnIndex(column, 'lead')].textContent;
+                const bVal = b.cells[getColumnIndex(column, 'lead')].textContent;
+                return aVal.localeCompare(bVal);
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        function getColumnIndex(column, type) {
+            const advocateColumns = {name: 0, state: 1, rep: 2, status: 3, date: 4, leads: 5, paid: 6};
+            const leadColumns = {name: 0, state: 1, advocate: 2, rep: 3, product: 4, status: 5, value: 6, date: 7};
+            return type === 'advocate' ? advocateColumns[column] : leadColumns[column];
+        }
+        
+        async function bulkEnrichLeads() {
+            const unenrichedLeads = referralLeadsData.filter(lead => {
+                const attrs = lead.attributes || lead;
+                return attrs.zip && !attrs.census_data;
+            });
+            
+            if (unenrichedLeads.length === 0) {
+                alert('All leads with ZIP codes are already enriched!');
+                return;
+            }
+            
+            const toEnrich = Math.min(unenrichedLeads.length, 20); // Limit to 20 at a time
+            
+            for (let i = 0; i < toEnrich; i++) {
+                const lead = unenrichedLeads[i];
+                const attrs = lead.attributes || lead;
+                await enrichReferralLead(attrs.lead_id);
+                await new Promise(resolve => setTimeout(resolve, 200)); // Rate limit
+            }
+            
+            alert(`Enriched ${toEnrich} leads with census data!`);
+        }
+        
+        function generateReports() {
+            // Calculate advocate performance
+            const advocateStats = advocatesData.map(advocate => {
+                const attrs = advocate.attributes || advocate;
+                const leads = referralLeadsData.filter(lead => {
+                    const leadAttrs = lead.attributes || lead;
+                    return leadAttrs.advocate_id == attrs.advocate_id;
+                });
+                const conversions = leads.filter(lead => {
+                    const leadAttrs = lead.attributes || lead;
+                    return leadAttrs.status === 4 || leadAttrs.status === 'converted';
+                });
+                
+                return {
+                    ...attrs,
+                    leadCount: leads.length,
+                    conversions: conversions.length,
+                    conversionRate: leads.length > 0 ? (conversions.length / leads.length * 100).toFixed(1) : 0,
+                    estimatedRevenue: conversions.length * 15000 // Avg project value
+                };
+            }).sort((a, b) => b.leadCount - a.leadCount);
+            
+            // Update stats
+            document.getElementById('topAdvocateLeads').textContent = advocateStats[0]?.leadCount || 0;
+            document.getElementById('avgLeadsPerAdvocate').textContent = (advocateStats.reduce((sum, a) => sum + a.leadCount, 0) / advocateStats.length).toFixed(1);
+            document.getElementById('totalConversions').textContent = advocateStats.reduce((sum, a) => sum + a.conversions, 0);
+            
+            const totalRevenue = advocateStats.reduce((sum, a) => sum + a.estimatedRevenue, 0);
+            const totalCost = advocateStats.reduce((sum, a) => sum + (a.conversions * 500), 0); // $500 per conversion
+            const roi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost * 100).toFixed(0) : 0;
+            document.getElementById('estimatedROI').textContent = roi + '%';
+            
+            // Populate leaderboard
+            const tbody = document.getElementById('leaderboardTableBody');
+            tbody.innerHTML = '';
+            
+            advocateStats.slice(0, 20).forEach((advocate, index) => {
+                const row = tbody.insertRow();
+                const repName = salesRepNames[advocate.sales_rep_id] || 'N/A';
+                
+                row.innerHTML = `
+                    <td><strong>#${index + 1}</strong></td>
+                    <td>${advocate.firstname} ${advocate.lastname}</td>
+                    <td>${advocate.state || 'N/A'}</td>
+                    <td>${repName}</td>
+                    <td>${advocate.leadCount}</td>
+                    <td>${advocate.conversions}</td>
+                    <td>${advocate.conversionRate}%</td>
+                    <td>$${advocate.estimatedRevenue.toLocaleString()}</td>
+                `;
+            });
+            
+            // Create charts
+            createReportsCharts(advocateStats);
+        }
+        
+        function createReportsCharts(advocateStats) {
+            // Top advocates chart
+            const topAdvocatesCtx = document.getElementById('topAdvocatesChart');
+            if (topAdvocatesCtx && !topAdvocatesCtx.chart) {
+                const top10 = advocateStats.slice(0, 10);
+                topAdvocatesCtx.chart = new Chart(topAdvocatesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: top10.map(a => `${a.firstname} ${a.lastname}`),
+                        datasets: [{
+                            data: top10.map(a => a.leadCount),
+                            backgroundColor: '#3498db',
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+            
+            // Sales rep performance
+            const salesRepCtx = document.getElementById('salesRepChart');
+            if (salesRepCtx && !salesRepCtx.chart) {
+                const repStats = {};
+                advocateStats.forEach(advocate => {
+                    const repId = advocate.sales_rep_id;
+                    const repName = salesRepNames[repId] || `Rep ${repId}`;
+                    if (!repStats[repName]) repStats[repName] = 0;
+                    repStats[repName] += advocate.leadCount;
+                });
+                
+                salesRepCtx.chart = new Chart(salesRepCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(repStats),
+                        datasets: [{
+                            data: Object.values(repStats),
+                            backgroundColor: ['#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6', '#1abc9c']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function loadReferralData() {
+            Promise.all([
+                syncAdvocates(),
+                syncReferralLeads()
+            ]).then(() => {
+                console.log('✅ All referral data loaded');
+                // Update advocate lead counts
+                populateAdvocatesTable();
+            }).catch(error => {
+                console.error('❌ Error loading referral data:', error);
+            });
+        }
+        
+        async function enrichReferralLead(leadId) {
+            const lead = referralLeadsData.find(l => {
+                const attrs = l.attributes || l;
+                return attrs.lead_id == leadId;
+            });
+            
+            if (!lead) return;
+            
+            const attrs = lead.attributes || lead;
+            const zipCode = attrs.zip;
+            
+            if (!zipCode) {
+                alert('No ZIP code available for census enrichment');
+                return;
+            }
+            
+            try {
+                // Enrich with census data
+                const censusResponse = await fetch(`https://api.census.gov/data/2021/acs/acs5?get=B19013_001E,B25077_001E,B08303_001E,B15003_022E,B25003_002E,B25003_001E&for=zcta:${zipCode}`);
+                
+                if (censusResponse.ok) {
+                    const censusData = await censusResponse.json();
+                    if (censusData.length > 1) {
+                        const data = censusData[1];
+                        const enrichedData = {
+                            median_income: parseInt(data[0]) || 0,
+                            median_home_value: parseInt(data[1]) || 0,
+                            commute_time: parseInt(data[2]) || 0,
+                            bachelor_degree: parseInt(data[3]) || 0,
+                            owner_occupied: parseInt(data[4]) || 0,
+                            total_housing: parseInt(data[5]) || 0,
+                            homeownership_rate: data[5] > 0 ? Math.round((data[4] / data[5]) * 100) : 0
+                        };
+                        
+                        // Store enriched data
+                        attrs.census_data = enrichedData;
+                        
+                        alert(`Lead Enriched!\n\nMedian Income: $${enrichedData.median_income.toLocaleString()}\nHome Value: $${enrichedData.median_home_value.toLocaleString()}\nHomeownership: ${enrichedData.homeownership_rate}%\nBachelor Degree: ${enrichedData.bachelor_degree.toLocaleString()}`);
+                        
+                        // Refresh table to show enriched data
+                        populateReferralLeadsTable();
+                    }
+                }
+            } catch (error) {
+                console.error('Census enrichment failed:', error);
+                alert('Census data enrichment failed');
+            }
+        }
+        
+        function exportAllReferralData() {
+            const combinedData = {
+                advocates: advocatesData,
+                leads: referralLeadsData,
+                summary: {
+                    totalAdvocates: advocatesData.length,
+                    totalLeads: referralLeadsData.length,
+                    exportDate: new Date().toISOString()
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(combinedData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `referral_data_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCRMData();
+            setupEventListeners();
+            createUSMap();
+            updateAPIUsageDisplay();
+            
+            // Initialize marketing table with sample data
+            setTimeout(() => {
+                populateMarketingTable();
+                updateScoreDisplay();
+                updateHomeownershipDisplay();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
