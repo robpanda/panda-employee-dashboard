@@ -106,9 +106,9 @@ def import_employees():
                 'points_balance': Decimal('0')
             }
             
-            # Use email as primary key for uniqueness
+            # Use last_name as primary key (existing table structure)
             try:
-                existing = table.get_item(Key={'email': email})
+                existing = table.get_item(Key={'last_name': last_name})
                 if 'Item' in existing:
                     # Update existing employee but preserve points
                     existing_item = existing['Item']
@@ -121,7 +121,7 @@ def import_employees():
             except:
                 imported_count += 1
             
-            # Insert/update employee with email as key
+            # Insert/update employee
             table.put_item(Item=employee_data)
         
         return {
@@ -156,22 +156,20 @@ def award_points(event):
                 'body': json.dumps({'error': 'Invalid employee or points amount'})
             }
         
-        # Find employee by email (now primary key)
-        try:
-            response = table.get_item(Key={'email': employee_email})
-            if 'Item' not in response:
-                return {
-                    'statusCode': 404,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Employee not found'})
-                }
-            employee = response['Item']
-        except Exception as e:
+        # Find employee by email using scan
+        response = table.scan(
+            FilterExpression='email = :email',
+            ExpressionAttributeValues={':email': employee_email}
+        )
+        
+        if not response['Items']:
             return {
                 'statusCode': 404,
                 'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Employee not found'})
             }
+        
+        employee = response['Items'][0]
         
 
         
@@ -180,7 +178,7 @@ def award_points(event):
         new_balance = (employee.get('points_balance', Decimal('0')) + points)
         
         table.update_item(
-            Key={'email': employee_email},
+            Key={'last_name': employee['last_name']},
             UpdateExpression='SET points_lifetime = :lifetime, points_balance = :balance',
             ExpressionAttributeValues={
                 ':lifetime': new_lifetime,
@@ -235,30 +233,24 @@ def employee_login(event):
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
-        # Find employee by email (now primary key)
-        try:
-            response = table.get_item(Key={'email': email})
-            if 'Item' not in response:
-                return {
-                    'statusCode': 401,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Invalid credentials'})
-                }
-            employee = response['Item']
-            
-            # Check if employee is active
-            if employee.get('status') != 'active':
-                return {
-                    'statusCode': 401,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Account inactive'})
-                }
-        except Exception as e:
+        # Find employee by email
+        response = table.scan(
+            FilterExpression='email = :email AND #status = :status',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':email': email,
+                ':status': 'active'
+            }
+        )
+        
+        if not response['Items']:
             return {
                 'statusCode': 401,
                 'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Invalid credentials'})
             }
+        
+        employee = response['Items'][0]
         
         # Check password (in production, use proper hashing)
         if employee.get('password') != password:
