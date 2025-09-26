@@ -454,38 +454,7 @@
         let terminatedEmployees = [];
         let backupData = null;
         
-        // Static employee data from Google Sheets
-        const staticEmployeeData = [
-            {"First Name":"Bryan","Last Name":"Abel","Department":"Finance & Accounting","Position":"Director of Finance","Employment Date":"2023-11-13","Email":"bryan.abel@pandaexteriors.com","Phone":"(555) 123-4567","Terminated":"No","Years of Service":"1.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"George","Last Name":"Aggelis","Department":"Insurance Sales","Position":"Sales Representative","Employment Date":"2025-08-28","Email":"george.aggelis@pandaexteriors.com","Phone":"(555) 234-5678","Terminated":"No","Years of Service":"0.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Bryan","Last Name":"Andrade","Department":"Call Center","Position":"Call Center Sales Representative","Employment Date":"2024-07-30","Email":"bryan.andrade@pandaexteriors.com","Phone":"(555) 345-6789","Terminated":"No","Years of Service":"0.4","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Camila","Last Name":"Arango","Department":"Talent Acquisition","Position":"Junior Recruiter","Employment Date":"2025-02-24","Email":"camila.arango@pandaexteriors.com","Phone":"(555) 456-7890","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"J.","Last Name":"Arpan","Department":"Insurance Sales","Position":"Director of Sales - Insurance Division","Employment Date":"2023-06-12","Email":"j.arpan@pandaexteriors.com","Phone":"(555) 567-8901","Terminated":"No","Years of Service":"1.5","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Dan","Last Name":"Atias","Department":"Insurance Sales","Position":"Sales Representative","Employment Date":"2021-10-01","Email":"dan.atias@pandaexteriors.com","Phone":"(555) 678-9012","Terminated":"No","Years of Service":"3.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Chris","Last Name":"Atkinson","Department":"Insurance Sales","Position":"Sales Representative","Employment Date":"2024-07-08","Email":"chris.atkinson@pandaexteriors.com","Phone":"(555) 789-0123","Terminated":"No","Years of Service":"0.4","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Spencer","Last Name":"Auletto","Department":"Operations","Position":"Roofing Project Manager","Employment Date":"2025-07-07","Email":"spencer.auletto@pandaexteriors.com","Phone":"(555) 890-1234","Terminated":"No","Years of Service":"0.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Christopher","Last Name":"Ayala Lovo","Department":"Operations","Position":"Project Manager","Employment Date":"2023-03-06","Email":"christopher.ayalalovo@pandaexteriors.com","Phone":"(555) 901-2345","Terminated":"No","Years of Service":"1.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Brian","Last Name":"Ayers","Department":"Insurance Sales","Position":"DE Sales Manager - Insurance Division","Employment Date":"2024-01-03","Email":"brian.ayers@pandaexteriors.com","Phone":"(555) 012-3456","Terminated":"No","Years of Service":"1.0","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Christian","Last Name":"Curry","Department":"Business Operations","Position":"President","Employment Date":"2021-09-24","Email":"christian.curry@pandaexteriors.com","Phone":"(555) 123-4567","Terminated":"No","Years of Service":"3.3","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Jason","Last Name":"Daniel","Department":"Finance & Accounting","Position":"Chief Financial Officer","Employment Date":"2020-12-01","Email":"jason.daniel@pandaexteriors.com","Phone":"(555) 234-5678","Terminated":"No","Years of Service":"4.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Cheyne","Last Name":"Kilbourne","Department":"Business Operations","Position":"Chief Operations Officer","Employment Date":"2021-01-01","Email":"cheyne.kilbourne@pandaexteriors.com","Phone":"(555) 345-6789","Terminated":"No","Years of Service":"4.0","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Scott","Last Name":"Tucker","Department":"Business Operations","Position":"Chief Executive Officer","Employment Date":"2020-12-01","Email":"scott.tucker@pandaexteriors.com","Phone":"(555) 456-7890","Terminated":"No","Years of Service":"4.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Rob","Last Name":"Winters","Department":"Business Operations","Position":"Digital Marketing Director","Employment Date":"2025-03-03","Email":"rob.winters@pandaexteriors.com","Phone":"(555) 567-8901","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Trevor","Last Name":"Johnson","Department":"Operations","Position":"Director of Operations","Employment Date":"2022-06-13","Email":"trevor.johnson@pandaexteriors.com","Phone":"(555) 678-9012","Terminated":"No","Years of Service":"2.5","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Valerie","Last Name":"Liebno","Department":"Human Resources","Position":"Director of Human Resources","Employment Date":"2022-12-05","Email":"valerie.liebno@pandaexteriors.com","Phone":"(555) 789-0123","Terminated":"No","Years of Service":"2.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Joe","Last Name":"LaRose Jr","Department":"Retail/Solar Sales","Position":"Director of Sales - Retail Division","Employment Date":"2023-10-30","Email":"joe.larosejr@pandaexteriors.com","Phone":"(555) 890-1234","Terminated":"No","Years of Service":"1.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Sutton","Last Name":"Gasper","Department":"Call Center","Position":"Service Center Manager","Employment Date":"2023-10-30","Email":"sutton.gasper@pandaexteriors.com","Phone":"(555) 901-2345","Terminated":"No","Years of Service":"1.2","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Andreas","Last Name":"Georgiou","Department":"Assets","Position":"Asset Manager","Employment Date":"2023-11-08","Email":"andreas.georgiou@pandaexteriors.com","Phone":"(555) 012-3456","Terminated":"No","Years of Service":"1.1","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Nicholas","Last Name":"Gessler","Department":"Talent Acquisition","Position":"Director of Talent Acquisition","Employment Date":"2025-02-03","Email":"nicholas.gessler@pandaexteriors.com","Phone":"(555) 123-4567","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"David","Last Name":"McGinnis","Department":"Retail Business Development","Position":"Director of Retail Business Development","Employment Date":"2025-03-04","Email":"david.mcginnis@pandaexteriors.com","Phone":"(555) 234-5678","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Todd","Last Name":"Sandberg","Department":"Business Operations","Position":"Director of Business Operations","Employment Date":"2025-02-10","Email":"todd.sandberg@pandaexteriors.com","Phone":"(555) 345-6789","Terminated":"No","Years of Service":"0.8","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Jason","Last Name":"Wooten","Department":"Estimating","Position":"Director of Sales Operations","Employment Date":"2022-04-27","Email":"jason.wooten@pandaexteriors.com","Phone":"(555) 456-7890","Terminated":"No","Years of Service":"2.7","Merch Requested":"","Merch Sent":"No"},
-            {"First Name":"Thomas","Last Name":"Hallwig","Department":"Commercial","Position":"Director of Operations - Commercial Division","Employment Date":"2022-01-17","Email":"thomas.hallwig@pandaexteriors.com","Phone":"(555) 567-8901","Terminated":"No","Years of Service":"2.9","Merch Requested":"","Merch Sent":"No"}
-        ];
-        
-        // Initialize with static data
-        employees = staticEmployeeData.filter(emp => emp.Terminated !== 'Yes');
-        terminatedEmployees = staticEmployeeData.filter(emp => emp.Terminated === 'Yes');
+        const API_BASE = 'https://w40mq6ab11.execute-api.us-east-2.amazonaws.com/prod';
         
         function parseName(fullName) {
             if (!fullName) return { firstName: '', lastName: '' };
@@ -637,6 +606,9 @@
             renderEmployeeTable();
             renderTerminatedTable();
             
+            // Save restored data to database
+            saveEmployeesToDB([...employees, ...terminatedEmployees]);
+            
             document.getElementById('uploadStatus').innerHTML = 
                 `<div style="color: blue; margin-top: 10px;">✓ Import undone - data restored to previous state</div>`;
             
@@ -749,6 +721,7 @@
             emp['Merch Sent'] = newMerchSent;
             
             renderEmployeeTable();
+            saveEmployeesToDB([...employees, ...terminatedEmployees]);
         }
         
         function findDuplicates() {
@@ -819,6 +792,34 @@
         function deleteDuplicate(index) {
             if (confirm('Delete this duplicate record?')) {
                 alert('Delete functionality - remove duplicate');
+            }
+        }
+        
+        async function loadEmployees() {
+            try {
+                const response = await fetch(`${API_BASE}/employees`);
+                const data = await response.json();
+                if (data.employees) {
+                    const allEmployees = data.employees;
+                    employees = allEmployees.filter(emp => emp.Terminated !== 'Yes');
+                    terminatedEmployees = allEmployees.filter(emp => emp.Terminated === 'Yes');
+                    renderEmployeeTable();
+                    renderTerminatedTable();
+                }
+            } catch (error) {
+                console.error('Error loading employees:', error);
+            }
+        }
+        
+        async function saveEmployeesToDB(allEmployees) {
+            try {
+                await fetch(`${API_BASE}/employees`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({employees: allEmployees})
+                });
+            } catch (error) {
+                console.error('Error saving employees:', error);
             }
         }
         
@@ -972,6 +973,9 @@
                 renderEmployeeTable();
                 renderTerminatedTable();
                 
+                // Save to database
+                saveEmployeesToDB([...employees, ...terminatedEmployees]);
+                
                 document.getElementById('uploadStatus').innerHTML = `
                     <div style="color: green; margin-top: 10px;">
                         ✓ Smart import completed:<br>
@@ -992,8 +996,7 @@
         // Initialize on load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Dashboard initializing...');
-            renderEmployeeTable();
-            renderTerminatedTable();
+            loadEmployees();
         });
         
         // Add keyboard shortcut for quick import
