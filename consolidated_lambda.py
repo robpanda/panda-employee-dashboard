@@ -30,6 +30,8 @@ def lambda_handler(event, context):
             return import_employees()
         elif path == '/award-points' and method == 'POST':
             return award_points(event)
+        elif path == '/employee-login' and method == 'POST':
+            return employee_login(event)
         else:
             return {
                 'statusCode': 404,
@@ -202,4 +204,68 @@ def award_points(event):
             'statusCode': 500,
             'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Award failed: {str(e)}'})
+        }
+
+def employee_login(event):
+    try:
+        body = json.loads(event.get('body', '{}'))
+        email = body.get('email')
+        password = body.get('password')
+        
+        if not email or not password:
+            return {
+                'statusCode': 400,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Email and password required'})
+            }
+        
+        # Find employee by email
+        response = table.scan(
+            FilterExpression='email = :email AND #status = :status',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':email': email,
+                ':status': 'active'
+            }
+        )
+        
+        if not response['Items']:
+            return {
+                'statusCode': 401,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Invalid credentials'})
+            }
+        
+        employee = response['Items'][0]
+        
+        # Check password (in production, use proper hashing)
+        if employee.get('password') != password:
+            return {
+                'statusCode': 401,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Invalid credentials'})
+            }
+        
+        # Convert Decimal to float for JSON
+        employee_data = {}
+        for key, value in employee.items():
+            if isinstance(value, Decimal):
+                employee_data[key] = float(value)
+            else:
+                employee_data[key] = value
+        
+        return {
+            'statusCode': 200,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({
+                'message': 'Login successful',
+                'employee': employee_data
+            })
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'Login failed: {str(e)}'})
         }
