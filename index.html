@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panda Admin Portal</title>
-    <!-- Cache bust: 2025-09-26-14:42 - FORCE DEPLOY -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        // Immediate redirect to login if not authenticated - v2
+        // Immediate redirect to login if not authenticated
         if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
             window.location.replace('login.html?v=' + Date.now());
         }
@@ -18,11 +17,12 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
         .portal-container {
             background: white;
@@ -30,58 +30,133 @@
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             text-align: center;
-            max-width: 500px;
-            width: 90%;
+            max-width: 800px;
+            width: 100%;
         }
-        .logo { font-size: 3em; margin-bottom: 20px; }
+        .logo { margin-bottom: 20px; }
+        .logo img { max-width: 200px; height: auto; }
         h1 { color: #2c3e50; margin-bottom: 30px; font-size: 2.2em; }
-        .nav-buttons { display: flex; flex-direction: column; gap: 20px; }
-        .nav-btn {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            padding: 20px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.2em;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .nav-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 30px 20px;
             text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-color: #2c5530;
+            text-decoration: none;
+            color: inherit;
+        }
+        .nav-card .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
             display: block;
         }
-        .nav-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        .nav-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.3em;
         }
-        .nav-btn.dashboard {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        .nav-card p {
+            color: #6c757d;
+            font-size: 0.9em;
+            line-height: 1.4;
         }
-        .nav-btn.dashboard:hover {
-            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        .employees { border-color: #27ae60; }
+        .employees:hover { border-color: #27ae60; box-shadow: 0 15px 30px rgba(39, 174, 96, 0.2); }
+        .points { border-color: #f39c12; }
+        .points:hover { border-color: #f39c12; box-shadow: 0 15px 30px rgba(243, 156, 18, 0.2); }
+        .admin { border-color: #e74c3c; }
+        .admin:hover { border-color: #e74c3c; box-shadow: 0 15px 30px rgba(231, 76, 60, 0.2); }
+        .assets { border-color: #3498db; }
+        .assets:hover { border-color: #3498db; box-shadow: 0 15px 30px rgba(52, 152, 219, 0.2); }
+        .leads { border-color: #9b59b6; }
+        .leads:hover { border-color: #9b59b6; box-shadow: 0 15px 30px rgba(155, 89, 182, 0.2); }
+        .referrals { border-color: #1abc9c; }
+        .referrals:hover { border-color: #1abc9c; box-shadow: 0 15px 30px rgba(26, 188, 156, 0.2); }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
         }
-        .nav-btn.referrals {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        }
-        .nav-btn.referrals:hover {
-            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
-        }
+        .logout-btn:hover { background: #c0392b; }
     </style>
 </head>
 <body>
+    <button class="logout-btn" onclick="logout()">Logout</button>
     
     <div class="portal-container">
-        <div class="logo">🎯</div>
+        <div class="logo">
+            <img src="panda-logo.png" alt="Panda Exteriors">
+        </div>
         <h1>Panda Admin Portal</h1>
-        <div class="nav-buttons">
-            <a href="dashboard.html" class="nav-btn dashboard">
-                👥 Employee Dashboard
+        <p style="color: #6c757d; margin-bottom: 20px;">Welcome to your administrative dashboard</p>
+        
+        <div class="nav-grid">
+            <a href="dashboard.html" class="nav-card employees">
+                <span class="icon">👥</span>
+                <h3>Employee Dashboard</h3>
+                <p>Manage employees, view profiles, and track performance metrics</p>
             </a>
-            <a href="leads.html" class="nav-btn">
-                📊 Lead Management
+            
+            <a href="#" class="nav-card points" onclick="alert('MyPandaPoints portal coming soon!')">
+                <span class="icon">⭐</span>
+                <h3>My Panda Points</h3>
+                <p>Award points to employees and manage the rewards program</p>
             </a>
-            <a href="referrals.html" class="nav-btn referrals">
-                🤝 Referral Management
+            
+            <a href="admin.html" class="nav-card admin">
+                <span class="icon">⚙️</span>
+                <h3>Admin Console</h3>
+                <p>System settings, user management, and administrative tools</p>
+            </a>
+            
+            <a href="assets.html" class="nav-card assets">
+                <span class="icon">📦</span>
+                <h3>Asset Management</h3>
+                <p>Track company assets, inventory, and equipment</p>
+            </a>
+            
+            <a href="leads.html" class="nav-card leads">
+                <span class="icon">📊</span>
+                <h3>Lead Management</h3>
+                <p>Track sales leads, opportunities, and customer pipeline</p>
+            </a>
+            
+            <a href="referrals.html" class="nav-card referrals">
+                <span class="icon">🤝</span>
+                <h3>Referral Management</h3>
+                <p>Manage customer referrals and partner relationships</p>
             </a>
         </div>
     </div>
+    
+    <script>
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = 'login.html';
+        }
+    </script>
 </body>
 </html>
