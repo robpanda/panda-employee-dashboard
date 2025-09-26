@@ -28,6 +28,8 @@ def lambda_handler(event, context):
             return get_employees()
         elif path == '/import' and method == 'POST':
             return import_employees()
+        elif path == '/award-points' and method == 'POST':
+            return award_points(event)
         else:
             return {
                 'statusCode': 404,
@@ -88,7 +90,11 @@ def import_employees():
                 'hire_date': row.get('Hire Date', '').strip(),
                 'phone': row.get('Phone', '').strip(),
                 'email': f"{row.get('First Name', '').strip().lower()}.{row.get('Last Name', '').strip().lower()}@pandaexteriors.com",
-                'status': 'active'
+                'status': 'active',
+                'password': 'Welcome2025!',
+                'points_lifetime': Decimal('0'),
+                'points_redeemed': Decimal('0'),
+                'points_balance': Decimal('0')
             }
             
             # Check if employee exists
@@ -119,4 +125,81 @@ def import_employees():
             'statusCode': 500,
             'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Import failed: {str(e)}'})
+        }
+
+def award_points(event):
+    try:
+        body = json.loads(event.get('body', '{}'))
+        employee_email = body.get('employee_email')
+        points = Decimal(str(body.get('points', 0)))
+        reason = body.get('reason', '')
+        manager = body.get('manager', '')
+        
+        if not employee_email or points <= 0:
+            return {
+                'statusCode': 400,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Invalid employee or points amount'})
+            }
+        
+        # Find employee by email
+        response = table.scan(
+            FilterExpression='email = :email',
+            ExpressionAttributeValues={':email': employee_email}
+        )
+        
+        if not response['Items']:
+            return {
+                'statusCode': 404,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Employee not found'})
+            }
+        
+        employee = response['Items'][0]
+        
+        # Update points
+        new_lifetime = (employee.get('points_lifetime', Decimal('0')) + points)
+        new_balance = (employee.get('points_balance', Decimal('0')) + points)
+        
+        table.update_item(
+            Key={'last_name': employee['last_name']},
+            UpdateExpression='SET points_lifetime = :lifetime, points_balance = :balance',
+            ExpressionAttributeValues={
+                ':lifetime': new_lifetime,
+                ':balance': new_balance
+            }
+        )
+        
+        # Send email notification
+        try:
+            ses = boto3.client('ses', region_name='us-east-1')
+            ses.send_email(
+                Source='noreply@pandaexteriors.com',
+                Destination={'ToAddresses': [employee_email]},
+                Message={
+                    'Subject': {'Data': 'You received Panda Points!'},
+                    'Body': {
+                        'Text': {
+                            'Data': f"Congratulations {employee['name']}!\n\nYou have been awarded {points} Panda Points by {manager}.\n\nReason: {reason or 'Great work!'}\n\nYour new balance: {new_balance} points\n\nRedeem your points at MyPandaPoints.com"
+                        }
+                    }
+                }
+            )
+        except Exception as e:
+            print(f"Email notification failed: {e}")
+        
+        return {
+            'statusCode': 200,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({
+                'message': f'Awarded {points} points to {employee["name"]}',
+                'new_balance': float(new_balance)
+            })
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'Award failed: {str(e)}'})
         }

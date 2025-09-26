@@ -81,6 +81,44 @@
                     </div>
                 </div>
                 
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h5 class="card-title"><i class="fas fa-star text-warning"></i> My Panda Points</h5>
+                                        <p class="card-text">Award points to employees for outstanding performance</p>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <select class="form-select" id="employeeSelect">
+                                                    <option value="">Select Employee...</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="number" class="form-control" id="pointsAmount" placeholder="Points" min="1" max="100">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button class="btn btn-warning" onclick="awardPoints()">Award Points</button>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <textarea class="form-control" id="pointsReason" placeholder="Reason for award (optional)" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <h6>Manager: Rob Winters</h6>
+                                            <div class="badge bg-warning fs-6 px-3 py-2">Quarterly Budget: <span id="managerBudget">500</span></div>
+                                            <div class="badge bg-info fs-6 px-3 py-2 mt-2">Remaining: <span id="remainingBudget">500</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <ul class="nav nav-pills nav-fill mb-4" id="mainTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="active-employees-tab" data-bs-toggle="tab" data-bs-target="#active-employees" type="button" role="tab">
@@ -180,13 +218,76 @@
             try {
                 const response = await fetch(`${API_URL}/employees`);
                 employees = await response.json();
+                
+                // Add default Panda Points fields if missing
+                employees = employees.map(emp => ({
+                    ...emp,
+                    password: emp.password || 'Welcome2025!',
+                    points_lifetime: emp.points_lifetime || 0,
+                    points_redeemed: emp.points_redeemed || 0,
+                    points_balance: emp.points_balance || 0
+                }));
+                
                 filteredEmployees = [...employees];
                 displayEmployees();
                 populateFilters();
+                populateEmployeeSelect();
             } catch (error) {
                 console.error('Error loading employees:', error);
                 document.getElementById('importResults').innerHTML = 
                     '<div class="alert alert-danger">Failed to load employees. Please check API connection.</div>';
+            }
+        }
+
+        function populateEmployeeSelect() {
+            const select = document.getElementById('employeeSelect');
+            const defaultOption = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            select.appendChild(defaultOption);
+            
+            employees.filter(emp => emp.status === 'active').forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.email;
+                option.textContent = `${employee.name} - ${employee.role}`;
+                select.appendChild(option);
+            });
+        }
+
+        async function awardPoints() {
+            const employeeEmail = document.getElementById('employeeSelect').value;
+            const points = parseInt(document.getElementById('pointsAmount').value);
+            const reason = document.getElementById('pointsReason').value;
+            
+            if (!employeeEmail || !points) {
+                alert('Please select an employee and enter points amount');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/award-points`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        employee_email: employeeEmail,
+                        points: points,
+                        reason: reason,
+                        manager: 'Rob Winters'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`Successfully awarded ${points} points!`);
+                    document.getElementById('employeeSelect').value = '';
+                    document.getElementById('pointsAmount').value = '';
+                    document.getElementById('pointsReason').value = '';
+                    await loadEmployees();
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`Failed to award points: ${error.message}`);
             }
         }
 
@@ -353,7 +454,8 @@
         function viewEmployee(email) {
             const employee = employees.find(e => e.email === email);
             if (employee) {
-                alert(`Employee Details:\n\nName: ${employee.name}\nEmployee ID: ${employee.employee_id}\nRole: ${employee.role}\nSupervisor: ${employee.supervisor}\nOffice: ${employee.office}\nDepartment: ${employee.department}\nHire Date: ${employee.hire_date}\nPhone: ${employee.phone}\nEmail: ${employee.email}\nStatus: ${employee.status}`);
+                const pointsInfo = `\n\n--- PANDA POINTS ---\nLifetime Total: ${employee.points_lifetime || 0}\nRedeemed: ${employee.points_redeemed || 0}\nCurrent Balance: ${employee.points_balance || 0}\nDefault Password: ${employee.password || 'Welcome2025!'}`;
+                alert(`Employee Details:\n\nName: ${employee.name}\nEmployee ID: ${employee.employee_id}\nRole: ${employee.role}\nSupervisor: ${employee.supervisor}\nOffice: ${employee.office}\nDepartment: ${employee.department}\nHire Date: ${employee.hire_date}\nPhone: ${employee.phone}\nEmail: ${employee.email}\nStatus: ${employee.status}${pointsInfo}`);
             }
         }
     </script>
