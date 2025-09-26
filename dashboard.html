@@ -157,6 +157,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Check authentication
+        if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
+            window.location.replace('login.html');
+        }
         let employees = [
             {
                 name: 'John Smith',

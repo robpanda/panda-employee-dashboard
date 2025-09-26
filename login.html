@@ -1,1 +1,156 @@
-<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Panda Exteriors Admin Login</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%); \n            min-height: 100vh; \n            display: flex; \n            align-items: center; \n            justify-content: center; \n        }\n        .login-container { \n            background: white; \n            padding: 40px; \n            border-radius: 15px; \n            box-shadow: 0 20px 40px rgba(0,0,0,0.1); \n            width: 400px; \n            text-align: center; \n        }\n        .logo { \n            font-size: 3em; \n            margin-bottom: 20px; \n        }\n        h1 { \n            color: #2c3e50; \n            margin-bottom: 30px; \n        }\n        .form-group { \n            margin-bottom: 20px; \n            text-align: left; \n        }\n        label { \n            display: block; \n            margin-bottom: 5px; \n            font-weight: 600; \n            color: #2c3e50; \n        }\n        input { \n            width: 100%; \n            padding: 12px; \n            border: 2px solid #ecf0f1; \n            border-radius: 8px; \n            font-size: 14px; \n            transition: border-color 0.3s; \n        }\n        input:focus { \n            border-color: #2c5530; \n            outline: none; \n            box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.1); \n        }\n        .btn { \n            width: 100%; \n            background: linear-gradient(135deg, #2c5530, #1a3d1f); \n            color: white; \n            padding: 12px; \n            border: none; \n            border-radius: 8px; \n            font-size: 16px; \n            font-weight: 600; \n            cursor: pointer; \n            transition: transform 0.2s; \n        }\n        .btn:hover { \n            transform: translateY(-1px); \n        }\n        .error { \n            background: #e74c3c; \n            color: white; \n            padding: 10px; \n            border-radius: 5px; \n            margin-bottom: 20px; \n            display: none; \n        }\n        .loading { \n            display: none; \n        }\n    </style>\n</head>\n<body>\n    <div class=\"login-container\">\n        <div class=\"logo\">🎯</div>\n        <h1>Panda Exteriors Admin</h1>\n        \n        <div id=\"error\" class=\"error\"></div>\n        \n        <form id=\"loginForm\">\n            <div class=\"form-group\">\n                <label for=\"email\">Email</label>\n                <input type=\"email\" id=\"email\" required>\n            </div>\n            <div class=\"form-group\">\n                <label for=\"password\">Password</label>\n                <input type=\"password\" id=\"password\" required>\n            </div>\n            <button type=\"submit\" class=\"btn\">\n                <span id=\"loginText\">Login</span>\n                <span id=\"loading\" class=\"loading\">🔐 Logging in...</span>\n            </button>\n        </form>\n    </div>\n\n    <script>\n        // Super admin credentials\n        const SUPER_ADMIN = {\n            email: 'superadmin@pandaexteriors.com',\n            password: 'PandaAdmin2024!'\n        };\n        \n        document.getElementById('loginForm').addEventListener('submit', function(e) {\n            e.preventDefault();\n            \n            const email = document.getElementById('email').value;\n            const password = document.getElementById('password').value;\n            const errorDiv = document.getElementById('error');\n            const loginText = document.getElementById('loginText');\n            const loading = document.getElementById('loading');\n            \n            // Show loading\n            loginText.style.display = 'none';\n            loading.style.display = 'inline';\n            errorDiv.style.display = 'none';\n            \n            // Simulate loading delay\n            setTimeout(() => {\n                if (email === SUPER_ADMIN.email && password === SUPER_ADMIN.password) {\n                    // Store login session\n                    sessionStorage.setItem('pandaAdmin', 'authenticated');\n                    sessionStorage.setItem('adminUser', email);\n                    \n                    // Redirect to portal\n                    window.location.href = 'portal.html';\n                } else {\n                    errorDiv.textContent = 'Invalid email or password';\n                    errorDiv.style.display = 'block';\n                    \n                    // Hide loading\n                    loginText.style.display = 'inline';\n                    loading.style.display = 'none';\n                }\n            }, 1000);\n        });\n        \n        // Check if already logged in\n        window.addEventListener('load', function() {\n            if (sessionStorage.getItem('pandaAdmin') === 'authenticated') {\n                window.location.href = 'portal.html';\n            }\n        });\n    </script>\n</body>\n</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panda Exteriors Admin Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .login-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 15px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+            width: 400px; 
+            text-align: center; 
+        }
+        .logo { 
+            font-size: 3em; 
+            margin-bottom: 20px; 
+        }
+        h1 { 
+            color: #2c3e50; 
+            margin-bottom: 30px; 
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+            text-align: left; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 600; 
+            color: #2c3e50; 
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #ecf0f1; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            transition: border-color 0.3s; 
+        }
+        input:focus { 
+            border-color: #2c5530; 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.1); 
+        }
+        .btn { 
+            width: 100%; 
+            background: linear-gradient(135deg, #2c5530, #1a3d1f); 
+            color: white; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: transform 0.2s; 
+        }
+        .btn:hover { 
+            transform: translateY(-1px); 
+        }
+        .error { 
+            background: #e74c3c; 
+            color: white; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin-bottom: 20px; 
+            display: none; 
+        }
+        .loading { 
+            display: none; 
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🎯</div>
+        <h1>Panda Exteriors Admin</h1>
+        
+        <div id="error" class="error"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn">
+                <span id="loginText">Login</span>
+                <span id="loading" class="loading">🔐 Logging in...</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Super admin credentials
+        const SUPER_ADMIN = {
+            email: 'superadmin@pandaexteriors.com',
+            password: 'PandaAdmin2024!'
+        };
+        
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error');
+            const loginText = document.getElementById('loginText');
+            const loading = document.getElementById('loading');
+            
+            // Show loading
+            loginText.style.display = 'none';
+            loading.style.display = 'inline';
+            errorDiv.style.display = 'none';
+            
+            // Simulate loading delay
+            setTimeout(() => {
+                if (email === SUPER_ADMIN.email && password === SUPER_ADMIN.password) {
+                    // Store login session
+                    sessionStorage.setItem('pandaAdmin', 'authenticated');
+                    sessionStorage.setItem('adminUser', email);
+                    
+                    // Redirect to portal
+                    window.location.href = 'index.html';
+                } else {
+                    errorDiv.textContent = 'Invalid email or password';
+                    errorDiv.style.display = 'block';
+                    
+                    // Hide loading
+                    loginText.style.display = 'inline';
+                    loading.style.display = 'none';
+                }
+            }, 1000);
+        });
+        
+        // Check if already logged in
+        window.addEventListener('load', function() {
+            if (sessionStorage.getItem('pandaAdmin') === 'authenticated') {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
