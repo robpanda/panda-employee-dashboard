@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Lambda Function</title>
+</head>
+<body>
+    <h1>Lambda Function Test</h1>
+    <button onclick="testEmployees()">Test GET /employees</button>
+    <button onclick="testImport()">Test POST /import</button>
+    <div id="results"></div>
+
+    <script>
+        const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
+
+        async function testEmployees() {
+            try {
+                const response = await fetch(`${API_URL}/employees`);
+                const data = await response.text();
+                document.getElementById('results').innerHTML = `
+                    <h3>GET /employees</h3>
+                    <p>Status: ${response.status}</p>
+                    <pre>${data}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `
+                    <h3>GET /employees ERROR</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testImport() {
+            try {
+                const response = await fetch(`${API_URL}/import`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.text();
+                document.getElementById('results').innerHTML = `
+                    <h3>POST /import</h3>
+                    <p>Status: ${response.status}</p>
+                    <pre>${data}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `
+                    <h3>POST /import ERROR</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
