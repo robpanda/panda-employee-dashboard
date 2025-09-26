@@ -7,59 +7,234 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .card { border: none; border-radius: 0.75rem; }
-        .sortable { cursor: pointer; user-select: none; }
-        .sortable:hover { background-color: #e9ecef; }
-        .employee-card {
-            transition: transform 0.2s;
-            border-left: 4px solid #28a745;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+            min-height: 100vh; 
         }
-        .employee-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        .navbar { 
+            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%) !important; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+        }
+        .navbar-brand img { height: 40px; }
+        .nav-link { 
+            color: rgba(255,255,255,0.9) !important; 
+            font-weight: 500; 
+            transition: all 0.3s ease; 
+        }
+        .nav-link:hover, .nav-link.active { 
+            color: white !important; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 8px; 
+        }
+        .container-fluid { padding: 30px; }
+        .card { 
+            border: none; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            transition: all 0.3s ease; 
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card-header { 
+            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%); 
+            color: white; 
+            border-radius: 15px 15px 0 0 !important; 
+            padding: 20px; 
+        }
+        .btn { 
+            border-radius: 25px; 
+            font-weight: 600; 
+            transition: all 0.3s ease; 
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-success { 
+            background: linear-gradient(135deg, #2c5530, #1a3d1f); 
+            border: none; 
+        }
+        .btn-outline-success { 
+            border-color: #2c5530; 
+            color: #2c5530; 
+        }
+        .btn-outline-success:hover { 
+            background: #2c5530; 
+            border-color: #2c5530; 
+        }
+        .form-control, .form-select { 
+            border-radius: 10px; 
+            border: 2px solid #e9ecef; 
+            transition: all 0.3s ease; 
+        }
+        .form-control:focus, .form-select:focus { 
+            border-color: #2c5530; 
+            box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.1); 
+        }
+        .badge { 
+            border-radius: 20px; 
+            padding: 8px 15px; 
+            font-weight: 600; 
         }
         .points-badge {
             background: linear-gradient(45deg, #ffd700, #ffed4e);
             color: #333;
             font-weight: bold;
+            border-radius: 20px;
+            padding: 6px 12px;
         }
-        .status-active { color: #28a745; }
-        .status-terminated { color: #dc3545; }
+        .employee-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2c5530, #1a3d1f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .table { border-radius: 15px; overflow: hidden; }
+        .table thead th { 
+            background: #f8f9fa; 
+            border: none; 
+            font-weight: 600; 
+            color: #2c3e50; 
+            padding: 15px; 
+        }
+        .table tbody tr { 
+            transition: all 0.3s ease; 
+            border: none; 
+        }
+        .table tbody tr:hover { 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+            transform: scale(1.01); 
+        }
+        .table tbody td { 
+            padding: 15px; 
+            border: none; 
+            vertical-align: middle; 
+        }
+        .nav-pills .nav-link { 
+            border-radius: 25px; 
+            font-weight: 600; 
+            margin: 0 5px; 
+        }
+        .nav-pills .nav-link.active { 
+            background: linear-gradient(135deg, #2c5530, #1a3d1f); 
+        }
+        .sortable { 
+            cursor: pointer; 
+            user-select: none; 
+            transition: all 0.3s ease; 
+        }
+        .sortable:hover { 
+            background: rgba(44, 85, 48, 0.1); 
+            color: #2c5530; 
+        }
+        .status-active { color: #28a745; font-weight: 600; }
+        .status-terminated { color: #dc3545; font-weight: 600; }
+        .input-group-text { 
+            background: #f8f9fa; 
+            border: 2px solid #e9ecef; 
+            border-right: none; 
+            border-radius: 10px 0 0 10px; 
+        }
+        .input-group .form-control { border-left: none; border-radius: 0 10px 10px 0; }
+        .display-6 { 
+            background: linear-gradient(135deg, #2c5530, #1a3d1f); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            background-clip: text; 
+        }
+        .modal-content { border-radius: 15px; }
+        .modal-header { 
+            background: linear-gradient(135deg, #2c5530, #1a3d1f); 
+            color: white; 
+            border-radius: 15px 15px 0 0; 
+        }
+        .employee-details-modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+        .employee-detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        .employee-detail-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .employee-detail-value {
+            color: #7f8c8d;
+        }
+        .analytics-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c5530;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
     </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow">
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/"><img src="panda-logo.png" alt="Panda" style="height: 40px;"></a>
+            <a class="navbar-brand" href="/">
+                <img src="panda-logo.png" alt="Panda Exteriors" style="height: 40px;">
+                <span class="ms-2 fw-bold">Panda Admin</span>
+            </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link active" href="/employee.html">Employees</a>
-                <a class="nav-link" href="/points.html">Points</a>
-                <a class="nav-link" href="/leads.html">Leads</a>
-                <a class="nav-link" href="/referrals.html">Referrals</a>
-                <a class="nav-link" href="/assets.html">Assets</a>
-                <a class="nav-link" href="/admin.html">Admin</a>
+                <a class="nav-link active" href="/employee.html"><i class="fas fa-users me-2"></i>Employees</a>
+                <a class="nav-link" href="/points.html"><i class="fas fa-star me-2"></i>Points</a>
+                <a class="nav-link" href="/leads.html"><i class="fas fa-chart-line me-2"></i>Leads</a>
+                <a class="nav-link" href="/referrals.html"><i class="fas fa-handshake me-2"></i>Referrals</a>
+                <a class="nav-link" href="/assets.html"><i class="fas fa-boxes me-2"></i>Assets</a>
+                <a class="nav-link" href="/admin.html"><i class="fas fa-cog me-2"></i>Admin</a>
+                <a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid mt-4">
+    <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="display-6 fw-bold text-success mb-0">Employee Management</h1>
-            <div class="d-flex gap-2">
-                <div class="badge bg-success fs-6 px-3 py-2">Active: <span id="activeCount">0</span></div>
-                <div class="badge bg-secondary fs-6 px-3 py-2">Total: <span id="totalCount">0</span></div>
+            <div>
+                <h1 class="display-6 fw-bold mb-0">👥 Employee Management</h1>
+                <p class="text-muted mb-0">Manage your team with comprehensive employee data and Panda Points tracking</p>
+            </div>
+            <div class="d-flex gap-3">
+                <div class="badge bg-success fs-6 px-4 py-3 rounded-pill">
+                    <i class="fas fa-user-check me-2"></i>Active: <span id="activeCount">0</span>
+                </div>
+                <div class="badge bg-secondary fs-6 px-4 py-3 rounded-pill">
+                    <i class="fas fa-users me-2"></i>Total: <span id="totalCount">0</span>
+                </div>
             </div>
         </div>
         
         <div class="row mb-4">
             <div class="col-md-8">
-                <div class="card shadow-sm">
+                <div class="card">
                     <div class="card-body py-3">
                         <div class="row g-3 align-items-center">
                             <div class="col-md-6">
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
-                                    <input type="text" class="form-control" id="searchInput" placeholder="Search employees..." onkeyup="filterEmployees()">
+                                    <span class="input-group-text"><i class="fas fa-search text-muted"></i></span>
+                                    <input type="text" class="form-control" id="searchInput" placeholder="Search employees by name, email, or ID..." onkeyup="filterEmployees()">
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -77,11 +252,15 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card shadow-sm">
+                <div class="card">
                     <div class="card-body text-center">
-                        <h5 class="card-title"><i class="fas fa-sync text-success"></i> Data Management</h5>
-                        <button class="btn btn-success" onclick="importFromGoogleSheets()">
-                            <i class="fas fa-download"></i> Sync Google Sheets
+                        <h5 class="card-title mb-3"><i class="fas fa-sync me-2"></i>Data Management</h5>
+                        <button class="btn btn-success mb-2" onclick="importFromGoogleSheets()">
+                            <i class="fas fa-download me-2"></i>Sync Google Sheets
+                        </button>
+                        <br>
+                        <button class="btn btn-outline-success btn-sm" onclick="exportEmployees()">
+                            <i class="fas fa-file-export me-2"></i>Export CSV
                         </button>
                     </div>
                 </div>
@@ -91,12 +270,17 @@
         <ul class="nav nav-pills nav-fill mb-4" id="employeeTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="active-employees-tab" data-bs-toggle="tab" data-bs-target="#active-employees" type="button" role="tab">
-                    <i class="fas fa-users me-2"></i>Active Employees <span class="badge bg-success ms-2" id="activeTabCount">0</span>
+                    <i class="fas fa-users me-2"></i>Active Employees <span class="badge bg-light text-dark ms-2" id="activeTabCount">0</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="terminated-employees-tab" data-bs-toggle="tab" data-bs-target="#terminated-employees" type="button" role="tab">
-                    <i class="fas fa-user-times me-2"></i>Terminated Employees <span class="badge bg-danger ms-2" id="terminatedTabCount">0</span>
+                    <i class="fas fa-user-times me-2"></i>Terminated Employees <span class="badge bg-light text-dark ms-2" id="terminatedTabCount">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                    <i class="fas fa-chart-bar me-2"></i>Analytics <span class="badge bg-light text-dark ms-2">📊</span>
                 </button>
             </li>
         </ul>
@@ -104,12 +288,19 @@
         <div class="tab-content" id="employeeTabContent">
             <!-- Active Employees Tab -->
             <div class="tab-pane fade show active" id="active-employees" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-users me-2"></i>Active Employees</h5>
                         <div>
-                            <button class="btn btn-outline-light btn-sm me-2" onclick="clearFilters()">Clear Filters</button>
-                            <a href="/admin.html" class="btn btn-light btn-sm">Admin Console</a>
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="clearFilters()">
+                                <i class="fas fa-filter-circle-xmark me-1"></i>Clear Filters
+                            </button>
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="bulkActions()">
+                                <i class="fas fa-tasks me-1"></i>Bulk Actions
+                            </button>
+                            <a href="/admin.html" class="btn btn-light btn-sm">
+                                <i class="fas fa-cog me-1"></i>Admin Console
+                            </a>
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -119,14 +310,11 @@
                             <table class="table table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('supervisor')">Supervisor <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('department')">Department <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold">Panda Points</th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('name')">Employee <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('role')">Role & Department <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('supervisor')">Supervisor & Office <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date & Tenure <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('points_balance')">Panda Points <i class="fas fa-sort"></i></th>
                                         <th class="fw-semibold">Actions</th>
                                     </tr>
                                 </thead>
@@ -140,8 +328,8 @@
             
             <!-- Terminated Employees Tab -->
             <div class="tab-pane fade" id="terminated-employees" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-danger text-white">
+                <div class="card">
+                    <div class="card-header" style="background: linear-gradient(135deg, #dc3545, #c82333);">
                         <h5 class="mb-0"><i class="fas fa-user-times me-2"></i>Terminated Employees</h5>
                     </div>
                     <div class="card-body p-0">
@@ -149,9 +337,8 @@
                             <table class="table table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th class="fw-semibold sortable" onclick="sortTable('name')">Name <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('employee_id')">Employee ID <i class="fas fa-sort"></i></th>
-                                        <th class="fw-semibold sortable" onclick="sortTable('role')">Role <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('name')">Employee <i class="fas fa-sort"></i></th>
+                                        <th class="fw-semibold sortable" onclick="sortTable('role')">Role & Department <i class="fas fa-sort"></i></th>
                                         <th class="fw-semibold sortable" onclick="sortTable('office')">Office <i class="fas fa-sort"></i></th>
                                         <th class="fw-semibold sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
                                         <th class="fw-semibold">Actions</th>
@@ -164,10 +351,106 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Analytics Tab -->
+            <div class="tab-pane fade" id="analytics" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Department Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="departmentChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Office Locations</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="officeChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-star me-2"></i>Panda Points Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="pointsChart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Performers</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="topPerformers"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Employee Details Modal -->
+    <div class="modal fade" id="employeeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user me-2"></i>Employee Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="employeeModalBody">
+                    <!-- Employee details will be populated here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" onclick="editEmployee()">Edit Employee</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Award Points Modal -->
+    <div class="modal fade" id="pointsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-star me-2"></i>Award Panda Points</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <input type="text" class="form-control" id="pointsEmployeeName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Points Amount</label>
+                        <input type="number" class="form-control" id="pointsAmount" min="1" max="500" placeholder="Enter points (1 point = $1)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" id="pointsReason" rows="3" placeholder="Reason for awarding points..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="submitPoints()">Award Points</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
         let employees = [];
@@ -205,11 +488,18 @@
         ];
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            if (!sessionStorage.getItem('pandaAdmin')) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
             // Use static data for presentation
             employees = staticEmployees;
             filteredEmployees = [...employees];
             displayEmployees();
             populateFilters();
+            createAnalyticsCharts();
         });
 
         async function loadEmployees() {
@@ -267,7 +557,7 @@
                 if (employee.status === 'active') {
                     activeTableBody.appendChild(row);
                     activeCount++;
-                } else {
+                } else if (employee.status === 'terminated') {
                     terminatedTableBody.appendChild(row);
                     terminatedCount++;
                 }
@@ -286,34 +576,46 @@
                 row.innerHTML = `
                     <td>
                         <div class="d-flex align-items-center">
-                            <div class="me-3">
-                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="fas fa-user text-white"></i>
-                                </div>
+                            <div class="employee-avatar me-3">
+                                ${getEmployeeInitials(employee.name || 'N A')}
                             </div>
                             <div>
                                 <strong>${employee.name || ''}</strong>
                                 <br><small class="text-muted">${employee.email || ''}</small>
+                                <br><small class="badge bg-light text-dark">${employee.employee_id || ''}</small>
                             </div>
                         </div>
                     </td>
-                    <td><span class="badge bg-light text-dark">${employee.employee_id || ''}</span></td>
-                    <td>${employee.role || ''}</td>
-                    <td>${employee.supervisor || ''}</td>
-                    <td>${employee.office || ''}</td>
-                    <td>${employee.department || ''}</td>
-                    <td>${employee.hire_date || ''}</td>
                     <td>
-                        <span class="badge points-badge">${employee.points_balance || 0} pts</span>
-                        <br><small class="text-muted">Lifetime: ${employee.points_lifetime || 0}</small>
+                        <span class="fw-bold">${employee.role || ''}</span>
+                        <br><small class="text-muted">${employee.department || ''}</small>
+                    </td>
+                    <td>
+                        <span>${employee.supervisor || 'N/A'}</span>
+                        <br><small class="text-muted">${employee.office || ''}</small>
+                    </td>
+                    <td>
+                        <span>${formatDate(employee.hire_date)}</span>
+                        <br><small class="text-muted">${calculateTenure(employee.hire_date)}</small>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="points-badge me-2">
+                                <i class="fas fa-star me-1"></i>${employee.points_balance || 0}
+                            </div>
+                            <small class="text-muted">Lifetime: ${employee.points_lifetime || 0}</small>
+                        </div>
                     </td>
                     <td>
                         <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')" title="View Details">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewEmployeeDetails('${employee.email}')" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-warning" onclick="awardPoints('${employee.email}')" title="Award Points">
+                            <button class="btn btn-sm btn-outline-warning" onclick="showAwardPoints('${employee.email}')" title="Award Points">
                                 <i class="fas fa-star"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="sendMessage('${employee.email}')" title="Send Message">
+                                <i class="fas fa-envelope"></i>
                             </button>
                         </div>
                     </td>
@@ -322,24 +624,28 @@
                 row.innerHTML = `
                     <td>
                         <div class="d-flex align-items-center">
-                            <div class="me-3">
-                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="fas fa-user text-white"></i>
-                                </div>
+                            <div class="employee-avatar me-3" style="background: #6c757d;">
+                                ${getEmployeeInitials(employee.name || 'N A')}
                             </div>
                             <div>
                                 <strong>${employee.name || ''}</strong>
                                 <br><small class="text-muted">${employee.email || ''}</small>
+                                <br><small class="badge bg-secondary">${employee.employee_id || ''}</small>
                             </div>
                         </div>
                     </td>
-                    <td><span class="badge bg-light text-dark">${employee.employee_id || ''}</span></td>
-                    <td>${employee.role || ''}</td>
-                    <td>${employee.office || ''}</td>
-                    <td>${employee.hire_date || ''}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('${employee.email}')">
-                            <i class="fas fa-eye"></i> View
+                        <span class="fw-bold">${employee.role || ''}</span>
+                        <br><small class="text-muted">${employee.department || ''}</small>
+                    </td>
+                    <td>${employee.office || ''}</td>
+                    <td>
+                        <span>${formatDate(employee.hire_date)}</span>
+                        <br><small class="text-muted">${calculateTenure(employee.hire_date)}</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployeeDetails('${employee.email}')">
+                            <i class="fas fa-eye me-1"></i>View
                         </button>
                     </td>
                 `;
@@ -420,47 +726,315 @@
             displayEmployees();
         }
 
-        function viewEmployee(email) {
-            const employee = employees.find(e => e.email === email);
-            if (employee) {
-                const details = `
-Employee Details:
-
-Name: ${employee.name}
-Employee ID: ${employee.employee_id}
-Role: ${employee.role}
-Department: ${employee.department}
-Supervisor: ${employee.supervisor}
-Office: ${employee.office}
-Hire Date: ${employee.hire_date}
-Phone: ${employee.phone}
-Email: ${employee.email}
-Status: ${employee.status}
-
-Panda Points:
-Current Balance: ${employee.points_balance || 0} points
-Lifetime Earned: ${employee.points_lifetime || 0} points
-                `;
-                alert(details);
+        // Helper functions
+        function getEmployeeInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
+        function calculateTenure(hireDate) {
+            if (!hireDate) return 'N/A';
+            const hire = new Date(hireDate);
+            const now = new Date();
+            const years = Math.floor((now - hire) / (365.25 * 24 * 60 * 60 * 1000));
+            const months = Math.floor(((now - hire) % (365.25 * 24 * 60 * 60 * 1000)) / (30.44 * 24 * 60 * 60 * 1000));
+            
+            if (years > 0) {
+                return `${years}y ${months}m`;
+            } else {
+                return `${months} months`;
             }
         }
-
-        function awardPoints(email) {
+        
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = '/login.html';
+        }
+        
+        function exportEmployees() {
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Name,Employee ID,Email,Role,Department,Office,Supervisor,Hire Date,Phone,Status,Points Balance,Points Lifetime\n" +
+                employees.map(e => [
+                    e.name, e.employee_id, e.email, e.role, e.department, e.office, 
+                    e.supervisor, e.hire_date, e.phone, e.status, e.points_balance, e.points_lifetime
+                ].join(',')).join('\n');
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `panda_employees_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function bulkActions() {
+            alert('Bulk actions feature coming soon! This will allow you to:\n\n• Award points to multiple employees\n• Update departments in bulk\n• Export selected employees\n• Send group messages');
+        }
+        
+        function viewEmployeeDetails(email) {
+            const employee = employees.find(e => e.email === email);
+            if (!employee) return;
+            
+            const modalBody = document.getElementById('employeeModalBody');
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="employee-avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 36px;">
+                            ${getEmployeeInitials(employee.name || 'N A')}
+                        </div>
+                        <h4>${employee.name}</h4>
+                        <p class="text-muted">${employee.role}</p>
+                        <div class="points-badge">
+                            <i class="fas fa-star me-1"></i>${employee.points_balance || 0} Points
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Employee ID:</span>
+                            <span class="employee-detail-value">${employee.employee_id}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Email:</span>
+                            <span class="employee-detail-value">${employee.email}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Phone:</span>
+                            <span class="employee-detail-value">${employee.phone}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Department:</span>
+                            <span class="employee-detail-value">${employee.department}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Office:</span>
+                            <span class="employee-detail-value">${employee.office}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Supervisor:</span>
+                            <span class="employee-detail-value">${employee.supervisor}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Hire Date:</span>
+                            <span class="employee-detail-value">${formatDate(employee.hire_date)}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Tenure:</span>
+                            <span class="employee-detail-value">${calculateTenure(employee.hire_date)}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Status:</span>
+                            <span class="employee-detail-value status-${employee.status}">${employee.status?.toUpperCase()}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Lifetime Points:</span>
+                            <span class="employee-detail-value">${employee.points_lifetime || 0} points</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('employeeModal'));
+            modal.show();
+        }
+        
+        let currentEmployeeForPoints = null;
+        
+        function showAwardPoints(email) {
+            const employee = employees.find(e => e.email === email);
+            if (!employee) return;
+            
+            currentEmployeeForPoints = employee;
+            document.getElementById('pointsEmployeeName').value = employee.name;
+            document.getElementById('pointsAmount').value = '';
+            document.getElementById('pointsReason').value = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('pointsModal'));
+            modal.show();
+        }
+        
+        function submitPoints() {
+            const points = parseInt(document.getElementById('pointsAmount').value);
+            const reason = document.getElementById('pointsReason').value;
+            
+            if (!points || points <= 0) {
+                alert('Please enter a valid points amount');
+                return;
+            }
+            
+            if (!reason.trim()) {
+                alert('Please provide a reason for awarding points');
+                return;
+            }
+            
+            // Update employee data
+            currentEmployeeForPoints.points_balance = (currentEmployeeForPoints.points_balance || 0) + points;
+            currentEmployeeForPoints.points_lifetime = (currentEmployeeForPoints.points_lifetime || 0) + points;
+            
+            // Refresh display
+            displayEmployees();
+            createAnalyticsCharts();
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('pointsModal')).hide();
+            
+            // Show success message
+            showSuccessMessage(`Successfully awarded ${points} Panda Points to ${currentEmployeeForPoints.name}!`);
+        }
+        
+        function sendMessage(email) {
             const employee = employees.find(e => e.email === email);
             if (employee) {
-                const points = prompt(`Award Panda Points to ${employee.name}:\n\nEnter points amount (1 point = $1 value):`);
-                if (points && !isNaN(points) && parseInt(points) > 0) {
-                    const reason = prompt('Reason for awarding points (optional):') || 'Great work!';
-                    
-                    // Update local data
-                    employee.points_balance = (employee.points_balance || 0) + parseInt(points);
-                    employee.points_lifetime = (employee.points_lifetime || 0) + parseInt(points);
-                    
-                    // Refresh display
-                    displayEmployees();
-                    
-                    alert(`Successfully awarded ${points} Panda Points to ${employee.name}!\n\nReason: ${reason}\nNew Balance: ${employee.points_balance} points`);
+                alert(`Send message feature coming soon!\n\nThis will allow you to send:\n• Email notifications\n• SMS messages\n• Internal announcements\n\nTo: ${employee.name} (${employee.email})`);
+            }
+        }
+        
+        function editEmployee() {
+            alert('Edit employee feature coming soon!\n\nThis will allow you to:\n• Update employee information\n• Change roles and departments\n• Modify contact details\n• Update supervisor assignments');
+        }
+        
+        function showSuccessMessage(message) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
                 }
+            }, 5000);
+        }
+        
+        function createAnalyticsCharts() {
+            // Department distribution
+            const departments = {};
+            employees.forEach(emp => {
+                const dept = emp.department || 'Unknown';
+                departments[dept] = (departments[dept] || 0) + 1;
+            });
+            
+            const deptCtx = document.getElementById('departmentChart');
+            if (deptCtx && !deptCtx.chart) {
+                deptCtx.chart = new Chart(deptCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(departments),
+                        datasets: [{
+                            data: Object.values(departments),
+                            backgroundColor: [
+                                '#2c5530', '#1a3d1f', '#28a745', '#20c997', '#17a2b8',
+                                '#6f42c1', '#e83e8c', '#fd7e14', '#ffc107', '#dc3545'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+            
+            // Office distribution
+            const offices = {};
+            employees.forEach(emp => {
+                const office = emp.office || 'Unknown';
+                offices[office] = (offices[office] || 0) + 1;
+            });
+            
+            const officeCtx = document.getElementById('officeChart');
+            if (officeCtx && !officeCtx.chart) {
+                officeCtx.chart = new Chart(officeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(offices),
+                        datasets: [{
+                            data: Object.values(offices),
+                            backgroundColor: '#2c5530',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+            
+            // Points distribution
+            const pointsRanges = {
+                '0-50': 0, '51-100': 0, '101-200': 0, '201-300': 0, '300+': 0
+            };
+            employees.forEach(emp => {
+                const points = emp.points_balance || 0;
+                if (points <= 50) pointsRanges['0-50']++;
+                else if (points <= 100) pointsRanges['51-100']++;
+                else if (points <= 200) pointsRanges['101-200']++;
+                else if (points <= 300) pointsRanges['201-300']++;
+                else pointsRanges['300+']++;
+            });
+            
+            const pointsCtx = document.getElementById('pointsChart');
+            if (pointsCtx && !pointsCtx.chart) {
+                pointsCtx.chart = new Chart(pointsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(pointsRanges),
+                        datasets: [{
+                            data: Object.values(pointsRanges),
+                            backgroundColor: '#ffd700',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+            
+            // Top performers
+            const topPerformers = [...employees]
+                .sort((a, b) => (b.points_lifetime || 0) - (a.points_lifetime || 0))
+                .slice(0, 5);
+            
+            const topPerformersDiv = document.getElementById('topPerformers');
+            if (topPerformersDiv) {
+                topPerformersDiv.innerHTML = topPerformers.map((emp, index) => `
+                    <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+                        <div class="badge bg-warning text-dark me-3" style="font-size: 18px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                            #${index + 1}
+                        </div>
+                        <div class="employee-avatar me-3">
+                            ${getEmployeeInitials(emp.name || 'N A')}
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>${emp.name}</strong>
+                            <br><small class="text-muted">${emp.role} • ${emp.department}</small>
+                        </div>
+                        <div class="points-badge">
+                            <i class="fas fa-star me-1"></i>${emp.points_lifetime || 0}
+                        </div>
+                    </div>
+                `).join('');
             }
         }
     </script>
