@@ -878,10 +878,14 @@
         }
 
         function displayEmployees() {
+            console.log('displayEmployees called with', filteredEmployees.length, 'employees');
             const tableBody = document.getElementById('employeeTableBody');
             const terminatedTableBody = document.getElementById('terminatedTableBody');
             
-            if (!tableBody || !terminatedTableBody) return;
+            if (!tableBody || !terminatedTableBody) {
+                console.log('Table bodies not found');
+                return;
+            }
             
             tableBody.innerHTML = '';
             terminatedTableBody.innerHTML = '';
@@ -890,7 +894,9 @@
             let terminatedCount = 0;
             let newHires1_30 = 0, newHires31_60 = 0, newHires61_90 = 0;
             
-            filteredEmployees.forEach(employee => {
+            console.log('Processing', filteredEmployees.length, 'employees for display');
+            filteredEmployees.forEach((employee, index) => {
+                if (index < 3) console.log('Employee', index, ':', employee);
                 const row = createEmployeeRow(employee);
                 const isTerminated = employee.Terminated === 'Yes' || 
                                    employee.status === 'terminated' || 
@@ -915,6 +921,7 @@
             });
             
             // Update stats
+            console.log('Final counts - Active:', activeCount, 'Terminated:', terminatedCount);
             document.getElementById('activeCount').textContent = activeCount;
             document.getElementById('newHires1-30').textContent = newHires1_30;
             document.getElementById('newHires31-60').textContent = newHires31_60;
