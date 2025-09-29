@@ -43,13 +43,14 @@
             background: #f8f9fa;
             padding: 15px 30px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 30px;
             border-bottom: 1px solid #e9ecef;
         }
         .nav-links {
             display: flex;
             gap: 20px;
+            flex: 1;
         }
         .nav-link {
             color: #6c757d;
@@ -120,7 +121,13 @@
             font-weight: 600;
             color: #2c3e50;
             padding: 15px;
+        }
+        .table thead th.sortable {
             cursor: pointer;
+            user-select: none;
+        }
+        .table thead th.sortable:hover {
+            background: #e9ecef;
         }
         .table tbody tr {
             cursor: pointer;
@@ -363,16 +370,10 @@
 </head>
 <body>
     <div class="main-container">
-        <div class="header">
-            <button class="logout-btn" onclick="logout()">Logout</button>
+        <div class="utility-nav">
             <div class="logo">
                 <img src="panda-logo.png" alt="Panda Exteriors">
             </div>
-            <h1>👥 Employee Management</h1>
-            <p>Manage your team with comprehensive employee data and Panda Points tracking</p>
-        </div>
-        
-        <div class="utility-nav">
             <div class="nav-links">
                 <a href="/employee.html" class="nav-link active">👥 Employees</a>
                 <a href="/points.html" class="nav-link">⭐ Points</a>
@@ -382,6 +383,11 @@
                 <a href="/admin.html" class="nav-link">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="header">
+            <h1>👥 Employee Management</h1>
+            <p>Manage your team with comprehensive employee data and Panda Points tracking</p>
         </div>
         
         <div class="section-nav">
@@ -440,11 +446,11 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th onclick="sortTable('name')">Employee <i class="fas fa-sort"></i></th>
-                                <th onclick="sortTable('role')">Role & Department <i class="fas fa-sort"></i></th>
-                                <th onclick="sortTable('office')">Office & Supervisor <i class="fas fa-sort"></i></th>
-                                <th onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
-                                <th onclick="sortTable('points_balance')">Points <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortTable('name')">Employee <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortTable('role')">Role & Department <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortTable('office')">Office & Supervisor <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortTable('points_balance')">Points <i class="fas fa-sort"></i></th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -695,6 +701,10 @@
             
             // Load real employee data from DynamoDB
             loadEmployees();
+            
+            // Default sort by name A-Z
+            sortColumn = 'name';
+            sortDirection = 'asc';
         });
 
         async function loadEmployees() {
@@ -910,6 +920,9 @@
                         </span>
                     </td>
                     <td>
+                        <button class="btn btn-sm btn-primary me-1" onclick="event.stopPropagation(); editEmployee('${employeeEmail}')">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
                         <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); showAwardPoints('${employeeEmail}')">
                             <i class="fas fa-star"></i>
                         </button>
@@ -1118,14 +1131,30 @@
             }
             
             filteredEmployees.sort((a, b) => {
-                let aVal = a[column] || '';
-                let bVal = b[column] || '';
+                let aVal, bVal;
                 
-                if (sortDirection === 'asc') {
-                    return aVal.localeCompare(bVal);
+                if (column === 'name') {
+                    aVal = a.name || `${a['First Name'] || ''} ${a['Last Name'] || ''}` || `${a.first_name || ''} ${a.last_name || ''}`;
+                    bVal = b.name || `${b['First Name'] || ''} ${b['Last Name'] || ''}` || `${b.first_name || ''} ${b.last_name || ''}`;
+                } else if (column === 'role') {
+                    aVal = a.role || a['Job Title (PIT)'] || a['Position Description'] || '';
+                    bVal = b.role || b['Job Title (PIT)'] || b['Position Description'] || '';
+                } else if (column === 'office') {
+                    aVal = a.office || a['Current Work Location Name'] || '';
+                    bVal = b.office || b['Current Work Location Name'] || '';
+                } else if (column === 'hire_date') {
+                    aVal = a.hire_date || a['Hire Date'] || '';
+                    bVal = b.hire_date || b['Hire Date'] || '';
+                } else if (column === 'points_balance') {
+                    aVal = a.points_balance || 0;
+                    bVal = b.points_balance || 0;
+                    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
                 } else {
-                    return bVal.localeCompare(aVal);
+                    aVal = a[column] || '';
+                    bVal = b[column] || '';
                 }
+                
+                return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
             });
             
             displayEmployees();
