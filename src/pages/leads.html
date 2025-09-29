@@ -3,144 +3,478 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead Management - Panda Exteriors</title>
-    <link rel="stylesheet" href="../assets/css/main.css">
+    <title>Lead Management - Panda Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .main-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .utility-nav {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+        }
+        .nav-link {
+            color: #6c757d;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: #2c5530;
+            color: white;
+            text-decoration: none;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover { background: #c82333; }
+        .header {
+            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%);
+            color: white;
+            padding: 30px;
+        }
+        .logo img { height: 50px; }
+        .header h1 { margin: 20px 0 10px 0; font-size: 2.5em; }
+        .header p { opacity: 0.9; margin-bottom: 0; }
+        .content-area {
+            padding: 30px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
+    <div class="main-container">
+        <div class="utility-nav">
+            <div class="logo">
+                <img src="panda-logo.png" alt="Panda Exteriors">
+            </div>
+            <div class="nav-links">
+                <a href="/employee.html" class="nav-link">👥 Employees</a>
+                <a href="/points.html" class="nav-link">⭐ Points</a>
+                <a href="/leads.html" class="nav-link active">📊 Leads</a>
+                <a href="/referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="/assets.html" class="nav-link">📦 Assets</a>
+                <a href="/admin.html" class="nav-link">⚙️ Admin</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
         <div class="header">
             <h1>📊 Lead Management Dashboard</h1>
-            <div class="territory-badge">
-                <a href="/" style="color: white; text-decoration: none;">🏠 Home</a>
-            </div>
+            <p>Track sales leads, opportunities, and customer pipeline</p>
         </div>
         
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('overview')">📊 Overview</button>
-            <button class="nav-tab" onclick="showTab('interactive')">🔍 Interactive</button>
-            <button class="nav-tab" onclick="showTab('campaigns')">📧 Campaigns</button>
-            <button class="nav-tab" onclick="showTab('validation')">✅ Validation</button>
-            <button class="nav-tab" onclick="showTab('enrichment')">🔍 Enrichment</button>
-        </div>
+        <div class="content-area">
         
-        <!-- Overview Tab -->
-        <div id="overview" class="tab-content active">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number">141</div>
-                    <div class="stat-label">Total Leads</div>
+        <ul class="nav nav-pills nav-fill mb-4" id="leadTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-chart-bar me-2"></i>Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="interactive-tab" data-bs-toggle="tab" data-bs-target="#interactive" type="button" role="tab">
+                    <i class="fas fa-search me-2"></i>Interactive
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="campaigns-tab" data-bs-toggle="tab" data-bs-target="#campaigns" type="button" role="tab">
+                    <i class="fas fa-envelope me-2"></i>Campaigns
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="validation-tab" data-bs-toggle="tab" data-bs-target="#validation" type="button" role="tab">
+                    <i class="fas fa-check-circle me-2"></i>Validation
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="enrichment-tab" data-bs-toggle="tab" data-bs-target="#enrichment" type="button" role="tab">
+                    <i class="fas fa-plus-circle me-2"></i>Enrichment
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="leadTabContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-2">
+                        <div class="card bg-primary text-white text-center">
+                            <div class="card-body">
+                                <h3>141</h3>
+                                <p class="mb-0">Total Leads</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card bg-success text-white text-center">
+                            <div class="card-body">
+                                <h3>10</h3>
+                                <p class="mb-0">States</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card bg-info text-white text-center">
+                            <div class="card-body">
+                                <h3>34</h3>
+                                <p class="mb-0">MD Leads</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card bg-warning text-dark text-center">
+                            <div class="card-body">
+                                <h3>31</h3>
+                                <p class="mb-0">NJ Leads</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card bg-secondary text-white text-center">
+                            <div class="card-body">
+                                <h3>26</h3>
+                                <p class="mb-0">PA Leads</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card bg-dark text-white text-center">
+                            <div class="card-body">
+                                <h3>99%</h3>
+                                <p class="mb-0">Valid Contacts</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">10</div>
-                    <div class="stat-label">States</div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Lead Distribution by State</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="stateChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Monthly Lead Trends</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="trendChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">34</div>
-                    <div class="stat-label">MD Leads</div>
+            </div>
+
+            <!-- Interactive Tab -->
+            <div class="tab-pane fade" id="interactive" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-search"></i> Interactive Lead Explorer</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Click on any stat card to drill down into lead details.</p>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card border-primary cursor-pointer" onclick="showLeadDetails('all')">
+                                    <div class="card-body text-center">
+                                        <h4 class="text-primary">141</h4>
+                                        <p>All Leads</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-info cursor-pointer" onclick="showLeadDetails('md')">
+                                    <div class="card-body text-center">
+                                        <h4 class="text-info">34</h4>
+                                        <p>Maryland</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-warning cursor-pointer" onclick="showLeadDetails('nj')">
+                                    <div class="card-body text-center">
+                                        <h4 class="text-warning">31</h4>
+                                        <p>New Jersey</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-secondary cursor-pointer" onclick="showLeadDetails('pa')">
+                                    <div class="card-body text-center">
+                                        <h4 class="text-secondary">26</h4>
+                                        <p>Pennsylvania</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">99%</div>
-                    <div class="stat-label">Valid Contacts</div>
+            </div>
+
+            <!-- Campaigns Tab -->
+            <div class="tab-pane fade" id="campaigns" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-envelope"></i> Campaign Segmentation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white text-center">
+                                    <div class="card-body">
+                                        <h4>70</h4>
+                                        <p>Email Only</p>
+                                        <button class="btn btn-light btn-sm" onclick="createCampaign('email')">Create Campaign</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white text-center">
+                                    <div class="card-body">
+                                        <h4>71</h4>
+                                        <p>Mixed Campaign</p>
+                                        <button class="btn btn-light btn-sm" onclick="createCampaign('mixed')">Create Campaign</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-dark text-center">
+                                    <div class="card-body">
+                                        <h4>0</h4>
+                                        <p>SMS Only</p>
+                                        <button class="btn btn-dark btn-sm" onclick="createCampaign('sms')">Create Campaign</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-danger text-white text-center">
+                                    <div class="card-body">
+                                        <h4>0</h4>
+                                        <p>Invalid</p>
+                                        <button class="btn btn-light btn-sm" onclick="validateContacts()">Validate</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Tab -->
+            <div class="tab-pane fade" id="validation" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-check-circle"></i> Contact Validation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white text-center">
+                                    <div class="card-body">
+                                        <h4>139</h4>
+                                        <p>Valid Emails</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-warning text-dark text-center">
+                                    <div class="card-body">
+                                        <h4>2</h4>
+                                        <p>Invalid Emails</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-info text-white text-center">
+                                    <div class="card-body">
+                                        <h4>99%</h4>
+                                        <p>Validation Rate</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="runValidation()">
+                            <i class="fas fa-play"></i> Run Validation
+                        </button>
+                        <button class="btn btn-success" onclick="exportValid()">
+                            <i class="fas fa-download"></i> Export Valid Contacts
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrichment Tab -->
+            <div class="tab-pane fade" id="enrichment" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-plus-circle"></i> Data Enrichment</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card border-primary text-center">
+                                    <div class="card-body">
+                                        <h4>85%</h4>
+                                        <p>Phone Numbers</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-success text-center">
+                                    <div class="card-body">
+                                        <h4>92%</h4>
+                                        <p>Addresses</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-warning text-center">
+                                    <div class="card-body">
+                                        <h4>78%</h4>
+                                        <p>Social Profiles</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-info text-center">
+                                    <div class="card-body">
+                                        <h4>65%</h4>
+                                        <p>Company Info</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="enrichData()">
+                            <i class="fas fa-magic"></i> Enrich Data
+                        </button>
+                        <button class="btn btn-info" onclick="viewEnrichment()">
+                            <i class="fas fa-eye"></i> View Enriched Data
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Interactive Tab -->
-        <div id="interactive" class="tab-content">
-            <h2>🔍 Interactive Lead Explorer</h2>
-            <p>Click on any chart element or stat card to drill down into lead details.</p>
-            
-            <div class="stats-grid">
-                <div class="stat-card" onclick="showLeadModal('all')">
-                    <div class="stat-number">141</div>
-                    <div class="stat-label">All Leads</div>
-                </div>
-                <div class="stat-card" onclick="showLeadModal('md')">
-                    <div class="stat-number">34</div>
-                    <div class="stat-label">Maryland</div>
-                </div>
-                <div class="stat-card" onclick="showLeadModal('nj')">
-                    <div class="stat-number">31</div>
-                    <div class="stat-label">New Jersey</div>
-                </div>
-                <div class="stat-card" onclick="showLeadModal('pa')">
-                    <div class="stat-number">26</div>
-                    <div class="stat-label">Pennsylvania</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Campaigns Tab -->
-        <div id="campaigns" class="tab-content">
-            <h2>📧📱 Campaign Segmentation</h2>
-            
-            <div class="stats-grid">
-                <div class="stat-card" onclick="showCampaignModal('email')">
-                    <div class="stat-number">70</div>
-                    <div class="stat-label">Email Only</div>
-                </div>
-                <div class="stat-card" onclick="showCampaignModal('mixed')">
-                    <div class="stat-number">71</div>
-                    <div class="stat-label">Mixed Campaign</div>
-                </div>
-                <div class="stat-card" onclick="showCampaignModal('sms')">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">SMS Only</div>
-                </div>
-                <div class="stat-card" onclick="showCampaignModal('invalid')">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Invalid</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Validation Tab -->
-        <div id="validation" class="tab-content">
-            <h2>✅ Contact Validation</h2>
-            
-            <div class="stats-grid">
-                <div>
-                    <label for="testEmail">Email Address</label>
-                    <input type="email" id="testEmail" placeholder="test@example.com" value="angelicaann99@gmail.com">
-                    <button class="btn" onclick="validateEmail()">Validate Email</button>
-                </div>
-                <div>
-                    <label for="testPhone">Phone Number</label>
-                    <input type="tel" id="testPhone" placeholder="(555) 123-4567" value="(717) 406-4768">
-                    <button class="btn" onclick="validatePhone()">Validate Phone</button>
-                </div>
-            </div>
-            <div id="validationResults" style="display: none; margin-top: 20px;">
-                <div id="emailResults"></div>
-                <div id="phoneResults"></div>
-            </div>
-        </div>
-        
-        <!-- Enrichment Tab -->
-        <div id="enrichment" class="tab-content">
-            <h2>🔍 Data Enrichment Options</h2>
-            
-            <div class="stats-grid">
-                <div>
-                    <label for="addressLine">Street Address</label>
-                    <input type="text" id="addressLine" placeholder="555 Marco Way" value="555 Marco Way">
-                    <label for="city">City</label>
-                    <input type="text" id="city" placeholder="East Stroudsburg" value="East Stroudsburg">
-                </div>
-                <div>
-                    <label for="state">State</label>
-                    <input type="text" id="state" placeholder="PA" value="PA" maxlength="2">
-                    <label for="zipCode">ZIP Code</label>
-                    <input type="text" id="zipCode" placeholder="18302" value="18302" maxlength="5">
-                </div>
-            </div>
-            <button class="btn" onclick="validateAddress()">Validate Address</button>
-            <div id="addressResults" style="display: none; margin-top: 20px;">
-                <div id="uspsResults"></div>
-            </div>
         </div>
     </div>
 
-    <script src="../assets/js/leads.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = '/login.html';
+        }
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            createStateChart();
+            createTrendChart();
+        });
+
+        function createStateChart() {
+            const ctx = document.getElementById('stateChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Maryland', 'New Jersey', 'Pennsylvania', 'Virginia', 'Others'],
+                    datasets: [{
+                        data: [34, 31, 26, 20, 30],
+                        backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function createTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Leads',
+                        data: [12, 19, 23, 25, 22, 30],
+                        borderColor: '#007bff',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function showLeadDetails(type) {
+            alert(`Showing ${type} lead details - Integration with CRM system`);
+        }
+
+        function createCampaign(type) {
+            alert(`Creating ${type} campaign - Integration with marketing automation`);
+        }
+
+        function validateContacts() {
+            alert('Running contact validation - Integration with validation service');
+        }
+
+        function runValidation() {
+            alert('Running full validation process...');
+        }
+
+        function exportValid() {
+            alert('Exporting valid contacts to CSV...');
+        }
+
+        function enrichData() {
+            alert('Starting data enrichment process...');
+        }
+
+        function viewEnrichment() {
+            alert('Viewing enriched data results...');
+        }
+    </script>
 </body>
 </html>
