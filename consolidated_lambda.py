@@ -15,11 +15,7 @@ def lambda_handler(event, context):
         if event.get('httpMethod') == 'OPTIONS':
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type'
-                }
+                'body': ''
             }
         
         path = event.get('path', '')
@@ -39,14 +35,12 @@ def lambda_handler(event, context):
         else:
             return {
                 'statusCode': 404,
-                'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': f'Not found - path: {path}, method: {method}'})
             }
             
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': str(e)})
         }
 
@@ -62,7 +56,6 @@ def get_employees():
     
     return {
         'statusCode': 200,
-        'headers': {'Access-Control-Allow-Origin': '*'},
         'body': json.dumps(employees)
     }
 
@@ -130,7 +123,6 @@ def import_employees():
         
         return {
             'statusCode': 200,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({
                 'message': f'Import completed. {imported_count} new employees, {updated_count} updated.',
                 'imported': imported_count,
@@ -141,7 +133,6 @@ def import_employees():
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Import failed: {str(e)}'})
         }
 
@@ -156,7 +147,6 @@ def award_points(event):
         if not employee_email or points <= 0:
             return {
                 'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Invalid employee or points amount'})
             }
         
@@ -169,7 +159,6 @@ def award_points(event):
         if not response['Items']:
             return {
                 'statusCode': 404,
-                'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Employee not found'})
             }
         
@@ -210,7 +199,6 @@ def award_points(event):
         
         return {
             'statusCode': 200,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({
                 'message': f'Awarded {points} points to {employee["name"]}',
                 'new_balance': float(new_balance)
@@ -220,7 +208,6 @@ def award_points(event):
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Award failed: {str(e)}'})
         }
 
@@ -233,7 +220,6 @@ def employee_login(event):
         if not email or not password:
             return {
                 'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
@@ -250,7 +236,6 @@ def employee_login(event):
         if not response['Items']:
             return {
                 'statusCode': 401,
-                'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Invalid credentials'})
             }
         
@@ -260,7 +245,6 @@ def employee_login(event):
         if employee.get('password') != password:
             return {
                 'statusCode': 401,
-                'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Invalid credentials'})
             }
         
@@ -274,7 +258,6 @@ def employee_login(event):
         
         return {
             'statusCode': 200,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({
                 'message': 'Login successful',
                 'employee': employee_data
@@ -284,7 +267,6 @@ def employee_login(event):
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Login failed: {str(e)}'})
         }
 
@@ -319,7 +301,6 @@ def upload_employees(event):
             if not csv_content:
                 return {
                     'statusCode': 400,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({'error': 'No valid CSV file found in upload'})
                 }
         else:
@@ -381,7 +362,6 @@ def upload_employees(event):
         
         return {
             'statusCode': 200,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({
                 'message': f'Upload completed. {imported_count} new employees, {updated_count} updated.',
                 'imported': imported_count,
@@ -392,6 +372,5 @@ def upload_employees(event):
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Upload failed: {str(e)}'})
         }
