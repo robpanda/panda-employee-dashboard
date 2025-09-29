@@ -605,30 +605,48 @@
 
         async function loadEmployees() {
             try {
-                document.getElementById('importResults').innerHTML = 
-                    '<div class="alert alert-info">Loading employees from database...</div>';
+                console.log('Loading employees from database...');
+                const importResults = document.getElementById('importResults');
+                if (importResults) {
+                    importResults.innerHTML = '<div class="alert alert-info">Loading employees from database...</div>';
+                }
                 
                 const response = await fetch(`${API_URL}/employees`);
-                if (!response.ok) throw new Error('Failed to fetch employees');
+                console.log('Employee fetch response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Employee fetch error:', errorText);
+                    throw new Error(`Failed to fetch employees: ${response.status}`);
+                }
                 
                 employees = await response.json();
+                console.log(`Loaded ${employees.length} employees:`, employees.slice(0, 3));
+                
                 filteredEmployees = [...employees];
                 
                 displayEmployees();
                 populateFilters();
                 createAnalyticsCharts();
                 
-                document.getElementById('importResults').innerHTML = 
-                    `<div class="alert alert-success">Loaded ${employees.length} employees from database</div>`;
-                    
-                setTimeout(() => {
-                    document.getElementById('importResults').innerHTML = '';
-                }, 3000);
+                if (importResults) {
+                    importResults.innerHTML = 
+                        `<div class="alert alert-success">Loaded ${employees.length} employees from database</div>`;
+                        
+                    setTimeout(() => {
+                        if (importResults) {
+                            importResults.innerHTML = '';
+                        }
+                    }, 3000);
+                }
                 
             } catch (error) {
                 console.error('Error loading employees:', error);
-                document.getElementById('importResults').innerHTML = 
-                    '<div class="alert alert-danger">Failed to load employees from database. Please try importing from Google Sheets.</div>';
+                const importResults = document.getElementById('importResults');
+                if (importResults) {
+                    importResults.innerHTML = 
+                        '<div class="alert alert-danger">Failed to load employees from database. Please try importing from Google Sheets.</div>';
+                }
             }
         }
 
@@ -638,6 +656,7 @@
             }
             
             try {
+                console.log('Starting smart import from Google Sheets...');
                 document.getElementById('importResults').innerHTML = 
                     '<div class="alert alert-info">Performing smart import from Google Sheets...</div>';
                 
@@ -647,16 +666,20 @@
                     body: JSON.stringify({ source: 'sheets' })
                 });
                 
+                console.log('Smart import response status:', response.status);
                 const result = await response.json();
+                console.log('Smart import result:', result);
                 
                 if (response.ok) {
                     document.getElementById('importResults').innerHTML = 
                         `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
+                    console.log('Reloading employees after smart import...');
                     await loadEmployees();
                 } else {
                     throw new Error(result.error);
                 }
             } catch (error) {
+                console.error('Smart import error:', error);
                 document.getElementById('importResults').innerHTML = 
                     `<div class="alert alert-danger">Smart import failed: ${error.message}</div>`;
             }
@@ -688,8 +711,15 @@
         }
 
         function displayEmployees() {
+            console.log(`Displaying ${filteredEmployees.length} employees`);
+            
             const activeTableBody = document.getElementById('activeEmployeesTableBody');
             const terminatedTableBody = document.getElementById('terminatedEmployeesTableBody');
+            
+            if (!activeTableBody || !terminatedTableBody) {
+                console.error('Table bodies not found');
+                return;
+            }
             
             activeTableBody.innerHTML = '';
             terminatedTableBody.innerHTML = '';
@@ -697,7 +727,7 @@
             let activeCount = 0;
             let terminatedCount = 0;
             
-            filteredEmployees.forEach(employee => {
+            filteredEmployees.forEach((employee, index) => {
                 const row = createEmployeeRow(employee);
                 
                 // Check for various status indicators
@@ -705,6 +735,14 @@
                                    employee.status === 'terminated' || 
                                    employee.status === 'inactive' ||
                                    employee['Employee Status Code'] === 'T';
+                
+                if (index < 5) {
+                    console.log(`Employee ${index}:`, {
+                        name: employee.name,
+                        status: employee.status,
+                        isTerminated: isTerminated
+                    });
+                }
                 
                 if (isTerminated) {
                     terminatedTableBody.appendChild(row);
@@ -715,6 +753,8 @@
                     activeCount++;
                 }
             });
+            
+            console.log(`Display counts - Active: ${activeCount}, Terminated: ${terminatedCount}`);
             
             document.getElementById('activeCount').textContent = activeCount;
             document.getElementById('activeTabCount').textContent = activeCount;
@@ -1110,6 +1150,7 @@
             formData.append('smart_import', 'true');
             
             try {
+                console.log('Starting smart file upload...');
                 document.getElementById('importResults').innerHTML = 
                     '<div class="alert alert-info">Performing smart import from file...</div>';
                 
@@ -1118,16 +1159,20 @@
                     body: formData
                 });
                 
+                console.log('Smart file upload response status:', response.status);
                 const result = await response.json();
+                console.log('Smart file upload result:', result);
                 
                 if (response.ok) {
                     document.getElementById('importResults').innerHTML = 
                         `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
+                    console.log('Reloading employees after smart file upload...');
                     await loadEmployees();
                 } else {
                     throw new Error(result.error);
                 }
             } catch (error) {
+                console.error('Smart file upload error:', error);
                 document.getElementById('importResults').innerHTML = 
                     `<div class="alert alert-danger">Smart import failed: ${error.message}</div>`;
             }

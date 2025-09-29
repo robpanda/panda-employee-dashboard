@@ -491,7 +491,9 @@ def parse_csv_to_employees(csv_content):
         csv_reader = csv.DictReader(io.StringIO(csv_content))
         employees_data = []
         
-        for row in csv_reader:
+        print(f"Parsing CSV content, first 500 chars: {csv_content[:500]}")
+        
+        for row_num, row in enumerate(csv_reader):
             if not row.get('Last Name') or not row.get('First Name'):
                 continue
                 
@@ -500,6 +502,12 @@ def parse_csv_to_employees(csv_content):
             
             # Generate email from name
             email = f"{first_name.lower()}.{last_name.lower()}@pandaexteriors.com"
+            
+            # Handle different status formats
+            status_code = row.get('Employee Status Code', '').strip().upper()
+            status = 'active'  # Default to active
+            if status_code == 'T' or status_code == 'TERMINATED':
+                status = 'terminated'
             
             employee_data = {
                 'last_name': last_name,
@@ -513,7 +521,7 @@ def parse_csv_to_employees(csv_content):
                 'hire_date': row.get('Hire Date', '').strip(),
                 'phone': row.get('Phone', '').strip(),
                 'email': email,
-                'status': 'terminated' if row.get('Employee Status Code', '').strip().upper() == 'T' else 'active',
+                'status': status,
                 'password': 'Welcome2025!',
                 'points_lifetime': Decimal('0'),
                 'points_redeemed': Decimal('0'),
@@ -521,7 +529,11 @@ def parse_csv_to_employees(csv_content):
             }
             
             employees_data.append(employee_data)
+            
+            if row_num < 3:  # Log first few employees for debugging
+                print(f"Parsed employee {row_num}: {employee_data['name']} - {employee_data['status']}")
         
+        print(f"Parsed {len(employees_data)} employees from CSV")
         return employees_data
         
     except Exception as e:
@@ -533,6 +545,8 @@ def perform_smart_import(new_employees, source_name):
     try:
         from datetime import datetime
         
+        print(f"Starting smart import from {source_name} with {len(new_employees)} new employees")
+        
         # Get all existing employees
         existing_employees = []
         response = table.scan()
@@ -542,38 +556,58 @@ def perform_smart_import(new_employees, source_name):
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             existing_employees.extend(response.get('Items', []))
         
+        print(f"Found {len(existing_employees)} existing employees")
+        
         # Create lookup maps for new employees
         new_by_email = {emp['email'].lower(): emp for emp in new_employees}
         new_by_name = {emp['name'].lower(): emp for emp in new_employees}
         new_by_id = {emp['employee_id']: emp for emp in new_employees if emp.get('employee_id')}
         
+        print(f"Created lookup maps: {len(new_by_email)} emails, {len(new_by_name)} names, {len(new_by_id)} IDs")
+        
         # Track changes
         added_count = 0
         terminated_count = 0
         unchanged_count = 0
+        updated_count = 0
         today = datetime.now().strftime('%Y-%m-%d')
         
-        # Check existing employees for termination
+        # Check existing employees for termination or updates
         for existing_emp in existing_employees:
             email = existing_emp.get('email', '').lower()
             name = existing_emp.get('name', '').lower()
             emp_id = existing_emp.get('employee_id', '')
             
             # Check if employee exists in new list
-            found = (email and email in new_by_email) or \
-                   (name and name in new_by_name) or \
-                   (emp_id and emp_id in new_by_id)
+            found_emp = None
+            if email and email in new_by_email:
+                found_emp = new_by_email[email]
+            elif name and name in new_by_name:
+                found_emp = new_by_name[name]
+            elif emp_id and emp_id in new_by_id:
+                found_emp = new_by_id[emp_id]
             
-            if not found and existing_emp.get('status') != 'terminated':
-                # Terminate employee
+            if found_emp:
+                # Employee found - update their info but preserve points
+                found_emp['points_lifetime'] = existing_emp.get('points_lifetime', Decimal('0'))
+                found_emp['points_balance'] = existing_emp.get('points_balance', Decimal('0'))
+                found_emp['points_redeemed'] = existing_emp.get('points_redeemed', Decimal('0'))
+                found_emp['password'] = existing_emp.get('password', 'Welcome2025!')
+                
+                # Ensure status is active for found employees
+                found_emp['status'] = 'active'
+                
+                table.put_item(Item=found_emp)
+                updated_count += 1
+            elif existing_emp.get('status') != 'terminated':
+                # Employee not found - terminate them
                 existing_emp['status'] = 'terminated'
                 existing_emp['termination_date'] = today
                 table.put_item(Item=existing_emp)
                 terminated_count += 1
-            elif found:
-                unchanged_count += 1
+                print(f"Terminated employee: {existing_emp.get('name', 'Unknown')}")
         
-        # Add new employees
+        # Add completely new employees
         existing_emails = {emp.get('email', '').lower() for emp in existing_employees}
         existing_names = {emp.get('name', '').lower() for emp in existing_employees}
         existing_ids = {emp.get('employee_id', '') for emp in existing_employees}
@@ -583,7 +617,7 @@ def perform_smart_import(new_employees, source_name):
             name = new_emp.get('name', '').lower()
             emp_id = new_emp.get('employee_id', '')
             
-            # Check if employee already exists
+            # Check if this is a completely new employee
             exists = (email and email in existing_emails) or \
                     (name and name in existing_names) or \
                     (emp_id and emp_id in existing_ids)
@@ -596,23 +630,27 @@ def perform_smart_import(new_employees, source_name):
                 
                 table.put_item(Item=new_emp)
                 added_count += 1
+                print(f"Added new employee: {new_emp.get('name', 'Unknown')}")
         
         message = f"Smart import from {source_name} completed:\n" + \
                  f"• {added_count} new employees added\n" + \
-                 f"• {terminated_count} employees terminated\n" + \
-                 f"• {unchanged_count} employees unchanged"
+                 f"• {updated_count} employees updated\n" + \
+                 f"• {terminated_count} employees terminated"
+        
+        print(f"Smart import completed: {added_count} added, {updated_count} updated, {terminated_count} terminated")
         
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'message': message,
                 'added': added_count,
-                'terminated': terminated_count,
-                'unchanged': unchanged_count
+                'updated': updated_count,
+                'terminated': terminated_count
             })
         }
     
     except Exception as e:
+        print(f"Smart import error: {str(e)}")
         return {
             'statusCode': 500,
             'body': json.dumps({'error': f'Smart import failed: {str(e)}'})
