@@ -625,12 +625,19 @@
             filteredEmployees.forEach(employee => {
                 const row = createEmployeeRow(employee);
                 
-                if (employee.status === 'active') {
-                    activeTableBody.appendChild(row);
-                    activeCount++;
-                } else if (employee.status === 'terminated') {
+                // Check for various status indicators
+                const isTerminated = employee.Terminated === 'Yes' || 
+                                   employee.status === 'terminated' || 
+                                   employee.status === 'inactive' ||
+                                   employee['Employee Status Code'] === 'T';
+                
+                if (isTerminated) {
                     terminatedTableBody.appendChild(row);
                     terminatedCount++;
+                } else {
+                    // Default to active for all other employees
+                    activeTableBody.appendChild(row);
+                    activeCount++;
                 }
             });
             
@@ -643,7 +650,13 @@
         function createEmployeeRow(employee) {
             const row = document.createElement('tr');
             
-            if (employee.status === 'active') {
+            // Check for various status indicators
+            const isTerminated = employee.Terminated === 'Yes' || 
+                               employee.status === 'terminated' || 
+                               employee.status === 'inactive' ||
+                               employee['Employee Status Code'] === 'T';
+            
+            if (!isTerminated) {
                 row.innerHTML = `
                     <td>
                         <div class="d-flex align-items-center">
@@ -651,23 +664,23 @@
                                 ${getEmployeeInitials(employee.name || 'N A')}
                             </div>
                             <div>
-                                <strong>${employee.name || ''}</strong>
-                                <br><small class="text-muted">${employee.email || ''}</small>
-                                <br><small class="badge bg-light text-dark">${employee.employee_id || ''}</small>
+                                <strong>${employee.name || (employee['First Name'] + ' ' + employee['Last Name']) || ''}</strong>
+                                <br><small class="text-muted">${employee.email || employee['Current Home Email'] || ''}</small>
+                                <br><small class="badge bg-light text-dark">${employee.employee_id || employee['Employee Id'] || ''}</small>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <span class="fw-bold">${employee.role || ''}</span>
-                        <br><small class="text-muted">${employee.department || ''}</small>
+                        <span class="fw-bold">${employee.role || employee['Job Title (PIT)'] || employee['Position Description'] || ''}</span>
+                        <br><small class="text-muted">${employee.department || employee['Department Description'] || ''}</small>
                     </td>
                     <td>
-                        <span>${employee.supervisor || 'N/A'}</span>
-                        <br><small class="text-muted">${employee.office || ''}</small>
+                        <span>${employee.supervisor || employee.Supervisor || 'N/A'}</span>
+                        <br><small class="text-muted">${employee.office || employee['Current Work Location Name'] || ''}</small>
                     </td>
                     <td>
-                        <span>${formatDate(employee.hire_date)}</span>
-                        <br><small class="text-muted">${calculateTenure(employee.hire_date)}</small>
+                        <span>${formatDate(employee.hire_date || employee['Hire Date'])}</span>
+                        <br><small class="text-muted">${calculateTenure(employee.hire_date || employee['Hire Date'])}</small>
                     </td>
                     <td>
                         <div class="d-flex align-items-center">
@@ -679,13 +692,13 @@
                     </td>
                     <td>
                         <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewEmployeeDetails('${employee.email}')" title="View Details">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewEmployeeDetails('${employee.email || employee['Current Home Email']}')" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-warning" onclick="showAwardPoints('${employee.email}')" title="Award Points">
+                            <button class="btn btn-sm btn-outline-warning" onclick="showAwardPoints('${employee.email || employee['Current Home Email']}')" title="Award Points">
                                 <i class="fas fa-star"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-info" onclick="sendMessage('${employee.email}')" title="Send Message">
+                            <button class="btn btn-sm btn-outline-info" onclick="sendMessage('${employee.email || employee['Current Home Email']}')" title="Send Message">
                                 <i class="fas fa-envelope"></i>
                             </button>
                         </div>
@@ -696,26 +709,26 @@
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="employee-avatar me-3" style="background: #6c757d;">
-                                ${getEmployeeInitials(employee.name || 'N A')}
+                                ${getEmployeeInitials(employee.name || (employee['First Name'] + ' ' + employee['Last Name']) || 'N A')}
                             </div>
                             <div>
-                                <strong>${employee.name || ''}</strong>
-                                <br><small class="text-muted">${employee.email || ''}</small>
-                                <br><small class="badge bg-secondary">${employee.employee_id || ''}</small>
+                                <strong>${employee.name || (employee['First Name'] + ' ' + employee['Last Name']) || ''}</strong>
+                                <br><small class="text-muted">${employee.email || employee['Current Home Email'] || ''}</small>
+                                <br><small class="badge bg-secondary">${employee.employee_id || employee['Employee Id'] || ''}</small>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <span class="fw-bold">${employee.role || ''}</span>
-                        <br><small class="text-muted">${employee.department || ''}</small>
+                        <span class="fw-bold">${employee.role || employee['Job Title (PIT)'] || employee['Position Description'] || ''}</span>
+                        <br><small class="text-muted">${employee.department || employee['Department Description'] || ''}</small>
                     </td>
-                    <td>${employee.office || ''}</td>
+                    <td>${employee.office || employee['Current Work Location Name'] || ''}</td>
                     <td>
-                        <span>${formatDate(employee.hire_date)}</span>
-                        <br><small class="text-muted">${calculateTenure(employee.hire_date)}</small>
+                        <span>${formatDate(employee.hire_date || employee['Hire Date'])}</span>
+                        <br><small class="text-muted">${calculateTenure(employee.hire_date || employee['Hire Date'])}</small>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployeeDetails('${employee.email}')">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmployeeDetails('${employee.email || employee['Current Home Email']}')">
                             <i class="fas fa-eye me-1"></i>View
                         </button>
                     </td>
