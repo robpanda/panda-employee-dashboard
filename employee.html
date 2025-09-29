@@ -35,66 +35,104 @@
             background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%);
             color: white;
             padding: 30px;
-            position: relative;
         }
         .logo img { height: 50px; }
         .header h1 { margin: 20px 0 10px 0; font-size: 2.5em; }
         .header p { opacity: 0.9; margin-bottom: 0; }
-        .logout-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.2);
+        .utility-nav {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-link {
+            color: #6c757d;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: #2c5530;
             color: white;
-            border: 1px solid rgba(255,255,255,0.3);
+            text-decoration: none;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
         }
-        .logout-btn:hover { background: rgba(255,255,255,0.3); }
-        .nav-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 30px;
+        .logout-btn:hover { background: #c82333; }
+        .section-nav {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+        .section-btn {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            color: #6c757d;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .section-btn:hover, .section-btn.active {
+            background: #2c5530;
+            color: white;
+            border-color: #2c5530;
+        }
+        .clickable {
+            cursor: pointer;
+        }
+        .clickable:hover {
+            transform: translateY(-2px);
+            border-color: #2c5530;
+        }
+        .red { color: #dc3545; }
+        .yellow { color: #ffc107; }
+        .green { color: #28a745; }
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .table {
+            margin: 0;
+        }
+        .table thead th {
+            background: #f8f9fa;
+            border: none;
+            font-weight: 600;
+            color: #2c3e50;
+            padding: 15px;
+            cursor: pointer;
+        }
+        .table tbody tr {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .table tbody tr:hover {
             background: #f8f9fa;
         }
-        .nav-card {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-        }
-        .nav-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-            border-color: #2c5530;
-            text-decoration: none;
-            color: inherit;
-        }
-        .nav-card.active {
-            border-color: #2c5530;
-            background: linear-gradient(135deg, #2c5530, #1a3d1f);
-            color: white;
-        }
-        .nav-card .icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-            display: block;
-        }
-        .nav-card h6 {
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        .nav-card small {
-            opacity: 0.8;
+        .table tbody td {
+            padding: 15px;
+            border: none;
+            vertical-align: middle;
         }
         .content-area {
             padding: 30px;
@@ -124,29 +162,7 @@
             padding: 25px;
             margin-bottom: 30px;
         }
-        .employee-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-        }
-        .employee-card {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        .employee-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-color: #2c5530;
-        }
-        .employee-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
+
         .employee-info h5 {
             margin: 0 0 5px 0;
             color: #2c3e50;
@@ -356,51 +372,47 @@
             <p>Manage your team with comprehensive employee data and Panda Points tracking</p>
         </div>
         
-        <div class="nav-cards">
-            <div class="nav-card active" onclick="showSection('employees')">
-                <span class="icon">👥</span>
-                <h6>Active Employees</h6>
-                <small><span id="activeCount">0</span> employees</small>
+        <div class="utility-nav">
+            <div class="nav-links">
+                <a href="/employee.html" class="nav-link active">👥 Employees</a>
+                <a href="/points.html" class="nav-link">⭐ Points</a>
+                <a href="/leads.html" class="nav-link">📊 Leads</a>
+                <a href="/referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="/assets.html" class="nav-link">📦 Assets</a>
+                <a href="/admin.html" class="nav-link">⚙️ Admin</a>
             </div>
-            <div class="nav-card" onclick="showSection('terminated')">
-                <span class="icon">❌</span>
-                <h6>Terminated</h6>
-                <small><span id="terminatedCount">0</span> employees</small>
-            </div>
-            <div class="nav-card" onclick="showSection('import')">
-                <span class="icon">📥</span>
-                <h6>Import Data</h6>
-                <small>Smart Import</small>
-            </div>
-            <div class="nav-card" onclick="showSection('analytics')">
-                <span class="icon">📊</span>
-                <h6>Analytics</h6>
-                <small>Charts & Stats</small>
-            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="section-nav">
+            <button class="section-btn active" onclick="showSection('all')">All Employees</button>
+            <button class="section-btn" onclick="showSection('terminated')">Terminated</button>
+            <button class="section-btn" onclick="showSection('import')">Import Data</button>
+            <button class="section-btn" onclick="showSection('analytics')">Analytics</button>
         </div>
         
         <div class="content-area">
             <div class="stats-row">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalCount">0</div>
-                    <div class="stat-label">Total Employees</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="activeStatCount">0</div>
+                <div class="stat-card clickable" onclick="filterByStatus('active')">
+                    <div class="stat-number" id="activeCount">188</div>
                     <div class="stat-label">Active Employees</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalPoints">0</div>
-                    <div class="stat-label">Total Points Awarded</div>
+                <div class="stat-card clickable" onclick="filterByHireDays(1, 30)">
+                    <div class="stat-number red" id="newHires1-30">0</div>
+                    <div class="stat-label">New Hires (1-30 Days)</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="avgPoints">0</div>
-                    <div class="stat-label">Average Points</div>
+                <div class="stat-card clickable" onclick="filterByHireDays(31, 60)">
+                    <div class="stat-number yellow" id="newHires31-60">0</div>
+                    <div class="stat-label">New Hires (31-60 Days)</div>
+                </div>
+                <div class="stat-card clickable" onclick="filterByHireDays(61, 90)">
+                    <div class="stat-number green" id="newHires61-90">0</div>
+                    <div class="stat-label">New Hires (61-90 Days)</div>
                 </div>
             </div>
         
             <!-- Employees Section -->
-            <div id="employees-section" class="section-content">
+            <div id="all-section" class="section-content">
                 <div class="filters-card">
                     <div class="row g-3 align-items-center">
                         <div class="col-md-4">
@@ -424,15 +436,40 @@
                     </div>
                 </div>
                 
-                <div class="employee-grid" id="employeeGrid">
-                    <!-- Employee cards will be populated here -->
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('name')">Employee <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable('role')">Role & Department <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable('office')">Office & Supervisor <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable('hire_date')">Hire Date <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable('points_balance')">Points <i class="fas fa-sort"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                        </tbody>
+                    </table>
                 </div>
             </div>
         
             <!-- Terminated Employees Section -->
             <div id="terminated-section" class="section-content" style="display: none;">
-                <div class="employee-grid" id="terminatedGrid">
-                    <!-- Terminated employee cards will be populated here -->
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Role & Department</th>
+                                <th>Office</th>
+                                <th>Hire Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="terminatedTableBody">
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -571,6 +608,68 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-success" onclick="submitPoints()">Award Points</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Employee Modal -->
+    <div class="modal fade" id="editEmployeeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Employee</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmployeeForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="editFirstName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="editLastName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Employee ID</label>
+                                <input type="text" class="form-control" id="editEmployeeId" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role</label>
+                                <input type="text" class="form-control" id="editRole">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Department</label>
+                                <input type="text" class="form-control" id="editDepartment">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Office</label>
+                                <input type="text" class="form-control" id="editOffice">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Supervisor</label>
+                                <input type="text" class="form-control" id="editSupervisor">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Hire Date</label>
+                                <input type="date" class="form-control" id="editHireDate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="editPhone">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveEmployee()">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -715,198 +814,133 @@
         }
 
         function displayEmployees() {
-            console.log(`Displaying ${filteredEmployees.length} employees`);
+            const tableBody = document.getElementById('employeeTableBody');
+            const terminatedTableBody = document.getElementById('terminatedTableBody');
             
-            const employeeGrid = document.getElementById('employeeGrid');
-            const terminatedGrid = document.getElementById('terminatedGrid');
+            if (!tableBody || !terminatedTableBody) return;
             
-            if (!employeeGrid || !terminatedGrid) {
-                console.error('Employee grids not found');
-                return;
-            }
-            
-            employeeGrid.innerHTML = '';
-            terminatedGrid.innerHTML = '';
+            tableBody.innerHTML = '';
+            terminatedTableBody.innerHTML = '';
             
             let activeCount = 0;
             let terminatedCount = 0;
-            let totalPoints = 0;
+            let newHires1_30 = 0, newHires31_60 = 0, newHires61_90 = 0;
             
-            filteredEmployees.forEach((employee, index) => {
-                const card = createEmployeeCard(employee);
-                
-                // Get employee name from various possible fields
-                const employeeName = employee.name || 
-                                   (employee['First Name'] && employee['Last Name'] ? 
-                                    `${employee['First Name']} ${employee['Last Name']}` : '') ||
-                                   (employee.first_name && employee.last_name ? 
-                                    `${employee.first_name} ${employee.last_name}` : 'Unknown');
-                
-                // Check for various status indicators
+            filteredEmployees.forEach(employee => {
+                const row = createEmployeeRow(employee);
                 const isTerminated = employee.Terminated === 'Yes' || 
                                    employee.status === 'terminated' || 
                                    employee.status === 'inactive' ||
                                    employee['Employee Status Code'] === 'T';
                 
-                if (index < 5) {
-                    console.log(`Employee ${index}:`, {
-                        name: employeeName,
-                        status: employee.status || employee['Employee Status Code'],
-                        terminated: employee.Terminated,
-                        isTerminated: isTerminated,
-                        rawEmployee: employee
-                    });
-                }
-                
                 if (isTerminated) {
-                    terminatedGrid.appendChild(card);
+                    terminatedTableBody.appendChild(row);
                     terminatedCount++;
                 } else {
-                    employeeGrid.appendChild(card);
+                    tableBody.appendChild(row);
                     activeCount++;
-                    totalPoints += (employee.points_balance || 0);
+                    
+                    // Calculate new hire days
+                    const hireDate = new Date(employee.hire_date || employee['Hire Date']);
+                    const daysSinceHire = Math.floor((new Date() - hireDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysSinceHire <= 30) newHires1_30++;
+                    else if (daysSinceHire <= 60) newHires31_60++;
+                    else if (daysSinceHire <= 90) newHires61_90++;
                 }
             });
             
-            console.log(`Display counts - Active: ${activeCount}, Terminated: ${terminatedCount}`);
-            
             // Update stats
             document.getElementById('activeCount').textContent = activeCount;
-            document.getElementById('activeStatCount').textContent = activeCount;
-            document.getElementById('terminatedCount').textContent = terminatedCount;
-            document.getElementById('totalCount').textContent = activeCount + terminatedCount;
-            document.getElementById('totalPoints').textContent = totalPoints;
-            document.getElementById('avgPoints').textContent = activeCount > 0 ? Math.round(totalPoints / activeCount) : 0;
+            document.getElementById('newHires1-30').textContent = newHires1_30;
+            document.getElementById('newHires31-60').textContent = newHires31_60;
+            document.getElementById('newHires61-90').textContent = newHires61_90;
         }
 
-        function createEmployeeCard(employee) {
-            const card = document.createElement('div');
-            card.className = 'employee-card';
+        function createEmployeeRow(employee) {
+            const row = document.createElement('tr');
             
-            // Get employee name from various possible fields
             const employeeName = employee.name || 
                                (employee['First Name'] && employee['Last Name'] ? 
                                 `${employee['First Name']} ${employee['Last Name']}` : '') ||
                                (employee.first_name && employee.last_name ? 
                                 `${employee.first_name} ${employee.last_name}` : 'Unknown');
             
-            // Get email from various possible fields
             const employeeEmail = employee.email || employee['Current Home Email'] || employee.Email || '';
-            
-            // Get employee ID from various possible fields
             const employeeId = employee.employee_id || employee['Employee Id'] || employee.id || '';
-            
-            // Check for various status indicators
-            const isTerminated = employee.Terminated === 'Yes' || 
-                               employee.status === 'terminated' || 
-                               employee.status === 'inactive' ||
-                               employee['Employee Status Code'] === 'T';
-            
             const role = employee.role || employee['Job Title (PIT)'] || employee['Position Description'] || employee.Position || '';
             const department = employee.department || employee['Department Description'] || employee.Department || '';
             const supervisor = employee.supervisor || employee.Supervisor || 'N/A';
             const office = employee.office || employee['Current Work Location Name'] || '';
             const hireDate = employee.hire_date || employee['Hire Date'] || employee['Employment Date'];
             
+            const isTerminated = employee.Terminated === 'Yes' || 
+                               employee.status === 'terminated' || 
+                               employee.status === 'inactive' ||
+                               employee['Employee Status Code'] === 'T';
+            
+            row.onclick = () => editEmployee(employeeEmail);
+            
             if (!isTerminated) {
-                card.innerHTML = `
-                    <div class="employee-header">
-                        <div class="employee-avatar">
-                            ${getEmployeeInitials(employeeName)}
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="employee-avatar me-3">
+                                ${getEmployeeInitials(employeeName)}
+                            </div>
+                            <div>
+                                <strong>${employeeName}</strong>
+                                <br><small class="text-muted">${employeeEmail}</small>
+                                <br><small class="badge bg-light text-dark">${employeeId}</small>
+                            </div>
                         </div>
-                        <div class="employee-info">
-                            <h5>${employeeName}</h5>
-                            <small>${employeeEmail}</small><br>
-                            <small class="badge bg-light text-dark">${employeeId}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="employee-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Role:</span>
-                            <span class="detail-value">${role}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Department:</span>
-                            <span class="detail-value">${department}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Supervisor:</span>
-                            <span class="detail-value">${supervisor}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Office:</span>
-                            <span class="detail-value">${office}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Hire Date:</span>
-                            <span class="detail-value">${formatDate(hireDate)}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Points:</span>
-                            <span class="points-badge">
-                                <i class="fas fa-star me-1"></i>${employee.points_balance || 0}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="employee-actions">
-                        <button class="btn btn-sm btn-primary" onclick="viewEmployeeDetails('${employeeEmail}')" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-warning" onclick="showAwardPoints('${employeeEmail}')" title="Award Points">
+                    </td>
+                    <td>
+                        <strong>${role}</strong>
+                        <br><small class="text-muted">${department}</small>
+                    </td>
+                    <td>
+                        <strong>${office}</strong>
+                        <br><small class="text-muted">${supervisor}</small>
+                    </td>
+                    <td>${formatDate(hireDate)}</td>
+                    <td>
+                        <span class="points-badge">
+                            <i class="fas fa-star me-1"></i>${employee.points_balance || 0}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); showAwardPoints('${employeeEmail}')">
                             <i class="fas fa-star"></i>
                         </button>
-                        <button class="btn btn-sm btn-info" onclick="sendMessage('${employeeEmail}')" title="Send Message">
-                            <i class="fas fa-envelope"></i>
-                        </button>
-                    </div>
+                    </td>
                 `;
             } else {
-                card.innerHTML = `
-                    <div class="employee-header">
-                        <div class="employee-avatar" style="background: #6c757d;">
-                            ${getEmployeeInitials(employeeName)}
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="employee-avatar me-3" style="background: #6c757d;">
+                                ${getEmployeeInitials(employeeName)}
+                            </div>
+                            <div>
+                                <strong>${employeeName}</strong>
+                                <br><small class="text-muted">${employeeEmail}</small>
+                            </div>
                         </div>
-                        <div class="employee-info">
-                            <h5>${employeeName}</h5>
-                            <small>${employeeEmail}</small><br>
-                            <small class="badge bg-secondary">${employeeId}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="employee-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Role:</span>
-                            <span class="detail-value">${role}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Department:</span>
-                            <span class="detail-value">${department}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Office:</span>
-                            <span class="detail-value">${office}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Hire Date:</span>
-                            <span class="detail-value">${formatDate(hireDate)}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Status:</span>
-                            <span class="detail-value status-terminated">TERMINATED</span>
-                        </div>
-                    </div>
-                    
-                    <div class="employee-actions">
-                        <button class="btn btn-sm btn-secondary" onclick="viewEmployeeDetails('${employeeEmail}')">
-                            <i class="fas fa-eye me-1"></i>View
-                        </button>
-                    </div>
+                    </td>
+                    <td>
+                        <strong>${role}</strong>
+                        <br><small class="text-muted">${department}</small>
+                    </td>
+                    <td>${office}</td>
+                    <td>${formatDate(hireDate)}</td>
+                    <td>
+                        <span class="badge bg-secondary">Terminated</span>
+                    </td>
                 `;
             }
             
-            return card;
+            return row;
         }
 
         function populateFilters() {
@@ -918,17 +952,108 @@
         }
         
         function showSection(section) {
-            // Hide all sections
             document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
             
-            // Remove active class from all nav cards
-            document.querySelectorAll('.nav-card').forEach(c => c.classList.remove('active'));
-            
-            // Show selected section
             document.getElementById(section + '-section').style.display = 'block';
+            event.target.classList.add('active');
+        }
+        
+        function filterByStatus(status) {
+            if (status === 'active') {
+                filteredEmployees = employees.filter(emp => {
+                    const isTerminated = emp.Terminated === 'Yes' || 
+                                       emp.status === 'terminated' || 
+                                       emp.status === 'inactive' ||
+                                       emp['Employee Status Code'] === 'T';
+                    return !isTerminated;
+                });
+            }
+            displayEmployees();
+        }
+        
+        function filterByHireDays(minDays, maxDays) {
+            filteredEmployees = employees.filter(emp => {
+                const hireDate = new Date(emp.hire_date || emp['Hire Date']);
+                const daysSinceHire = Math.floor((new Date() - hireDate) / (1000 * 60 * 60 * 24));
+                return daysSinceHire >= minDays && daysSinceHire <= maxDays;
+            });
+            displayEmployees();
+        }
+        
+        let currentEditEmployee = null;
+        
+        function editEmployee(email) {
+            const employee = employees.find(e => (e.email || e['Current Home Email']) === email);
+            if (!employee) return;
             
-            // Add active class to clicked nav card
-            event.target.closest('.nav-card').classList.add('active');
+            currentEditEmployee = employee;
+            
+            // Populate form
+            document.getElementById('editFirstName').value = employee['First Name'] || employee.first_name || '';
+            document.getElementById('editLastName').value = employee['Last Name'] || employee.last_name || '';
+            document.getElementById('editEmail').value = employee.email || employee['Current Home Email'] || '';
+            document.getElementById('editEmployeeId').value = employee.employee_id || employee['Employee Id'] || '';
+            document.getElementById('editRole').value = employee.role || employee['Job Title (PIT)'] || '';
+            document.getElementById('editDepartment').value = employee.department || employee['Department Description'] || '';
+            document.getElementById('editOffice').value = employee.office || employee['Current Work Location Name'] || '';
+            document.getElementById('editSupervisor').value = employee.supervisor || employee.Supervisor || '';
+            document.getElementById('editHireDate').value = employee.hire_date || employee['Hire Date'] || '';
+            document.getElementById('editPhone').value = employee.phone || '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+            modal.show();
+        }
+        
+        async function saveEmployee() {
+            if (!currentEditEmployee) return;
+            
+            const updatedEmployee = {
+                ...currentEditEmployee,
+                'First Name': document.getElementById('editFirstName').value,
+                'Last Name': document.getElementById('editLastName').value,
+                name: `${document.getElementById('editFirstName').value} ${document.getElementById('editLastName').value}`,
+                email: document.getElementById('editEmail').value,
+                'Current Home Email': document.getElementById('editEmail').value,
+                employee_id: document.getElementById('editEmployeeId').value,
+                'Employee Id': document.getElementById('editEmployeeId').value,
+                role: document.getElementById('editRole').value,
+                'Job Title (PIT)': document.getElementById('editRole').value,
+                department: document.getElementById('editDepartment').value,
+                'Department Description': document.getElementById('editDepartment').value,
+                office: document.getElementById('editOffice').value,
+                'Current Work Location Name': document.getElementById('editOffice').value,
+                supervisor: document.getElementById('editSupervisor').value,
+                Supervisor: document.getElementById('editSupervisor').value,
+                hire_date: document.getElementById('editHireDate').value,
+                'Hire Date': document.getElementById('editHireDate').value,
+                phone: document.getElementById('editPhone').value
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/update-employee`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(updatedEmployee)
+                });
+                
+                if (response.ok) {
+                    // Update local data
+                    const index = employees.findIndex(e => e.last_name === currentEditEmployee.last_name);
+                    if (index !== -1) {
+                        employees[index] = updatedEmployee;
+                        filteredEmployees = [...employees];
+                        displayEmployees();
+                    }
+                    
+                    bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal')).hide();
+                    showSuccessMessage('Employee updated successfully!');
+                } else {
+                    throw new Error('Failed to update employee');
+                }
+            } catch (error) {
+                alert(`Failed to update employee: ${error.message}`);
+            }
         }
 
         function populateSelect(selectId, options) {
@@ -1196,9 +1321,7 @@
             }
         }
         
-        function editEmployee() {
-            alert('Edit employee feature coming soon!\n\nThis will allow you to:\n• Update employee information\n• Change roles and departments\n• Modify contact details\n• Update supervisor assignments');
-        }
+
         
         function showSuccessMessage(message) {
             const alert = document.createElement('div');
