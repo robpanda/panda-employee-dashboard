@@ -671,8 +671,17 @@
                 console.log('Smart import result:', result);
                 
                 if (response.ok) {
-                    document.getElementById('importResults').innerHTML = 
-                        `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
+                    // Check if result has message property (expected) or is an array (unexpected)
+                    if (result.message) {
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
+                    } else if (Array.isArray(result)) {
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-warning"><strong>Import completed but returned employee data instead of status message.</strong><br>Loaded ${result.length} employees.</div>`;
+                    } else {
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success"><strong>Smart Import Completed</strong></div>`;
+                    }
                     console.log('Reloading employees after smart import...');
                     await loadEmployees();
                 } else {

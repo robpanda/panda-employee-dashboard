@@ -21,22 +21,34 @@ def lambda_handler(event, context):
         path = event.get('path', '')
         method = event.get('httpMethod', 'GET')
         
+        print(f"Lambda handler called with path: {path}, method: {method}")
+        
         # Handle both root path and /employees for GET requests
         if (path == '/employees' or path == '' or path == '/') and method == 'GET':
+            print("Calling get_employees()")
             return get_employees()
         elif path == '/import' and method == 'POST':
+            print("Calling import_employees()")
             return import_employees()
         elif path == '/award-points' and method == 'POST':
+            print("Calling award_points()")
             return award_points(event)
         elif path == '/employee-login' and method == 'POST':
+            print("Calling employee_login()")
             return employee_login(event)
         elif path == '/upload-employees' and method == 'POST':
+            print("Calling upload_employees()")
             return upload_employees(event)
         elif path == '/upload' and method == 'POST':
+            print("Calling handle_file_upload()")
             return handle_file_upload(event)
         elif path == '/smart-import' and method == 'POST':
-            return smart_import(event)
+            print("Calling smart_import()")
+            result = smart_import(event)
+            print(f"Smart import result: {result}")
+            return result
         elif path == '/restore-backup' and method == 'POST':
+            print("Calling restore_backup()")
             return restore_backup(event)
         else:
             return {
@@ -45,6 +57,7 @@ def lambda_handler(event, context):
             }
             
     except Exception as e:
+        print(f"Lambda handler error: {str(e)}")
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
