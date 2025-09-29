@@ -910,6 +910,7 @@
                     } else {
                         tableBody.appendChild(row);
                         activeCount++;
+                    }
                 } catch (error) {
                     console.error('Error creating row for employee', index, ':', error, employee);
                 }
@@ -921,6 +922,7 @@
                     if (daysSinceHire <= 30) newHires1_30++;
                     else if (daysSinceHire <= 60) newHires31_60++;
                     else if (daysSinceHire <= 90) newHires61_90++;
+                    }
                 }
             });
             
