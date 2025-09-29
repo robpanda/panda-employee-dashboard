@@ -10,7 +10,7 @@
     <script>
         // Immediate redirect to login if not authenticated
         if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
-            window.location.replace('/login.html?v=' + Date.now());
+            window.location.replace('/login.html');
         }
     </script>
     <style>
