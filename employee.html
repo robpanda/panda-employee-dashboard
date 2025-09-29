@@ -750,22 +750,18 @@
                 }
                 
                 const data = await response.json();
-                console.log('Raw API response:', data);
-                console.log('Response type:', typeof data);
-                console.log('Is array?', Array.isArray(data));
                 
-                // Handle both direct array and wrapped object responses
-                if (Array.isArray(data)) {
-                    employees = data;
-                } else if (data.employees && Array.isArray(data.employees)) {
+                // Lambda returns {employees: [...]} format
+                if (data.employees && Array.isArray(data.employees)) {
                     employees = data.employees;
+                } else if (Array.isArray(data)) {
+                    employees = data;
                 } else {
                     employees = [];
                 }
-                console.log(`Final employees array length: ${employees.length}`);
+                console.log(`Loaded ${employees.length} employees from database`);
                 
                 filteredEmployees = [...employees];
-                console.log('About to display', filteredEmployees.length, 'employees');
                 
                 displayEmployees();
                 populateFilters();
