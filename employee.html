@@ -897,18 +897,22 @@
             console.log('Processing', filteredEmployees.length, 'employees for display');
             filteredEmployees.forEach((employee, index) => {
                 if (index < 3) console.log('Employee', index, ':', employee);
-                const row = createEmployeeRow(employee);
-                const isTerminated = employee.Terminated === 'Yes' || 
-                                   employee.status === 'terminated' || 
-                                   employee.status === 'inactive' ||
-                                   employee['Employee Status Code'] === 'T';
-                
-                if (isTerminated) {
-                    terminatedTableBody.appendChild(row);
-                    terminatedCount++;
-                } else {
-                    tableBody.appendChild(row);
-                    activeCount++;
+                try {
+                    const row = createEmployeeRow(employee);
+                    const isTerminated = employee.Terminated === 'Yes' || 
+                                       employee.status === 'terminated' || 
+                                       employee.status === 'inactive' ||
+                                       employee['Employee Status Code'] === 'T';
+                    
+                    if (isTerminated) {
+                        terminatedTableBody.appendChild(row);
+                        terminatedCount++;
+                    } else {
+                        tableBody.appendChild(row);
+                        activeCount++;
+                } catch (error) {
+                    console.error('Error creating row for employee', index, ':', error, employee);
+                }
                     
                     // Calculate new hire days
                     const hireDate = new Date(employee.hire_date || employee['Hire Date']);
