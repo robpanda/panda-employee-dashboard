@@ -32,6 +32,12 @@ def lambda_handler(event, context):
             return employee_login(event)
         elif path == '/upload-employees' and method == 'POST':
             return upload_employees(event)
+        elif path == '/upload' and method == 'POST':
+            return handle_file_upload(event)
+        elif path == '/smart-import' and method == 'POST':
+            return smart_import(event)
+        elif path == '/restore-backup' and method == 'POST':
+            return restore_backup(event)
         else:
             return {
                 'statusCode': 404,
@@ -373,4 +379,328 @@ def upload_employees(event):
         return {
             'statusCode': 500,
             'body': json.dumps({'error': f'Upload failed: {str(e)}'})
+        }
+
+def handle_file_upload(event):
+    """Handle file upload with optional smart import"""
+    try:
+        import base64
+        
+        # Get file content from base64 encoded body
+        if event.get('isBase64Encoded'):
+            body = base64.b64decode(event['body'])
+        else:
+            body = event['body'].encode('utf-8')
+        
+        # Parse multipart form data
+        content_type = event.get('headers', {}).get('content-type', '') or event.get('headers', {}).get('Content-Type', '')
+        
+        if 'multipart/form-data' not in content_type:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'Content-Type must be multipart/form-data'})
+            }
+        
+        # Extract boundary
+        boundary = content_type.split('boundary=')[1]
+        parts = body.split(f'--{boundary}'.encode())
+        
+        csv_content = None
+        is_smart_import = False
+        
+        for part in parts:
+            if b'name="smart_import"' in part:
+                is_smart_import = True
+            elif b'filename=' in part and (b'.csv' in part or b'.xlsx' in part or b'.xls' in part):
+                # Find the start of file content (after double CRLF)
+                content_start = part.find(b'\r\n\r\n')
+                if content_start != -1:
+                    file_content = part[content_start + 4:].rstrip(b'\r\n')
+                    csv_content = file_content.decode('utf-8')
+                    break
+        
+        if not csv_content:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'No valid CSV file found in upload'})
+            }
+        
+        # Parse CSV into employee data
+        new_employees = parse_csv_to_employees(csv_content)
+        
+        if not new_employees:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'No valid employee data found in file'})
+            }
+        
+        if is_smart_import:
+            return perform_smart_import(new_employees, 'uploaded file')
+        else:
+            return perform_regular_import(new_employees)
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'File upload failed: {str(e)}'})
+        }
+
+def smart_import(event):
+    """Handle smart import from Google Sheets"""
+    try:
+        body = json.loads(event.get('body', '{}'))
+        source = body.get('source', 'sheets')
+        
+        if source == 'sheets':
+            new_employees = fetch_from_google_sheets()
+            if not new_employees:
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({'error': 'No data found in Google Sheets'})
+                }
+            return perform_smart_import(new_employees, 'Google Sheets')
+        else:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'Invalid source specified'})
+            }
+    
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Smart import failed: {str(e)}'})
+        }
+
+def fetch_from_google_sheets():
+    """Fetch employee data from Google Sheets"""
+    try:
+        sheet_url = "https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/export?format=csv"
+        
+        with urllib.request.urlopen(sheet_url) as response:
+            csv_content = response.read().decode('utf-8')
+        
+        return parse_csv_to_employees(csv_content)
+        
+    except Exception as e:
+        print(f"Error fetching from Google Sheets: {str(e)}")
+        return []
+
+def parse_csv_to_employees(csv_content):
+    """Parse CSV content into employee data structure"""
+    try:
+        csv_reader = csv.DictReader(io.StringIO(csv_content))
+        employees_data = []
+        
+        for row in csv_reader:
+            if not row.get('Last Name') or not row.get('First Name'):
+                continue
+                
+            first_name = row.get('First Name', '').strip()
+            last_name = row.get('Last Name', '').strip()
+            
+            # Generate email from name
+            email = f"{first_name.lower()}.{last_name.lower()}@pandaexteriors.com"
+            
+            employee_data = {
+                'last_name': last_name,
+                'first_name': first_name,
+                'name': f"{first_name} {last_name}",
+                'employee_id': row.get('Employee Id', '').strip() or row.get('Employee ID', '').strip(),
+                'role': row.get('Job Title (PIT)', '').strip() or row.get('Position Description', '').strip() or row.get('Role', '').strip(),
+                'supervisor': row.get('Supervisor', '').strip(),
+                'office': row.get('Current Work Location Name', '').strip() or row.get('Office', '').strip(),
+                'department': row.get('Department Description', '').strip() or row.get('Department', '').strip(),
+                'hire_date': row.get('Hire Date', '').strip(),
+                'phone': row.get('Phone', '').strip(),
+                'email': email,
+                'status': 'terminated' if row.get('Employee Status Code', '').strip().upper() == 'T' else 'active',
+                'password': 'Welcome2025!',
+                'points_lifetime': Decimal('0'),
+                'points_redeemed': Decimal('0'),
+                'points_balance': Decimal('0')
+            }
+            
+            employees_data.append(employee_data)
+        
+        return employees_data
+        
+    except Exception as e:
+        print(f"Error parsing CSV: {str(e)}")
+        return []
+
+def perform_smart_import(new_employees, source_name):
+    """Perform smart import with auto-termination"""
+    try:
+        from datetime import datetime
+        
+        # Get all existing employees
+        existing_employees = []
+        response = table.scan()
+        existing_employees = response.get('Items', [])
+        
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            existing_employees.extend(response.get('Items', []))
+        
+        # Create lookup maps for new employees
+        new_by_email = {emp['email'].lower(): emp for emp in new_employees}
+        new_by_name = {emp['name'].lower(): emp for emp in new_employees}
+        new_by_id = {emp['employee_id']: emp for emp in new_employees if emp.get('employee_id')}
+        
+        # Track changes
+        added_count = 0
+        terminated_count = 0
+        unchanged_count = 0
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Check existing employees for termination
+        for existing_emp in existing_employees:
+            email = existing_emp.get('email', '').lower()
+            name = existing_emp.get('name', '').lower()
+            emp_id = existing_emp.get('employee_id', '')
+            
+            # Check if employee exists in new list
+            found = (email and email in new_by_email) or \
+                   (name and name in new_by_name) or \
+                   (emp_id and emp_id in new_by_id)
+            
+            if not found and existing_emp.get('status') != 'terminated':
+                # Terminate employee
+                existing_emp['status'] = 'terminated'
+                existing_emp['termination_date'] = today
+                table.put_item(Item=existing_emp)
+                terminated_count += 1
+            elif found:
+                unchanged_count += 1
+        
+        # Add new employees
+        existing_emails = {emp.get('email', '').lower() for emp in existing_employees}
+        existing_names = {emp.get('name', '').lower() for emp in existing_employees}
+        existing_ids = {emp.get('employee_id', '') for emp in existing_employees}
+        
+        for new_emp in new_employees:
+            email = new_emp.get('email', '').lower()
+            name = new_emp.get('name', '').lower()
+            emp_id = new_emp.get('employee_id', '')
+            
+            # Check if employee already exists
+            exists = (email and email in existing_emails) or \
+                    (name and name in existing_names) or \
+                    (emp_id and emp_id in existing_ids)
+            
+            if not exists:
+                # Add new employee
+                new_emp['status'] = 'active'
+                if not new_emp.get('hire_date'):
+                    new_emp['hire_date'] = today
+                
+                table.put_item(Item=new_emp)
+                added_count += 1
+        
+        message = f"Smart import from {source_name} completed:\n" + \
+                 f"• {added_count} new employees added\n" + \
+                 f"• {terminated_count} employees terminated\n" + \
+                 f"• {unchanged_count} employees unchanged"
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': message,
+                'added': added_count,
+                'terminated': terminated_count,
+                'unchanged': unchanged_count
+            })
+        }
+    
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Smart import failed: {str(e)}'})
+        }
+
+def perform_regular_import(new_employees):
+    """Perform regular import without termination"""
+    try:
+        imported_count = 0
+        updated_count = 0
+        
+        for employee in new_employees:
+            try:
+                existing = table.get_item(Key={'last_name': employee['last_name']})
+                if 'Item' in existing:
+                    # Update existing employee but preserve points
+                    existing_item = existing['Item']
+                    employee['points_lifetime'] = existing_item.get('points_lifetime', Decimal('0'))
+                    employee['points_balance'] = existing_item.get('points_balance', Decimal('0'))
+                    employee['points_redeemed'] = existing_item.get('points_redeemed', Decimal('0'))
+                    updated_count += 1
+                else:
+                    imported_count += 1
+            except:
+                imported_count += 1
+            
+            table.put_item(Item=employee)
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': f'Import completed. {imported_count} new employees, {updated_count} updated.',
+                'imported': imported_count,
+                'updated': updated_count
+            })
+        }
+    
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Regular import failed: {str(e)}'})
+        }
+
+def restore_backup(event):
+    """Restore employee data from backup"""
+    try:
+        body = json.loads(event.get('body', '{}'))
+        employees = body.get('employees', [])
+        
+        if not employees:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'No employee data provided'})
+            }
+        
+        # Clear existing data
+        response = table.scan()
+        existing_items = response.get('Items', [])
+        
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            existing_items.extend(response.get('Items', []))
+        
+        # Delete existing items
+        for item in existing_items:
+            table.delete_item(Key={'last_name': item['last_name']})
+        
+        # Restore from backup
+        restored_count = 0
+        for employee in employees:
+            # Convert numeric values to Decimal for DynamoDB
+            for key in ['points_lifetime', 'points_balance', 'points_redeemed']:
+                if key in employee and not isinstance(employee[key], Decimal):
+                    employee[key] = Decimal(str(employee[key]))
+            
+            table.put_item(Item=employee)
+            restored_count += 1
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': f'Successfully restored {restored_count} employees from backup',
+                'count': restored_count
+            })
+        }
+    
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Backup restore failed: {str(e)}'})
         }

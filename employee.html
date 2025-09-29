@@ -355,24 +355,33 @@
             <div class="tab-pane fade" id="import" role="tabpanel">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-sync me-2"></i>Import Employee Data</h5>
+                        <h5 class="mb-0"><i class="fas fa-sync me-2"></i>Smart Import Employee Data</h5>
                     </div>
                     <div class="card-body">
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Smart Import Rules:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Anyone NOT on the new list will be automatically terminated</strong></li>
+                                <li>Anyone NEW will be added as active employee</li>
+                                <li>Anyone already in database remains unchanged</li>
+                            </ul>
+                        </div>
+                        
                         <div id="importResults" class="mb-4"></div>
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card border-success">
                                     <div class="card-header bg-success text-white">
-                                        <h6 class="mb-0"><i class="fas fa-table me-2"></i>Google Sheets Import</h6>
+                                        <h6 class="mb-0"><i class="fas fa-table me-2"></i>Smart Google Sheets Import</h6>
                                     </div>
                                     <div class="card-body text-center">
-                                        <p class="text-muted mb-3">Import employee data directly from the configured Google Sheets document.</p>
-                                        <button class="btn btn-success" onclick="importFromGoogleSheets()">
-                                            <i class="fas fa-download me-2"></i>Sync Google Sheets
+                                        <p class="text-muted mb-3">Import with auto-termination from Google Sheets.</p>
+                                        <button class="btn btn-success" onclick="smartImportFromGoogleSheets()">
+                                            <i class="fas fa-download me-2"></i>Smart Import from Sheets
                                         </button>
                                         <div class="mt-3">
-                                            <small class="text-muted">This will fetch the latest data from Google Sheets and update the database.</small>
+                                            <small class="text-muted">Employees not on the new list will be terminated automatically.</small>
                                         </div>
                                     </div>
                                 </div>
@@ -380,17 +389,53 @@
                             <div class="col-md-6">
                                 <div class="card border-primary">
                                     <div class="card-header bg-primary text-white">
-                                        <h6 class="mb-0"><i class="fas fa-file-upload me-2"></i>File Upload</h6>
+                                        <h6 class="mb-0"><i class="fas fa-file-upload me-2"></i>Smart File Upload</h6>
                                     </div>
                                     <div class="card-body text-center">
-                                        <p class="text-muted mb-3">Upload employee data from CSV or Excel files.</p>
-                                        <input type="file" id="fileUpload" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleFileUpload(event)">
-                                        <button class="btn btn-primary" onclick="document.getElementById('fileUpload').click()">
-                                            <i class="fas fa-file-upload me-2"></i>Upload CSV/Excel
+                                        <p class="text-muted mb-3">Upload with auto-termination from CSV/Excel files.</p>
+                                        <input type="file" id="smartFileUpload" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleSmartFileUpload(event)">
+                                        <button class="btn btn-primary" onclick="document.getElementById('smartFileUpload').click()">
+                                            <i class="fas fa-file-upload me-2"></i>Smart Upload CSV/Excel
                                         </button>
                                         <div class="mt-3">
-                                            <small class="text-muted">Supported formats: CSV, Excel (.xlsx, .xls)</small>
+                                            <small class="text-muted">Employees not in file will be terminated automatically.</small>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card border-secondary">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-plus me-2"></i>Regular Import (No Termination)</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <p class="text-muted mb-3">Add new employees without affecting existing ones.</p>
+                                        <button class="btn btn-secondary me-2" onclick="importFromGoogleSheets()">
+                                            <i class="fas fa-download me-1"></i>Regular Sheets Import
+                                        </button>
+                                        <input type="file" id="fileUpload" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleFileUpload(event)">
+                                        <button class="btn btn-secondary" onclick="document.getElementById('fileUpload').click()">
+                                            <i class="fas fa-file-upload me-1"></i>Regular File Upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        <h6 class="mb-0"><i class="fas fa-undo me-2"></i>Backup & Restore</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <p class="text-muted mb-3">Backup current data or restore from backup.</p>
+                                        <button class="btn btn-outline-danger me-2" onclick="backupEmployees()">
+                                            <i class="fas fa-save me-1"></i>Backup Data
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="restoreEmployees()">
+                                            <i class="fas fa-undo me-1"></i>Restore Backup
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -587,6 +632,36 @@
             }
         }
 
+        async function smartImportFromGoogleSheets() {
+            if (!confirm('⚠️ WARNING: This will automatically terminate employees not on the new list.\n\nAre you sure you want to proceed with Smart Import?')) {
+                return;
+            }
+            
+            try {
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-info">Performing smart import from Google Sheets...</div>';
+                
+                const response = await fetch(`${API_URL}/smart-import`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ source: 'sheets' })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('importResults').innerHTML = 
+                        `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
+                    await loadEmployees();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('importResults').innerHTML = 
+                    `<div class="alert alert-danger">Smart import failed: ${error.message}</div>`;
+            }
+        }
+        
         async function importFromGoogleSheets() {
             try {
                 document.getElementById('importResults').innerHTML = 
@@ -1021,6 +1096,46 @@
             }, 5000);
         }
         
+        async function handleSmartFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!confirm('⚠️ WARNING: This will automatically terminate employees not in the uploaded file.\n\nAre you sure you want to proceed with Smart Import?')) {
+                event.target.value = '';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('smart_import', 'true');
+            
+            try {
+                document.getElementById('importResults').innerHTML = 
+                    '<div class="alert alert-info">Performing smart import from file...</div>';
+                
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('importResults').innerHTML = 
+                        `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
+                    await loadEmployees();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('importResults').innerHTML = 
+                    `<div class="alert alert-danger">Smart import failed: ${error.message}</div>`;
+            }
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
         async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1032,7 +1147,7 @@
                 document.getElementById('importResults').innerHTML = 
                     '<div class="alert alert-info">Uploading and processing file...</div>';
                 
-                const response = await fetch(`${API_URL}/upload-employees`, {
+                const response = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 });
@@ -1053,6 +1168,73 @@
             
             // Reset file input
             event.target.value = '';
+        }
+        
+        function backupEmployees() {
+            const backup = {
+                timestamp: new Date().toISOString(),
+                employees: employees
+            };
+            
+            const dataStr = JSON.stringify(backup, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `panda_employees_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showSuccessMessage('Employee data backup downloaded successfully!');
+        }
+        
+        function restoreEmployees() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                if (!confirm('⚠️ WARNING: This will replace ALL current employee data with the backup.\n\nAre you sure you want to restore from backup?')) {
+                    return;
+                }
+                
+                try {
+                    const text = await file.text();
+                    const backup = JSON.parse(text);
+                    
+                    if (!backup.employees || !Array.isArray(backup.employees)) {
+                        throw new Error('Invalid backup file format');
+                    }
+                    
+                    // Update local data
+                    employees = backup.employees;
+                    filteredEmployees = [...employees];
+                    
+                    // Save to database
+                    const response = await fetch(`${API_URL}/restore-backup`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ employees: employees })
+                    });
+                    
+                    if (response.ok) {
+                        displayEmployees();
+                        populateFilters();
+                        createAnalyticsCharts();
+                        showSuccessMessage(`Successfully restored ${employees.length} employees from backup!`);
+                    } else {
+                        throw new Error('Failed to save restored data to database');
+                    }
+                } catch (error) {
+                    alert(`Restore failed: ${error.message}`);
+                }
+            };
+            input.click();
         }
         
         function createAnalyticsCharts() {
