@@ -2,7 +2,8 @@ import json
 import boto3
 import csv
 import io
-import requests
+import urllib.request
+import urllib.parse
 from decimal import Decimal
 
 dynamodb = boto3.resource('dynamodb')
@@ -24,7 +25,8 @@ def lambda_handler(event, context):
         path = event.get('path', '')
         method = event.get('httpMethod', 'GET')
         
-        if path == '/employees' and method == 'GET':
+        # Handle both root path and /employees for GET requests
+        if (path == '/employees' or path == '' or path == '/') and method == 'GET':
             return get_employees()
         elif path == '/import' and method == 'POST':
             return import_employees()
@@ -38,7 +40,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 404,
                 'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Not found'})
+                'body': json.dumps({'error': f'Not found - path: {path}, method: {method}'})
             }
             
     except Exception as e:
@@ -69,8 +71,8 @@ def import_employees():
         # Google Sheets CSV URL
         sheet_url = "https://docs.google.com/spreadsheets/d/1vO-94iEtB8FAthneJ8Cx1Cm-iA-oHJiBwOPAGmsiM-4/export?format=csv"
         
-        response = requests.get(sheet_url)
-        csv_content = response.text
+        with urllib.request.urlopen(sheet_url) as response:
+            csv_content = response.read().decode('utf-8')
         
         # Parse CSV
         csv_reader = csv.DictReader(io.StringIO(csv_content))
@@ -289,44 +291,40 @@ def employee_login(event):
 def upload_employees(event):
     try:
         import base64
-        import pandas as pd
+        
+        # Get file content from base64 encoded body
+        if event.get('isBase64Encoded'):
+            body = base64.b64decode(event['body'])
+        else:
+            body = event['body'].encode('utf-8')
         
         # Parse multipart form data
-        content_type = event.get('headers', {}).get('content-type', '')
-        if 'multipart/form-data' not in content_type:
-            return {
-                'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Invalid content type'})
-            }
+        content_type = event.get('headers', {}).get('content-type', '') or event.get('headers', {}).get('Content-Type', '')
         
-        # Decode base64 body
-        body = base64.b64decode(event['body'])
-        
-        # Simple multipart parsing (for CSV files)
-        body_str = body.decode('utf-8')
-        
-        # Extract CSV content between boundaries
-        lines = body_str.split('\n')
-        csv_start = -1
-        csv_end = -1
-        
-        for i, line in enumerate(lines):
-            if 'Employee Id' in line or 'Employee ID' in line:
-                csv_start = i
-            elif csv_start > -1 and line.startswith('--'):
-                csv_end = i
-                break
-        
-        if csv_start == -1:
-            return {
-                'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'CSV headers not found'})
-            }
-        
-        csv_lines = lines[csv_start:csv_end] if csv_end > -1 else lines[csv_start:]
-        csv_content = '\n'.join(csv_lines)
+        if 'multipart/form-data' in content_type:
+            # Extract boundary
+            boundary = content_type.split('boundary=')[1]
+            parts = body.split(f'--{boundary}'.encode())
+            
+            csv_content = None
+            for part in parts:
+                if b'filename=' in part and (b'.csv' in part or b'.xlsx' in part or b'.xls' in part):
+                    # Find the start of file content (after double CRLF)
+                    content_start = part.find(b'\r\n\r\n')
+                    if content_start != -1:
+                        file_content = part[content_start + 4:].rstrip(b'\r\n')
+                        csv_content = file_content.decode('utf-8')
+                        break
+            
+            if not csv_content:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'No valid CSV file found in upload'})
+                }
+        else:
+            # Direct CSV content
+            csv_content = body.decode('utf-8')
         
         # Parse CSV
         csv_reader = csv.DictReader(io.StringIO(csv_content))
