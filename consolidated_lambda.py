@@ -5,9 +5,12 @@ import io
 import urllib.request
 import urllib.parse
 from decimal import Decimal
+import hashlib
+from datetime import datetime
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('panda-employees')
+admin_table = dynamodb.Table('panda-admin-users')
 
 def lambda_handler(event, context):
     try:
@@ -22,6 +25,14 @@ def lambda_handler(event, context):
         method = event.get('httpMethod', 'GET')
         
         print(f"Lambda handler called with path: {path}, method: {method}")
+        
+        # Admin authentication endpoints
+        if path == '/admin-login':
+            return handle_admin_login(event)
+        elif path == '/admin-users':
+            return handle_admin_users(event)
+        elif path == '/create-admin':
+            return handle_create_admin(event)
         
         # Handle both root path and /employees for GET requests
         if (path == '/employees' or path == '' or path == '/') and method == 'GET':
@@ -754,4 +765,129 @@ def restore_backup(event):
         return {
             'statusCode': 500,
             'body': json.dumps({'error': f'Backup restore failed: {str(e)}'})
+        }
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def handle_admin_login(event):
+    try:
+        body = json.loads(event.get('body', '{}'))
+        email = body.get('email')
+        password = body.get('password')
+        
+        if not email or not password:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'success': False, 'message': 'Email and password required'})
+            }
+        
+        response = admin_table.get_item(Key={'email': email})
+        
+        if 'Item' not in response:
+            return {
+                'statusCode': 401,
+                'body': json.dumps({'success': False, 'message': 'Invalid credentials'})
+            }
+        
+        admin_user = response['Item']
+        if admin_user['password'] != hash_password(password) or not admin_user.get('active', True):
+            return {
+                'statusCode': 401,
+                'body': json.dumps({'success': False, 'message': 'Invalid credentials'})
+            }
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'success': True, 'user': {'email': email, 'role': admin_user.get('role', 'admin')}})
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'success': False, 'message': str(e)})
+        }
+
+def handle_admin_users(event):
+    try:
+        method = event.get('httpMethod')
+        
+        if method == 'GET':
+            response = admin_table.scan()
+            users = []
+            for item in response.get('Items', []):
+                users.append({
+                    'email': item['email'],
+                    'role': item.get('role', 'admin'),
+                    'active': item.get('active', True),
+                    'created_at': item.get('created_at', '')
+                })
+            
+            return {
+                'statusCode': 200,
+                'body': json.dumps({'users': users})
+            }
+            
+        elif method == 'POST':
+            body = json.loads(event.get('body', '{}'))
+            email = body.get('email')
+            password = body.get('password')
+            role = body.get('role', 'admin')
+            
+            if not email or not password:
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({'success': False, 'message': 'Email and password required'})
+                }
+            
+            admin_table.put_item(
+                Item={
+                    'email': email,
+                    'password': hash_password(password),
+                    'role': role,
+                    'active': True,
+                    'created_at': datetime.now().isoformat()
+                }
+            )
+            
+            return {
+                'statusCode': 200,
+                'body': json.dumps({'success': True, 'message': 'Admin user created'})
+            }
+            
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'success': False, 'message': str(e)})
+        }
+
+def handle_create_admin(event):
+    try:
+        super_admin_email = 'robwinters@pandaexteriors.com'
+        super_admin_password = 'PandaAdmin2024!'
+        
+        try:
+            admin_table.put_item(
+                Item={
+                    'email': super_admin_email,
+                    'password': hash_password(super_admin_password),
+                    'role': 'super_admin',
+                    'active': True,
+                    'created_at': datetime.now().isoformat()
+                },
+                ConditionExpression='attribute_not_exists(email)'
+            )
+            message = f'Super admin created: {super_admin_email}'
+        except:
+            message = f'Super admin already exists: {super_admin_email}'
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'success': True, 'message': message})
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'success': False, 'message': str(e)})
         }
