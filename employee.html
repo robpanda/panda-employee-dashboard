@@ -497,7 +497,7 @@
                     <div class="import-grid">
                         <div class="import-card success">
                             <h6><i class="fas fa-table me-2"></i>Smart Google Sheets Import</h6>
-                            <p class="text-muted mb-3">Import with auto-termination from Google Sheets.</p>
+                            <input type="url" class="form-control mb-3" id="googleSheetsUrl" placeholder="Enter Google Sheets URL">
                             <button class="btn btn-success" onclick="smartImportFromGoogleSheets()">
                                 <i class="fas fa-download me-2"></i>Smart Import from Sheets
                             </button>
@@ -514,7 +514,7 @@
                         
                         <div class="import-card secondary">
                             <h6><i class="fas fa-plus me-2"></i>Regular Import</h6>
-                            <p class="text-muted mb-3">Add new employees without affecting existing ones.</p>
+                            <input type="url" class="form-control mb-2" id="regularSheetsUrl" placeholder="Enter Google Sheets URL">
                             <button class="btn btn-secondary me-2" onclick="importFromGoogleSheets()">
                                 <i class="fas fa-download me-1"></i>Regular Sheets
                             </button>
@@ -755,67 +755,87 @@
         }
 
         async function smartImportFromGoogleSheets() {
+            const url = document.getElementById('googleSheetsUrl').value;
+            if (!url) {
+                alert('Please enter a Google Sheets URL');
+                return;
+            }
+            
             if (!confirm('⚠️ WARNING: This will automatically terminate employees not on the new list.\n\nAre you sure you want to proceed with Smart Import?')) {
                 return;
             }
             
             try {
-                console.log('Starting smart import from Google Sheets...');
                 document.getElementById('importResults').innerHTML = 
                     '<div class="alert alert-info">Performing smart import from Google Sheets...</div>';
                 
                 const response = await fetch(`${API_URL}/smart-import`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ source: 'sheets' })
+                    body: JSON.stringify({ source: 'sheets', url: url })
                 });
                 
-                console.log('Smart import response status:', response.status);
                 const result = await response.json();
-                console.log('Smart import result:', result);
                 
                 if (response.ok) {
-                    // Check if result has message property (expected) or is an array (unexpected)
                     if (result.message) {
                         document.getElementById('importResults').innerHTML = 
                             `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
                     } else if (Array.isArray(result)) {
+                        // Handle case where API returns employee data directly
+                        employees = result;
+                        filteredEmployees = [...employees];
+                        displayEmployees();
+                        populateFilters();
                         document.getElementById('importResults').innerHTML = 
-                            `<div class="alert alert-warning"><strong>Import completed but returned employee data instead of status message.</strong><br>Loaded ${result.length} employees.</div>`;
-                    } else {
-                        document.getElementById('importResults').innerHTML = 
-                            `<div class="alert alert-success"><strong>Smart Import Completed</strong></div>`;
+                            `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>Processed ${result.length} employees</div>`;
+                        return;
                     }
-                    console.log('Reloading employees after smart import...');
                     await loadEmployees();
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || 'Import failed');
                 }
             } catch (error) {
-                console.error('Smart import error:', error);
                 document.getElementById('importResults').innerHTML = 
                     `<div class="alert alert-danger">Smart import failed: ${error.message}</div>`;
             }
         }
         
         async function importFromGoogleSheets() {
+            const url = document.getElementById('regularSheetsUrl').value;
+            if (!url) {
+                alert('Please enter a Google Sheets URL');
+                return;
+            }
+            
             try {
                 document.getElementById('importResults').innerHTML = 
                     '<div class="alert alert-info">Importing from Google Sheets...</div>';
                 
                 const response = await fetch(`${API_URL}/import`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'}
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ url: url })
                 });
                 
                 const result = await response.json();
                 
                 if (response.ok) {
-                    document.getElementById('importResults').innerHTML = 
-                        `<div class="alert alert-success">${result.message}</div>`;
+                    if (result.message) {
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success">${result.message}</div>`;
+                    } else if (Array.isArray(result)) {
+                        employees = result;
+                        filteredEmployees = [...employees];
+                        displayEmployees();
+                        populateFilters();
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success">Imported ${result.length} employees successfully</div>`;
+                        return;
+                    }
                     await loadEmployees();
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || 'Import failed');
                 }
             } catch (error) {
                 document.getElementById('importResults').innerHTML = 
@@ -1383,7 +1403,6 @@
             formData.append('smart_import', 'true');
             
             try {
-                console.log('Starting smart file upload...');
                 document.getElementById('importResults').innerHTML = 
                     '<div class="alert alert-info">Performing smart import from file...</div>';
                 
@@ -1392,25 +1411,31 @@
                     body: formData
                 });
                 
-                console.log('Smart file upload response status:', response.status);
                 const result = await response.json();
-                console.log('Smart file upload result:', result);
                 
                 if (response.ok) {
-                    document.getElementById('importResults').innerHTML = 
-                        `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
-                    console.log('Reloading employees after smart file upload...');
+                    if (result.message) {
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>${result.message}</div>`;
+                    } else if (Array.isArray(result)) {
+                        employees = result;
+                        filteredEmployees = [...employees];
+                        displayEmployees();
+                        populateFilters();
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success"><strong>Smart Import Completed:</strong><br>Processed ${result.length} employees</div>`;
+                        event.target.value = '';
+                        return;
+                    }
                     await loadEmployees();
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || 'Import failed');
                 }
             } catch (error) {
-                console.error('Smart file upload error:', error);
                 document.getElementById('importResults').innerHTML = 
                     `<div class="alert alert-danger">Smart import failed: ${error.message}</div>`;
             }
             
-            // Reset file input
             event.target.value = '';
         }
         
@@ -1433,18 +1458,28 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    document.getElementById('importResults').innerHTML = 
-                        `<div class="alert alert-success">${result.message}</div>`;
+                    if (result.message) {
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success">${result.message}</div>`;
+                    } else if (Array.isArray(result)) {
+                        employees = result;
+                        filteredEmployees = [...employees];
+                        displayEmployees();
+                        populateFilters();
+                        document.getElementById('importResults').innerHTML = 
+                            `<div class="alert alert-success">Uploaded ${result.length} employees successfully</div>`;
+                        event.target.value = '';
+                        return;
+                    }
                     await loadEmployees();
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || 'Upload failed');
                 }
             } catch (error) {
                 document.getElementById('importResults').innerHTML = 
                     `<div class="alert alert-danger">Upload failed: ${error.message}</div>`;
             }
             
-            // Reset file input
             event.target.value = '';
         }
         
