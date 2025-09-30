@@ -470,6 +470,62 @@
                     </div>
                 </div>
 
+                <!-- System Configuration -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-cogs"></i> System Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6><i class="fas fa-tags"></i> Contact Status</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="statusList" class="mb-2"></div>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="newStatus" placeholder="New status">
+                                            <button class="btn btn-info" onclick="addStatus()">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6><i class="fas fa-list"></i> Contact Lists</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="listsList" class="mb-2"></div>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="newList" placeholder="New list">
+                                            <button class="btn btn-warning" onclick="addList()">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6><i class="fas fa-user-cog"></i> Custom Fields</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="customFieldsList" class="mb-2"></div>
+                                        <button class="btn btn-success btn-sm w-100" onclick="showAddCustomField()">
+                                            <i class="fas fa-plus"></i> Add Field
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Data Management -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -770,13 +826,69 @@
                             <div id="mappingFields"></div>
                         </div>
                     </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Default Status</label>
+                            <select class="form-select" id="defaultStatus"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Default Lists</label>
+                            <select class="form-select" id="defaultLists" multiple></select>
+                        </div>
+                    </div>
                     <div class="alert alert-info">
-                        <small><i class="fas fa-info-circle"></i> Drag file columns to database fields to map them</small>
+                        <small><i class="fas fa-info-circle"></i> Drag file columns to database fields. Click mapped fields to remove mapping.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="processBulkImport()">Import Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Field Modal -->
+    <div class="modal fade" id="customFieldModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Custom Field</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customFieldForm">
+                        <div class="mb-3">
+                            <label class="form-label">Field Name *</label>
+                            <input type="text" class="form-control" id="fieldName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Field Type *</label>
+                            <select class="form-select" id="fieldType" required>
+                                <option value="text">Text</option>
+                                <option value="number">Number</option>
+                                <option value="date">Date</option>
+                                <option value="email">Email</option>
+                                <option value="phone">Phone</option>
+                                <option value="select">Dropdown</option>
+                                <option value="checkbox">Checkbox</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 d-none" id="optionsGroup">
+                            <label class="form-label">Options (comma-separated)</label>
+                            <input type="text" class="form-control" id="fieldOptions" placeholder="Option 1, Option 2, Option 3">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fieldRequired">
+                                <label class="form-check-label" for="fieldRequired">Required Field</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveCustomField()">Save Field</button>
                 </div>
             </div>
         </div>
@@ -806,26 +918,149 @@
                 });
             });
             
-            // Load admin stats
+            // Load admin stats and config
             loadAdminStats();
         });
         
         async function loadAdminStats() {
             try {
-                const [contactsRes, collectionsRes] = await Promise.all([
+                const [contactsRes, collectionsRes, configRes] = await Promise.all([
                     fetch(`${API_BASE}/contacts/count`),
-                    fetch(`${API_BASE}/collections/count`)
+                    fetch(`${API_BASE}/collections/count`),
+                    fetch(`${API_BASE}/config`)
                 ]);
                 
                 const contactsCount = await contactsRes.json();
                 const collectionsCount = await collectionsRes.json();
+                const config = await configRes.json();
                 
                 document.getElementById('totalContacts').textContent = contactsCount.count || 0;
                 document.getElementById('totalCollections').textContent = collectionsCount.count || 0;
+                
+                if (config) {
+                    systemConfig = { ...systemConfig, ...config };
+                    displaySystemConfig();
+                }
             } catch (error) {
                 console.error('Failed to load admin stats:', error);
+                displaySystemConfig(); // Show defaults
             }
         }
+        
+        function displaySystemConfig() {
+            // Display statuses
+            const statusList = document.getElementById('statusList');
+            statusList.innerHTML = systemConfig.statuses.map(status => 
+                `<span class="badge bg-info m-1">${status} <i class="fas fa-times ms-1 cursor-pointer" onclick="removeStatus('${status}')"></i></span>`
+            ).join('');
+            
+            // Display lists
+            const listsList = document.getElementById('listsList');
+            listsList.innerHTML = systemConfig.lists.map(list => 
+                `<span class="badge bg-warning m-1">${list} <i class="fas fa-times ms-1 cursor-pointer" onclick="removeList('${list}')"></i></span>`
+            ).join('');
+            
+            // Display custom fields
+            const customFieldsList = document.getElementById('customFieldsList');
+            customFieldsList.innerHTML = systemConfig.customFields.map(field => 
+                `<div class="d-flex justify-content-between align-items-center mb-1">
+                    <small>${field.name} (${field.type})</small>
+                    <i class="fas fa-times text-danger cursor-pointer" onclick="removeCustomField('${field.name}')"></i>
+                </div>`
+            ).join('');
+        }
+        
+        async function addStatus() {
+            const status = document.getElementById('newStatus').value.trim();
+            if (status && !systemConfig.statuses.includes(status)) {
+                systemConfig.statuses.push(status);
+                await saveConfig();
+                document.getElementById('newStatus').value = '';
+                displaySystemConfig();
+            }
+        }
+        
+        async function removeStatus(status) {
+            systemConfig.statuses = systemConfig.statuses.filter(s => s !== status);
+            await saveConfig();
+            displaySystemConfig();
+        }
+        
+        async function addList() {
+            const list = document.getElementById('newList').value.trim();
+            if (list && !systemConfig.lists.includes(list)) {
+                systemConfig.lists.push(list);
+                await saveConfig();
+                document.getElementById('newList').value = '';
+                displaySystemConfig();
+            }
+        }
+        
+        async function removeList(list) {
+            systemConfig.lists = systemConfig.lists.filter(l => l !== list);
+            await saveConfig();
+            displaySystemConfig();
+        }
+        
+        function showAddCustomField() {
+            document.getElementById('customFieldForm').reset();
+            document.getElementById('optionsGroup').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('customFieldModal')).show();
+        }
+        
+        async function saveCustomField() {
+            const form = document.getElementById('customFieldForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const field = {
+                name: document.getElementById('fieldName').value.trim(),
+                type: document.getElementById('fieldType').value,
+                required: document.getElementById('fieldRequired').checked,
+                options: document.getElementById('fieldOptions').value.split(',').map(s => s.trim()).filter(s => s)
+            };
+            
+            if (!systemConfig.customFields.find(f => f.name === field.name)) {
+                systemConfig.customFields.push(field);
+                await saveConfig();
+                displaySystemConfig();
+                bootstrap.Modal.getInstance(document.getElementById('customFieldModal')).hide();
+            } else {
+                alert('Field name already exists');
+            }
+        }
+        
+        async function removeCustomField(fieldName) {
+            systemConfig.customFields = systemConfig.customFields.filter(f => f.name !== fieldName);
+            await saveConfig();
+            displaySystemConfig();
+        }
+        
+        async function saveConfig() {
+            try {
+                await fetch(`${API_BASE}/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(systemConfig)
+                });
+            } catch (error) {
+                console.error('Failed to save config:', error);
+            }
+        }
+        
+        // Show/hide options for select fields
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'fieldType') {
+                const optionsGroup = document.getElementById('optionsGroup');
+                if (e.target.value === 'select') {
+                    optionsGroup.classList.remove('d-none');
+                } else {
+                    optionsGroup.classList.add('d-none');
+                }
+            }
+        });
 
         function createStateChart() {
             const ctx = document.getElementById('stateChart').getContext('2d');
@@ -901,6 +1136,11 @@
         const HATCH_API = 'https://api.usehatchapp.com';
         
         let selectedContacts = [];
+        let systemConfig = {
+            statuses: ['active', 'inactive', 'do-not-contact'],
+            lists: ['leads', 'customers', 'prospects'],
+            customFields: []
+        };
         
         // Tab persistence
         function saveActiveTab(tabId) {
@@ -1161,18 +1401,34 @@
                 `<div class="badge bg-secondary m-1 draggable" draggable="true" data-column="${col}">${col}</div>`
             ).join('');
             
-            const fields = currentImportType === 'contacts' 
+            let fields = currentImportType === 'contacts' 
                 ? ['name', 'email', 'phone', 'status', 'lists']
                 : ['name', 'email', 'phone', 'amount', 'installDate', 'stage'];
+            
+            // Add custom fields for contacts
+            if (currentImportType === 'contacts') {
+                fields = fields.concat(systemConfig.customFields.map(f => f.name));
+            }
             
             const mappingFieldsDiv = document.getElementById('mappingFields');
             mappingFieldsDiv.innerHTML = fields.map(field => 
                 `<div class="mb-2">
                     <label class="form-label">${field} ${field === 'name' || field === 'email' || field === 'amount' || field === 'installDate' ? '*' : ''}</label>
-                    <div class="border rounded p-2 drop-zone" data-field="${field}" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="border rounded p-2 drop-zone" data-field="${field}" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="removeMapping(this)">
                         Drop column here
                     </div>
                 </div>`
+            ).join('');
+            
+            // Populate default dropdowns
+            const statusSelect = document.getElementById('defaultStatus');
+            statusSelect.innerHTML = systemConfig.statuses.map(status => 
+                `<option value="${status}">${status}</option>`
+            ).join('');
+            
+            const listsSelect = document.getElementById('defaultLists');
+            listsSelect.innerHTML = systemConfig.lists.map(list => 
+                `<option value="${list}">${list}</option>`
             ).join('');
             
             // Add drag functionality
@@ -1194,9 +1450,17 @@
             const column = ev.dataTransfer.getData('text/plain');
             const field = ev.target.dataset.field;
             if (field) {
-                ev.target.textContent = column;
+                ev.target.innerHTML = `${column} <small class="text-muted">(click to remove)</small>`;
                 ev.target.dataset.mapped = column;
-                ev.target.classList.add('bg-light');
+                ev.target.classList.add('bg-light', 'border-success');
+            }
+        }
+        
+        function removeMapping(element) {
+            if (element.dataset.mapped) {
+                element.innerHTML = 'Drop column here';
+                delete element.dataset.mapped;
+                element.classList.remove('bg-light', 'border-success');
             }
         }
         
@@ -1216,11 +1480,21 @@
                 return;
             }
             
+            const defaultStatus = document.getElementById('defaultStatus').value;
+            const defaultLists = Array.from(document.getElementById('defaultLists').selectedOptions).map(o => o.value);
+            
             const mappedData = currentFileData.map(row => {
                 const mapped = {};
                 Object.keys(mappings).forEach(field => {
                     mapped[field] = row[mappings[field]];
                 });
+                
+                // Apply defaults
+                if (currentImportType === 'contacts') {
+                    if (!mapped.status) mapped.status = defaultStatus;
+                    if (!mapped.lists) mapped.lists = defaultLists;
+                }
+                
                 return mapped;
             }).filter(row => row.name && row.email);
             
