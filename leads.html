@@ -357,10 +357,10 @@
                             <div class="col-md-4">
                                 <div class="card border-primary">
                                     <div class="card-body">
-                                        <h6><i class="fas fa-envelope"></i> PodOps Email</h6>
-                                        <p class="small text-muted">mypodops.com/connect</p>
+                                        <h6><i class="fas fa-envelope"></i> Email Service</h6>
+                                        <p class="small text-muted">External AWS Account</p>
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="badge bg-success">Connected</span>
+                                            <span class="badge bg-success" id="emailStatus">Connected</span>
                                             <button class="btn btn-outline-primary btn-sm" onclick="testEmailConnection()">
                                                 Test
                                             </button>
@@ -371,10 +371,10 @@
                             <div class="col-md-4">
                                 <div class="card border-success">
                                     <div class="card-body">
-                                        <h6><i class="fas fa-sms"></i> PodOps SMS</h6>
-                                        <p class="small text-muted">mypodops.com/connect</p>
+                                        <h6><i class="fas fa-sms"></i> SMS Service</h6>
+                                        <p class="small text-muted">External AWS Account</p>
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="badge bg-success">Connected</span>
+                                            <span class="badge bg-success" id="smsStatus">Connected</span>
                                             <button class="btn btn-outline-success btn-sm" onclick="testSMSConnection()">
                                                 Test
                                             </button>
@@ -388,7 +388,7 @@
                                         <h6><i class="fas fa-robot"></i> Riley Agent</h6>
                                         <p class="small text-muted">Same AWS Account</p>
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="badge bg-success">Connected</span>
+                                            <span class="badge bg-success" id="rileyStatus">Connected</span>
                                             <button class="btn btn-outline-info btn-sm" onclick="openRileyDashboard()">
                                                 Open
                                             </button>
@@ -599,7 +599,7 @@
                                         <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
                                         <h6>Email Campaigns</h6>
                                         <button class="btn btn-primary btn-sm" onclick="launchEmailCampaign()">
-                                            Launch via PodOps
+                                            Launch Email
                                         </button>
                                     </div>
                                 </div>
@@ -610,7 +610,7 @@
                                         <i class="fas fa-sms fa-2x text-success mb-2"></i>
                                         <h6>SMS Campaigns</h6>
                                         <button class="btn btn-success btn-sm" onclick="launchSMSCampaign()">
-                                            Launch via PodOps
+                                            Launch SMS
                                         </button>
                                     </div>
                                 </div>
@@ -716,7 +716,9 @@
 
         // Collections & Campaign Management
         const API_BASE = 'https://your-api-gateway-url.amazonaws.com';
-        const PODOPS_API = 'https://mypodops.com/connect/api';
+        const EMAIL_API = 'https://external-email-api-url.amazonaws.com';
+        const SMS_API = 'https://external-sms-api-url.amazonaws.com';
+        const RILEY_API = 'https://riley-api-url.amazonaws.com';
         
         function previewFile() {
             const file = document.getElementById('collectionsFile').files[0];
@@ -805,10 +807,10 @@
                 if (response.ok) {
                     const campaign = await response.json();
                     if (type === 'email' || type === 'mixed') {
-                        await launchPodOpsEmail(campaign.id, stage);
+                        await launchEmailCampaign(campaign.id, stage);
                     }
                     if (type === 'sms' || type === 'mixed') {
-                        await launchPodOpsSMS(campaign.id, stage);
+                        await launchSMSCampaign(campaign.id, stage);
                     }
                     alert('Campaign launched successfully!');
                 } else {
@@ -819,44 +821,36 @@
             }
         }
 
-        async function launchPodOpsEmail(campaignId, stage) {
+        async function launchEmailCampaign(campaignId, stage) {
             try {
-                const response = await fetch(`${PODOPS_API}/email/campaign`, {
+                const response = await fetch(`${EMAIL_API}/campaign`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer YOUR_PODOPS_TOKEN'
+                        'x-api-key': 'YOUR_EMAIL_API_KEY'
                     },
-                    body: JSON.stringify({
-                        campaignId,
-                        stage,
-                        source: 'pandaadmin'
-                    })
+                    body: JSON.stringify({ campaignId, stage, source: 'pandaadmin' })
                 });
                 return response.ok;
             } catch (error) {
-                console.error('PodOps Email launch failed:', error);
+                console.error('Email launch failed:', error);
                 return false;
             }
         }
 
-        async function launchPodOpsSMS(campaignId, stage) {
+        async function launchSMSCampaign(campaignId, stage) {
             try {
-                const response = await fetch(`${PODOPS_API}/sms/campaign`, {
+                const response = await fetch(`${SMS_API}/campaign`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer YOUR_PODOPS_TOKEN'
+                        'x-api-key': 'YOUR_SMS_API_KEY'
                     },
-                    body: JSON.stringify({
-                        campaignId,
-                        stage,
-                        source: 'pandaadmin'
-                    })
+                    body: JSON.stringify({ campaignId, stage, source: 'pandaadmin' })
                 });
                 return response.ok;
             } catch (error) {
-                console.error('PodOps SMS launch failed:', error);
+                console.error('SMS launch failed:', error);
                 return false;
             }
         }
@@ -870,15 +864,27 @@
         }
 
         function testEmailConnection() {
-            fetch(`${PODOPS_API}/test/email`)
-                .then(r => r.ok ? alert('Email connection OK') : alert('Email connection failed'))
-                .catch(() => alert('Email connection failed'));
+            fetch(`${EMAIL_API}/health`)
+                .then(r => {
+                    document.getElementById('emailStatus').className = r.ok ? 'badge bg-success' : 'badge bg-danger';
+                    document.getElementById('emailStatus').textContent = r.ok ? 'Connected' : 'Failed';
+                })
+                .catch(() => {
+                    document.getElementById('emailStatus').className = 'badge bg-danger';
+                    document.getElementById('emailStatus').textContent = 'Failed';
+                });
         }
 
         function testSMSConnection() {
-            fetch(`${PODOPS_API}/test/sms`)
-                .then(r => r.ok ? alert('SMS connection OK') : alert('SMS connection failed'))
-                .catch(() => alert('SMS connection failed'));
+            fetch(`${SMS_API}/health`)
+                .then(r => {
+                    document.getElementById('smsStatus').className = r.ok ? 'badge bg-success' : 'badge bg-danger';
+                    document.getElementById('smsStatus').textContent = r.ok ? 'Connected' : 'Failed';
+                })
+                .catch(() => {
+                    document.getElementById('smsStatus').className = 'badge bg-danger';
+                    document.getElementById('smsStatus').textContent = 'Failed';
+                });
         }
 
         function previewCampaign() {
