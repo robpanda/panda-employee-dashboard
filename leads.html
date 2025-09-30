@@ -1828,12 +1828,34 @@
             }
         }
 
-        function openRileyInterface() {
-            window.open('/riley-chat', '_blank');
+        async function openRileyInterface() {
+            try {
+                const response = await apiCall(`${API_BASE}/riley/chat`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: 'admin',
+                        context: { source: 'panda_crm' }
+                    })
+                });
+                
+                const data = await response.json();
+                window.open(data.chat_url, '_blank');
+            } catch (error) {
+                alert('Failed to open Riley chat: ' + error.message);
+            }
         }
 
-        function openRileyDashboard() {
-            window.open('/riley-dashboard', '_blank');
+        async function openRileyDashboard() {
+            try {
+                const response = await apiCall(`${API_BASE}/riley/auth`);
+                const data = await response.json();
+                
+                // Open Riley dashboard with API key
+                const dashboardUrl = `https://riley-dashboard.your-domain.com?api_key=${data.api_key}`;
+                window.open(dashboardUrl, '_blank');
+            } catch (error) {
+                alert('Failed to open Riley dashboard: ' + error.message);
+            }
         }
 
         function testEmailConnection() {
@@ -1858,6 +1880,19 @@
                     document.getElementById('smsStatus').className = 'badge bg-danger';
                     document.getElementById('smsStatus').textContent = 'Failed';
                 });
+        }
+        
+        async function testRileyConnection() {
+            try {
+                const response = await apiCall(`${API_BASE}/riley/auth`);
+                const data = await response.json();
+                
+                document.getElementById('rileyStatus').className = 'badge bg-success';
+                document.getElementById('rileyStatus').textContent = 'Connected';
+            } catch (error) {
+                document.getElementById('rileyStatus').className = 'badge bg-danger';
+                document.getElementById('rileyStatus').textContent = 'Failed';
+            }
         }
 
         function previewCampaign() {

@@ -1,0 +1,19 @@
+{
+  "riley_platform": {
+    "description": "Riley Platform Configuration for Panda CRM",
+    "endpoints": {
+      "auth": "/riley/auth",
+      "chat": "/riley/chat"
+    },
+    "integration": {
+      "type": "api_key",
+      "storage": "aws_secrets_manager",
+      "auto_generated": true
+    },
+    "usage": {
+      "get_api_key": "GET /riley/auth",
+      "create_chat_session": "POST /riley/chat",
+      "frontend_integration": "openRileyInterface()"
+    }
+  }
+}

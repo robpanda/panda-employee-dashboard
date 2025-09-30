@@ -7,8 +7,26 @@ Parameters:
     Type: String
     Default: prod
     AllowedValues: [dev, prod]
+  RileyApiKey:
+    Type: String
+    Description: Riley Platform API Key
+    NoEcho: true
+    Default: riley_api_key_placeholder
 
 Resources:
+  # Secrets Manager for Riley API Key
+  RileyApiSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub panda-riley-api-${Environment}
+      Description: Riley Platform API Key for Panda CRM
+      SecretString: !Sub |
+        {
+          "api_key": "${RileyApiKey}",
+          "platform": "riley",
+          "environment": "${Environment}"
+        }
+
   # DynamoDB Tables
   ContactsTable:
     Type: AWS::DynamoDB::Table
@@ -73,6 +91,7 @@ Resources:
           CONTACTS_TABLE: !Ref ContactsTable
           COLLECTIONS_TABLE: !Ref CollectionsTable
           CONFIG_TABLE: !Ref ConfigTable
+          RILEY_SECRET_ARN: !Ref RileyApiSecret
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ContactsTable
@@ -82,6 +101,12 @@ Resources:
             TableName: !Ref ConfigTable
         - DynamoDBCrudPolicy:
             TableName: !Ref EmployeesTable
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref RileyApiSecret
       Events:
         ApiGateway:
           Type: Api
@@ -115,3 +140,15 @@ Outputs:
   CollectionsTable:
     Description: Collections DynamoDB Table
     Value: !Ref CollectionsTable
+
+  RileySecretId:
+    Description: Riley API Secret ID
+    Value: !Ref RileyApiSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-RileySecretId
+
+  RileySecretArn:
+    Description: Riley API Secret ARN
+    Value: !Ref RileyApiSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-RileySecretArn

@@ -6,10 +6,24 @@ from decimal import Decimal
 import uuid
 
 dynamodb = boto3.resource('dynamodb')
+secretsmanager = boto3.client('secretsmanager')
 employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'panda-employees'))
 contacts_table = dynamodb.Table(os.environ.get('CONTACTS_TABLE', 'panda-contacts'))
 collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-collections'))
 config_table = dynamodb.Table(os.environ.get('CONFIG_TABLE', 'panda-config'))
+
+def get_riley_api_key():
+    try:
+        secret_arn = os.environ.get('RILEY_SECRET_ARN')
+        if not secret_arn:
+            return None
+        
+        response = secretsmanager.get_secret_value(SecretId=secret_arn)
+        secret = json.loads(response['SecretString'])
+        return secret.get('api_key')
+    except Exception as e:
+        print(f'Error getting Riley API key: {e}')
+        return None
 
 def lambda_handler(event, context):
     http_method = event['httpMethod']
@@ -41,6 +55,10 @@ def lambda_handler(event, context):
             return handle_collections(event)
         elif path == '/config':
             return handle_config(event)
+        elif path == '/riley/auth':
+            return handle_riley_auth(event)
+        elif path == '/riley/chat':
+            return handle_riley_chat(event)
         else:
             return {
                 'statusCode': 404,
@@ -498,4 +516,80 @@ def handle_config(event):
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
             'body': json.dumps({'message': 'Config saved'})
+        }
+
+def handle_riley_auth(event):
+    method = event['httpMethod']
+    
+    if method == 'GET':
+        api_key = get_riley_api_key()
+        
+        if not api_key:
+            return {
+                'statusCode': 404,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'error': 'Riley API key not configured'})
+            }
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({
+                'api_key': api_key,
+                'platform': 'riley',
+                'status': 'active'
+            })
+        }
+
+def handle_riley_chat(event):
+    method = event['httpMethod']
+    
+    if method == 'POST':
+        body = json.loads(event['body'])
+        api_key = get_riley_api_key()
+        
+        if not api_key:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'error': 'Riley API key not available'})
+            }
+        
+        # Create chat session with Riley
+        chat_session = {
+            'session_id': str(uuid.uuid4()),
+            'user_id': body.get('user_id', 'anonymous'),
+            'context': body.get('context', {}),
+            'api_key': api_key,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({
+                'session_id': chat_session['session_id'],
+                'chat_url': f'https://riley-chat.your-domain.com/session/{chat_session["session_id"]}',
+                'api_key': api_key
+            })
         }
