@@ -1,0 +1,12 @@
+{
+  "name": "panda-crm-deployment",
+  "version": "1.0.0",
+  "description": "Panda CRM System Deployment Package",
+  "scripts": {
+    "deploy": "./deploy.sh",
+    "update-frontend": "./update-frontend.sh",
+    "install-sam": "pip install aws-sam-cli"
+  },
+  "keywords": ["crm", "aws", "serverless", "dynamodb"],
+  "author": "Panda Exteriors"
+}
