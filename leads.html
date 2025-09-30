@@ -355,75 +355,44 @@
             <!-- Overview Tab -->
             <div class="tab-pane fade show active" id="overview" role="tabpanel">
                 <div class="row mb-4">
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="card bg-primary text-white text-center">
                             <div class="card-body">
-                                <h3>141</h3>
-                                <p class="mb-0">Total Leads</p>
+                                <h3 id="totalContacts">-</h3>
+                                <p class="mb-0">Total Contacts</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="card bg-success text-white text-center">
                             <div class="card-body">
-                                <h3>10</h3>
-                                <p class="mb-0">States</p>
+                                <h3 id="totalCollections">-</h3>
+                                <p class="mb-0">Collections</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="card bg-info text-white text-center">
                             <div class="card-body">
-                                <h3>34</h3>
-                                <p class="mb-0">MD Leads</p>
+                                <h3 id="activeCollections">-</h3>
+                                <p class="mb-0">Active</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="card bg-warning text-dark text-center">
                             <div class="card-body">
-                                <h3>31</h3>
-                                <p class="mb-0">NJ Leads</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="card bg-secondary text-white text-center">
-                            <div class="card-body">
-                                <h3>26</h3>
-                                <p class="mb-0">PA Leads</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="card bg-dark text-white text-center">
-                            <div class="card-body">
-                                <h3>99%</h3>
-                                <p class="mb-0">Valid Contacts</p>
+                                <h3 id="totalAmount">-</h3>
+                                <p class="mb-0">Total Amount</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Lead Distribution by State</h5>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="stateChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Monthly Lead Trends</h5>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="trendChart" width="400" height="200"></canvas>
-                            </div>
+                <div class="row" id="overviewError" style="display: none;">
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Unable to load overview data. Check API connection.
                         </div>
                     </div>
                 </div>
@@ -535,13 +504,13 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="text-center">
-                                    <h4 class="text-primary" id="totalContacts">0</h4>
+                                    <h4 class="text-primary" id="adminTotalContacts">0</h4>
                                     <small>Total Contacts</small>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="text-center">
-                                    <h4 class="text-success" id="totalCollections">0</h4>
+                                    <h4 class="text-success" id="adminTotalCollections">0</h4>
                                     <small>Total Collections</small>
                                 </div>
                             </div>
@@ -902,10 +871,9 @@
             sessionStorage.removeItem('adminUser');
             window.location.href = '/login.html';
         }
-        // Initialize charts and collections
+        // Initialize data and collections
         document.addEventListener('DOMContentLoaded', function() {
-            createStateChart();
-            createTrendChart();
+            loadOverviewData();
             refreshCollections();
             refreshContacts();
             loadCollectionsTable();
@@ -939,32 +907,15 @@
                 const collectionsData = await collectionsRes.json();
                 const collectionsCount = (collectionsData.collections || []).length;
                 
-                document.getElementById('totalContacts').textContent = contactsCount;
-                document.getElementById('totalCollections').textContent = collectionsCount;
+                document.getElementById('adminTotalContacts').textContent = contactsCount;
+                document.getElementById('adminTotalCollections').textContent = collectionsCount;
                 
                 displaySystemConfig();
             } catch (error) {
                 console.error('Failed to load admin stats:', error);
-                document.getElementById('totalContacts').textContent = '0';
-                document.getElementById('totalCollections').textContent = '0';
+                document.getElementById('adminTotalContacts').textContent = '0';
+                document.getElementById('adminTotalCollections').textContent = '0';
                 displaySystemConfig();
-            }
-        }
-                
-                const contactsCount = await contactsRes.json();
-                const collectionsCount = await collectionsRes.json();
-                const config = await configRes.json();
-                
-                document.getElementById('totalContacts').textContent = contactsCount.count || 0;
-                document.getElementById('totalCollections').textContent = collectionsCount.count || 0;
-                
-                if (config) {
-                    systemConfig = { ...systemConfig, ...config };
-                    displaySystemConfig();
-                }
-            } catch (error) {
-                console.error('Failed to load admin stats:', error);
-                displaySystemConfig(); // Show defaults
             }
         }
         
@@ -1082,42 +1033,36 @@
             }
         });
 
-        function createStateChart() {
-            const ctx = document.getElementById('stateChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Maryland', 'New Jersey', 'Pennsylvania', 'Virginia', 'Others'],
-                    datasets: [{
-                        data: [34, 31, 26, 20, 30],
-                        backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6c757d']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        function createTrendChart() {
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                        label: 'Leads',
-                        data: [12, 19, 23, 25, 22, 30],
-                        borderColor: '#007bff',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
+        async function loadOverviewData() {
+            try {
+                const [contactsRes, collectionsRes] = await Promise.all([
+                    apiCall(`${API_BASE}/contacts`),
+                    apiCall(`${API_BASE}/collections`)
+                ]);
+                
+                const contactsData = await contactsRes.json();
+                const collectionsData = await collectionsRes.json();
+                
+                const contacts = contactsData.contacts || [];
+                const collections = collectionsData.collections || [];
+                
+                const activeCollections = collections.filter(c => c.status === 'active');
+                const totalAmount = activeCollections.reduce((sum, c) => sum + (c.amount || 0), 0);
+                
+                document.getElementById('totalContacts').textContent = contacts.length;
+                document.getElementById('totalCollections').textContent = collections.length;
+                document.getElementById('activeCollections').textContent = activeCollections.length;
+                document.getElementById('totalAmount').textContent = '$' + totalAmount.toLocaleString();
+                
+                document.getElementById('overviewError').style.display = 'none';
+            } catch (error) {
+                console.error('Failed to load overview data:', error);
+                document.getElementById('overviewError').style.display = 'block';
+                document.getElementById('totalContacts').textContent = 'Error';
+                document.getElementById('totalCollections').textContent = 'Error';
+                document.getElementById('activeCollections').textContent = 'Error';
+                document.getElementById('totalAmount').textContent = 'Error';
+            }
         }
 
         function showLeadDetails(type) {
