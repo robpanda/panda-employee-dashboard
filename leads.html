@@ -120,6 +120,11 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
+                    <i class="fas fa-cog me-2"></i>Admin
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
                     <i class="fas fa-chart-bar me-2"></i>Overview
                 </button>
@@ -267,9 +272,14 @@
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between">
                         <h5><i class="fas fa-chart-pie"></i> Collections Overview</h5>
-                        <button class="btn btn-outline-primary btn-sm" onclick="refreshCollections()">
-                            <i class="fas fa-sync"></i> Refresh
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" onclick="showAddCollection()">
+                                <i class="fas fa-plus"></i> Add Collection
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshCollections()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="row text-center">
@@ -420,6 +430,79 @@
             </div>
 
 
+
+            <!-- Admin Tab -->
+            <div class="tab-pane fade" id="admin" role="tabpanel">
+                <!-- Bulk Upload Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-upload"></i> Bulk Data Import</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6><i class="fas fa-users"></i> Import Contacts</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <input type="file" class="form-control mb-3" id="contactsUpload" accept=".csv,.xlsx,.xls" onchange="previewContactsFile()">
+                                        <button class="btn btn-primary w-100" onclick="showContactsMapping()" disabled id="contactsMapBtn">
+                                            <i class="fas fa-map"></i> Map Fields & Import
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6><i class="fas fa-dollar-sign"></i> Import Collections</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <input type="file" class="form-control mb-3" id="collectionsUpload" accept=".csv,.xlsx,.xls" onchange="previewCollectionsUpload()">
+                                        <button class="btn btn-success w-100" onclick="showCollectionsMapping()" disabled id="collectionsMapBtn">
+                                            <i class="fas fa-map"></i> Map Fields & Import
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-database"></i> Data Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary" id="totalContacts">0</h4>
+                                    <small>Total Contacts</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-success" id="totalCollections">0</h4>
+                                    <small>Total Collections</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-warning w-100" onclick="cleanupDuplicates()">
+                                    <i class="fas fa-broom"></i> Remove Duplicates
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-danger w-100" onclick="confirmDataReset()">
+                                    <i class="fas fa-trash"></i> Reset All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Campaigns Tab -->
             <div class="tab-pane fade" id="campaigns" role="tabpanel">
@@ -573,7 +656,134 @@
         </div>
     </div>
 
+    <!-- Contact Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="contactForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="contactName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="contactEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="contactPhone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="contactStatus">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="do-not-contact">Do Not Contact</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Lists</label>
+                            <input type="text" class="form-control" id="contactLists" placeholder="leads, customers, prospects">
+                            <small class="text-muted">Comma-separated list names</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveContact()">Save Contact</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collection Modal -->
+    <div class="modal fade" id="collectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Collection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="collectionForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="collectionName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="collectionEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="collectionPhone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount *</label>
+                            <input type="number" class="form-control" id="collectionAmount" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Install Date *</label>
+                            <input type="date" class="form-control" id="collectionInstallDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Stage</label>
+                            <select class="form-select" id="collectionStageModal">
+                                <option value="0-30">0-30 Days</option>
+                                <option value="31-60">31-60 Days</option>
+                                <option value="61-90">61-90 Days</option>
+                                <option value="91-plus">91+ Days</option>
+                                <option value="judgment">In Judgment</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveCollection()">Save Collection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field Mapping Modal -->
+    <div class="modal fade" id="mappingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mappingTitle">Map Fields</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>File Columns</h6>
+                            <div id="fileColumns" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Database Fields</h6>
+                            <div id="mappingFields"></div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <small><i class="fas fa-info-circle"></i> Drag file columns to database fields to map them</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="processBulkImport()">Import Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
@@ -595,7 +805,27 @@
                     saveActiveTab(e.target.id);
                 });
             });
+            
+            // Load admin stats
+            loadAdminStats();
         });
+        
+        async function loadAdminStats() {
+            try {
+                const [contactsRes, collectionsRes] = await Promise.all([
+                    fetch(`${API_BASE}/contacts/count`),
+                    fetch(`${API_BASE}/collections/count`)
+                ]);
+                
+                const contactsCount = await contactsRes.json();
+                const collectionsCount = await collectionsRes.json();
+                
+                document.getElementById('totalContacts').textContent = contactsCount.count || 0;
+                document.getElementById('totalCollections').textContent = collectionsCount.count || 0;
+            } catch (error) {
+                console.error('Failed to load admin stats:', error);
+            }
+        }
 
         function createStateChart() {
             const ctx = document.getElementById('stateChart').getContext('2d');
@@ -767,13 +997,66 @@
         }
         
         function showAddContact() {
-            // Modal or form for adding new contact
-            const name = prompt('Contact Name:');
-            const email = prompt('Email:');
-            const phone = prompt('Phone (optional):');
+            document.getElementById('contactForm').reset();
+            new bootstrap.Modal(document.getElementById('contactModal')).show();
+        }
+        
+        function showAddCollection() {
+            document.getElementById('collectionForm').reset();
+            new bootstrap.Modal(document.getElementById('collectionModal')).show();
+        }
+        
+        async function saveContact() {
+            const form = document.getElementById('contactForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
             
-            if (name && email) {
-                addContact({ name, email, phone });
+            const contact = {
+                name: document.getElementById('contactName').value,
+                email: document.getElementById('contactEmail').value,
+                phone: document.getElementById('contactPhone').value,
+                status: document.getElementById('contactStatus').value,
+                lists: document.getElementById('contactLists').value.split(',').map(s => s.trim()).filter(s => s)
+            };
+            
+            await addContact(contact);
+            bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
+        }
+        
+        async function saveCollection() {
+            const form = document.getElementById('collectionForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const collection = {
+                name: document.getElementById('collectionName').value,
+                email: document.getElementById('collectionEmail').value,
+                phone: document.getElementById('collectionPhone').value,
+                amount: parseFloat(document.getElementById('collectionAmount').value),
+                installDate: document.getElementById('collectionInstallDate').value,
+                stage: document.getElementById('collectionStageModal').value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/collections`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ collections: [collection] })
+                });
+                
+                if (response.ok) {
+                    refreshCollections();
+                    loadCollectionsTable();
+                    bootstrap.Modal.getInstance(document.getElementById('collectionModal')).hide();
+                } else {
+                    alert('Failed to save collection');
+                }
+            } catch (error) {
+                alert('Error saving collection: ' + error.message);
             }
         }
         
@@ -796,8 +1079,210 @@
         }
         
         function showBulkUpload() {
-            document.getElementById('contacts-tab').click();
-            // Focus on file input or show modal
+            document.getElementById('admin-tab').click();
+        }
+        
+        // Bulk Upload Functions
+        let currentFileData = null;
+        let currentImportType = null;
+        
+        function previewContactsFile() {
+            const file = document.getElementById('contactsUpload').files[0];
+            document.getElementById('contactsMapBtn').disabled = !file;
+        }
+        
+        function previewCollectionsUpload() {
+            const file = document.getElementById('collectionsUpload').files[0];
+            document.getElementById('collectionsMapBtn').disabled = !file;
+        }
+        
+        async function showContactsMapping() {
+            const file = document.getElementById('contactsUpload').files[0];
+            currentImportType = 'contacts';
+            await processFileForMapping(file);
+        }
+        
+        async function showCollectionsMapping() {
+            const file = document.getElementById('collectionsUpload').files[0];
+            currentImportType = 'collections';
+            await processFileForMapping(file);
+        }
+        
+        async function processFileForMapping(file) {
+            const data = await readFile(file);
+            currentFileData = data;
+            
+            const columns = Object.keys(data[0] || {});
+            displayMappingModal(columns);
+        }
+        
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        let data;
+                        if (file.name.endsWith('.csv')) {
+                            const text = e.target.result;
+                            const lines = text.split('\n').filter(line => line.trim());
+                            const headers = lines[0].split(',').map(h => h.trim());
+                            data = lines.slice(1).map(line => {
+                                const values = line.split(',');
+                                const obj = {};
+                                headers.forEach((header, index) => {
+                                    obj[header] = values[index]?.trim() || '';
+                                });
+                                return obj;
+                            });
+                        } else {
+                            const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                            const sheetName = workbook.SheetNames[0];
+                            data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                        }
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                if (file.name.endsWith('.csv')) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsBinaryString(file);
+                }
+            });
+        }
+        
+        function displayMappingModal(columns) {
+            document.getElementById('mappingTitle').textContent = `Map ${currentImportType} Fields`;
+            
+            const fileColumnsDiv = document.getElementById('fileColumns');
+            fileColumnsDiv.innerHTML = columns.map(col => 
+                `<div class="badge bg-secondary m-1 draggable" draggable="true" data-column="${col}">${col}</div>`
+            ).join('');
+            
+            const fields = currentImportType === 'contacts' 
+                ? ['name', 'email', 'phone', 'status', 'lists']
+                : ['name', 'email', 'phone', 'amount', 'installDate', 'stage'];
+            
+            const mappingFieldsDiv = document.getElementById('mappingFields');
+            mappingFieldsDiv.innerHTML = fields.map(field => 
+                `<div class="mb-2">
+                    <label class="form-label">${field} ${field === 'name' || field === 'email' || field === 'amount' || field === 'installDate' ? '*' : ''}</label>
+                    <div class="border rounded p-2 drop-zone" data-field="${field}" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        Drop column here
+                    </div>
+                </div>`
+            ).join('');
+            
+            // Add drag functionality
+            document.querySelectorAll('.draggable').forEach(el => {
+                el.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.column);
+                });
+            });
+            
+            new bootstrap.Modal(document.getElementById('mappingModal')).show();
+        }
+        
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+        
+        function drop(ev) {
+            ev.preventDefault();
+            const column = ev.dataTransfer.getData('text/plain');
+            const field = ev.target.dataset.field;
+            if (field) {
+                ev.target.textContent = column;
+                ev.target.dataset.mapped = column;
+                ev.target.classList.add('bg-light');
+            }
+        }
+        
+        async function processBulkImport() {
+            const mappings = {};
+            document.querySelectorAll('.drop-zone[data-mapped]').forEach(el => {
+                mappings[el.dataset.field] = el.dataset.mapped;
+            });
+            
+            const requiredFields = currentImportType === 'contacts' 
+                ? ['name', 'email'] 
+                : ['name', 'email', 'amount', 'installDate'];
+            
+            const missingFields = requiredFields.filter(field => !mappings[field]);
+            if (missingFields.length > 0) {
+                alert(`Please map required fields: ${missingFields.join(', ')}`);
+                return;
+            }
+            
+            const mappedData = currentFileData.map(row => {
+                const mapped = {};
+                Object.keys(mappings).forEach(field => {
+                    mapped[field] = row[mappings[field]];
+                });
+                return mapped;
+            }).filter(row => row.name && row.email);
+            
+            try {
+                const endpoint = currentImportType === 'contacts' ? '/contacts/bulk' : '/collections';
+                const body = currentImportType === 'contacts' 
+                    ? { contacts: mappedData }
+                    : { collections: mappedData };
+                
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (response.ok) {
+                    alert(`Successfully imported ${mappedData.length} ${currentImportType}`);
+                    bootstrap.Modal.getInstance(document.getElementById('mappingModal')).hide();
+                    if (currentImportType === 'contacts') {
+                        refreshContacts();
+                    } else {
+                        refreshCollections();
+                        loadCollectionsTable();
+                    }
+                } else {
+                    alert('Import failed');
+                }
+            } catch (error) {
+                alert('Import error: ' + error.message);
+            }
+        }
+        
+        async function cleanupDuplicates() {
+            if (confirm('Remove duplicate contacts and collections based on email?')) {
+                try {
+                    await fetch(`${API_BASE}/admin/cleanup-duplicates`, { method: 'POST' });
+                    alert('Duplicates removed successfully');
+                    refreshContacts();
+                    refreshCollections();
+                } catch (error) {
+                    alert('Cleanup failed: ' + error.message);
+                }
+            }
+        }
+        
+        function confirmDataReset() {
+            if (confirm('WARNING: This will delete ALL contacts and collections data. Are you sure?')) {
+                if (confirm('This action cannot be undone. Type YES to confirm:') === 'YES') {
+                    resetAllData();
+                }
+            }
+        }
+        
+        async function resetAllData() {
+            try {
+                await fetch(`${API_BASE}/admin/reset-all`, { method: 'POST' });
+                alert('All data has been reset');
+                refreshContacts();
+                refreshCollections();
+            } catch (error) {
+                alert('Reset failed: ' + error.message);
+            }
         }
         
         function exportContacts() {
