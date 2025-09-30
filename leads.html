@@ -924,11 +924,25 @@
         
         async function loadAdminStats() {
             try {
-                const [contactsRes, collectionsRes, configRes] = await Promise.all([
-                    mockFetch(`${API_BASE}/contacts/count`),
-                    mockFetch(`${API_BASE}/collections/count`),
-                    mockFetch(`${API_BASE}/config`)
-                ]);
+                const contactsRes = await apiCall(`${API_BASE}/contacts`);
+                const contactsData = await contactsRes.json();
+                const contactsCount = (contactsData.contacts || []).length;
+                
+                const collectionsRes = await apiCall(`${API_BASE}/collections`);
+                const collectionsData = await collectionsRes.json();
+                const collectionsCount = (collectionsData.collections || []).length;
+                
+                document.getElementById('totalContacts').textContent = contactsCount;
+                document.getElementById('totalCollections').textContent = collectionsCount;
+                
+                displaySystemConfig();
+            } catch (error) {
+                console.error('Failed to load admin stats:', error);
+                document.getElementById('totalContacts').textContent = '0';
+                document.getElementById('totalCollections').textContent = '0';
+                displaySystemConfig();
+            }
+        }
                 
                 const contactsCount = await contactsRes.json();
                 const collectionsCount = await collectionsRes.json();
@@ -1040,10 +1054,9 @@
         
         async function saveConfig() {
             try {
-                await mockFetch(`${API_BASE}/config`, {
+                await apiCall(`${API_BASE}/config`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(systemConfig)
+                    body: JSON.stringify({ action: 'save', config: systemConfig })
                 });
             } catch (error) {
                 console.error('Failed to save config:', error);
@@ -1128,17 +1141,15 @@
             alert('Viewing enriched data results...');
         }
 
-        // CRM & Collections Management - Update these URLs
-        const API_BASE = window.location.hostname === 'localhost' 
-            ? 'http://localhost:8080/api'  // Local development
-            : 'https://your-deployed-api-gateway-url.amazonaws.com';  // Production
+        // CRM & Collections Management - Replace with your actual API Gateway URL
+        const API_BASE = 'https://your-actual-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod';
         const EMAIL_API = 'https://external-email-api-url.amazonaws.com';
         const SMS_API = 'https://external-sms-api-url.amazonaws.com';
         const RILEY_API = 'https://riley-api-url.amazonaws.com';
         const HATCH_API = 'https://api.usehatchapp.com';
         
-        // Mock API for development
-        const MOCK_MODE = true;  // Set to false when real API is ready
+        // Use real API - set to true for testing without backend
+        const MOCK_MODE = true;  // Change to false when you have the real API URL
         
         let selectedContacts = [];
         let systemConfig = {
@@ -1157,99 +1168,26 @@
             { id: '1', name: 'John Doe', email: 'john@example.com', phone: '555-0123', amount: 1500.00, install_date: '2024-01-15', stage: '31-60', status: 'active', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
         ];
         
-        // Mock API functions
-        async function mockFetch(url, options = {}) {
-            if (!MOCK_MODE) {
-                return fetch(url, options);
-            }
-            
-            console.log('Mock API call:', url, options);
-            
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            const path = url.replace(API_BASE, '');
-            
-            if (path === '/contacts' && options.method === 'GET') {
-                return { ok: true, json: () => Promise.resolve(mockContacts) };
-            }
-            
-            if (path === '/contacts' && options.method === 'POST') {
-                const contact = JSON.parse(options.body);
-                contact.id = Date.now().toString();
-                contact.created_at = new Date().toISOString();
-                contact.updated_at = new Date().toISOString();
-                mockContacts.push(contact);
-                return { ok: true, json: () => Promise.resolve({ id: contact.id, message: 'Contact created' }) };
-            }
-            
-            if (path === '/contacts/bulk' && options.method === 'POST') {
-                const data = JSON.parse(options.body);
-                data.contacts.forEach(contact => {
-                    contact.id = Date.now().toString() + Math.random();
-                    contact.created_at = new Date().toISOString();
-                    contact.updated_at = new Date().toISOString();
-                    mockContacts.push(contact);
+        // Real API function
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
                 });
-                return { ok: true, json: () => Promise.resolve({ message: `${data.contacts.length} contacts created` }) };
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
             }
-            
-            if (path === '/contacts/count') {
-                return { ok: true, json: () => Promise.resolve({ count: mockContacts.length }) };
-            }
-            
-            if (path === '/contacts/export') {
-                const csv = 'Name,Email,Phone,Status\n' + mockContacts.map(c => `${c.name},${c.email},${c.phone},${c.status}`).join('\n');
-                return { ok: true, text: () => Promise.resolve(csv) };
-            }
-            
-            if (path === '/collections' && options.method === 'GET') {
-                return { ok: true, json: () => Promise.resolve(mockCollections) };
-            }
-            
-            if (path === '/collections' && options.method === 'POST') {
-                const data = JSON.parse(options.body);
-                data.collections.forEach(collection => {
-                    collection.id = Date.now().toString() + Math.random();
-                    collection.created_at = new Date().toISOString();
-                    collection.updated_at = new Date().toISOString();
-                    mockCollections.push(collection);
-                });
-                return { ok: true, json: () => Promise.resolve({ message: `${data.collections.length} collections created` }) };
-            }
-            
-            if (path === '/collections/count') {
-                return { ok: true, json: () => Promise.resolve({ count: mockCollections.length }) };
-            }
-            
-            if (path === '/collections/counts') {
-                const counts = {
-                    '0-30': mockCollections.filter(c => c.stage === '0-30').length,
-                    '31-60': mockCollections.filter(c => c.stage === '31-60').length,
-                    '61-90': mockCollections.filter(c => c.stage === '61-90').length,
-                    '91-plus': mockCollections.filter(c => c.stage === '91-plus').length,
-                    'judgment': mockCollections.filter(c => c.stage === 'judgment').length,
-                    'resolved': mockCollections.filter(c => c.stage === 'resolved').length
-                };
-                return { ok: true, json: () => Promise.resolve(counts) };
-            }
-            
-            if (path === '/config' && options.method === 'GET') {
-                return { ok: true, json: () => Promise.resolve(systemConfig) };
-            }
-            
-            if (path === '/config' && options.method === 'POST') {
-                const config = JSON.parse(options.body);
-                Object.assign(systemConfig, config);
-                return { ok: true, json: () => Promise.resolve({ message: 'Config saved' }) };
-            }
-            
-            if (path === '/campaigns' && options.method === 'POST') {
-                return { ok: true, json: () => Promise.resolve({ id: Date.now().toString(), message: 'Campaign created' }) };
-            }
-            
-            // Default response
-            return { ok: true, json: () => Promise.resolve({ message: 'Mock response' }) };
         }
         
         // Tab persistence
@@ -1270,11 +1208,13 @@
         // Contact Management
         async function refreshContacts() {
             try {
-                const response = await mockFetch(`${API_BASE}/contacts`);
-                const contacts = await response.json();
+                const response = await apiCall(`${API_BASE}/contacts`);
+                const data = await response.json();
+                const contacts = data.contacts || [];
                 displayContacts(contacts);
             } catch (error) {
                 console.error('Failed to load contacts:', error);
+                displayContacts([]);
             }
         }
         
@@ -1392,10 +1332,9 @@
             };
             
             try {
-                const response = await mockFetch(`${API_BASE}/collections`, {
+                const response = await apiCall(`${API_BASE}/collections`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ collections: [collection] })
+                    body: JSON.stringify({ action: 'create', collection })
                 });
                 
                 if (response.ok) {
@@ -1412,17 +1351,13 @@
         
         async function addContact(contact) {
             try {
-                const response = await mockFetch(`${API_BASE}/contacts`, {
+                const response = await apiCall(`${API_BASE}/contacts`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(contact)
+                    body: JSON.stringify({ action: 'create', contact })
                 });
                 
-                if (response.ok) {
-                    refreshContacts();
-                } else {
-                    alert('Failed to add contact');
-                }
+                refreshContacts();
+                alert('Contact added successfully');
             } catch (error) {
                 alert('Error adding contact: ' + error.message);
             }
@@ -1609,15 +1544,13 @@
             }).filter(row => row.name && row.email);
             
             try {
-                const endpoint = currentImportType === 'contacts' ? '/contacts/bulk' : '/collections';
-                const body = currentImportType === 'contacts' 
-                    ? { contacts: mappedData }
-                    : { collections: mappedData };
+                const endpoint = currentImportType === 'contacts' ? '/contacts' : '/collections';
+                const action = currentImportType === 'contacts' ? 'bulk_create' : 'bulk_create';
+                const dataKey = currentImportType === 'contacts' ? 'contacts' : 'collections';
                 
-                const response = await mockFetch(`${API_BASE}${endpoint}`, {
+                const response = await apiCall(`${API_BASE}${endpoint}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify({ action, [dataKey]: mappedData })
                 });
                 
                 if (response.ok) {
@@ -1671,8 +1604,13 @@
         
         async function exportContacts() {
             try {
-                const response = await mockFetch(`${API_BASE}/contacts/export`);
-                const csv = await response.text();
+                const response = await apiCall(`${API_BASE}/contacts`);
+                const data = await response.json();
+                const contacts = data.contacts || [];
+                
+                const csv = 'Name,Email,Phone,Status\n' + 
+                    contacts.map(c => `${c.name},${c.email},${c.phone || ''},${c.status}`).join('\n');
+                
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1717,10 +1655,9 @@
             
             try {
                 // Save to collections table (separate from contacts)
-                const response = await mockFetch(`${API_BASE}/collections`, {
+                const response = await apiCall(`${API_BASE}/collections`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ collections })
+                    body: JSON.stringify({ action: 'bulk_create', collections })
                 });
                 
                 if (response.ok) {
@@ -1740,8 +1677,9 @@
 
         async function refreshCollections() {
             try {
-                const response = await mockFetch(`${API_BASE}/collections/counts`);
-                const counts = await response.json();
+                const response = await apiCall(`${API_BASE}/collections?action=counts`);
+                const data = await response.json();
+                const counts = data.counts || {};
                 
                 Object.keys(counts).forEach(stage => {
                     const element = document.getElementById(`count-${stage}`);
@@ -1754,11 +1692,13 @@
         
         async function loadCollectionsTable() {
             try {
-                const response = await mockFetch(`${API_BASE}/collections`);
-                const collections = await response.json();
+                const response = await apiCall(`${API_BASE}/collections`);
+                const data = await response.json();
+                const collections = data.collections || [];
                 displayCollectionsTable(collections);
             } catch (error) {
                 console.error('Failed to load collections:', error);
+                displayCollectionsTable([]);
             }
         }
         

@@ -7,6 +7,9 @@ import uuid
 
 dynamodb = boto3.resource('dynamodb')
 employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'panda-employees'))
+contacts_table = dynamodb.Table(os.environ.get('CONTACTS_TABLE', 'panda-contacts'))
+collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-collections'))
+config_table = dynamodb.Table(os.environ.get('CONFIG_TABLE', 'panda-config'))
 
 def lambda_handler(event, context):
     http_method = event['httpMethod']
@@ -32,6 +35,12 @@ def lambda_handler(event, context):
             return update_employee(event)
         elif http_method == 'DELETE' and '/employees/' in path:
             return delete_employee(event)
+        elif path == '/contacts':
+            return handle_contacts(event)
+        elif path == '/collections':
+            return handle_collections(event)
+        elif path == '/config':
+            return handle_config(event)
         else:
             return {
                 'statusCode': 404,
@@ -230,3 +239,263 @@ def delete_employee(event):
         },
         'body': json.dumps({'message': 'Employee deleted successfully'})
     }
+
+def handle_contacts(event):
+    method = event['httpMethod']
+    
+    if method == 'GET':
+        response = contacts_table.scan()
+        items = response['Items']
+        
+        for item in items:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'contacts': items})
+        }
+    
+    elif method == 'POST':
+        body = json.loads(event['body'])
+        action = body.get('action', 'create')
+        
+        if action == 'bulk_create':
+            contacts = body.get('contacts', [])
+            
+            with contacts_table.batch_writer() as batch:
+                for contact in contacts:
+                    contact_item = {
+                        'id': str(uuid.uuid4()),
+                        'name': contact.get('name', ''),
+                        'email': contact.get('email', ''),
+                        'phone': contact.get('phone', ''),
+                        'status': contact.get('status', 'active'),
+                        'lists': contact.get('lists', []),
+                        'created_at': datetime.now().isoformat(),
+                        'updated_at': datetime.now().isoformat()
+                    }
+                    batch.put_item(Item=contact_item)
+            
+            return {
+                'statusCode': 201,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'message': f'{len(contacts)} contacts created'})
+            }
+        
+        else:
+            contact = body.get('contact', {})
+            contact_item = {
+                'id': str(uuid.uuid4()),
+                'name': contact.get('name', ''),
+                'email': contact.get('email', ''),
+                'phone': contact.get('phone', ''),
+                'status': contact.get('status', 'active'),
+                'lists': contact.get('lists', []),
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            contacts_table.put_item(Item=contact_item)
+            
+            return {
+                'statusCode': 201,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'id': contact_item['id'], 'message': 'Contact created'})
+            }
+
+def handle_collections(event):
+    method = event['httpMethod']
+    query_params = event.get('queryStringParameters') or {}
+    
+    if method == 'GET':
+        if query_params.get('action') == 'counts':
+            response = collections_table.scan()
+            items = response['Items']
+            
+            counts = {
+                '0-30': 0,
+                '31-60': 0,
+                '61-90': 0,
+                '91-plus': 0,
+                'judgment': 0,
+                'resolved': 0
+            }
+            
+            for item in items:
+                stage = item.get('stage', '')
+                if stage in counts:
+                    counts[stage] += 1
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'counts': counts})
+            }
+        
+        else:
+            response = collections_table.scan()
+            items = response['Items']
+            
+            for item in items:
+                for key, value in item.items():
+                    if isinstance(value, Decimal):
+                        item[key] = float(value)
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'collections': items})
+            }
+    
+    elif method == 'POST':
+        body = json.loads(event['body'])
+        action = body.get('action', 'create')
+        
+        if action == 'bulk_create':
+            collections = body.get('collections', [])
+            
+            with collections_table.batch_writer() as batch:
+                for collection in collections:
+                    collection_item = {
+                        'id': str(uuid.uuid4()),
+                        'name': collection.get('name', ''),
+                        'email': collection.get('email', ''),
+                        'phone': collection.get('phone', ''),
+                        'amount': Decimal(str(collection.get('amount', 0))),
+                        'install_date': collection.get('installDate', ''),
+                        'stage': collection.get('stage', '0-30'),
+                        'status': collection.get('status', 'active'),
+                        'created_at': datetime.now().isoformat(),
+                        'updated_at': datetime.now().isoformat()
+                    }
+                    batch.put_item(Item=collection_item)
+            
+            return {
+                'statusCode': 201,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'message': f'{len(collections)} collections created'})
+            }
+        
+        else:
+            collection = body.get('collection', {})
+            collection_item = {
+                'id': str(uuid.uuid4()),
+                'name': collection.get('name', ''),
+                'email': collection.get('email', ''),
+                'phone': collection.get('phone', ''),
+                'amount': Decimal(str(collection.get('amount', 0))),
+                'install_date': collection.get('installDate', ''),
+                'stage': collection.get('stage', '0-30'),
+                'status': collection.get('status', 'active'),
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            collections_table.put_item(Item=collection_item)
+            
+            return {
+                'statusCode': 201,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'id': collection_item['id'], 'message': 'Collection created'})
+            }
+
+def handle_config(event):
+    method = event['httpMethod']
+    
+    if method == 'GET':
+        try:
+            response = config_table.get_item(Key={'id': 'system_config'})
+            config = response.get('Item', {
+                'statuses': ['active', 'inactive', 'do-not-contact'],
+                'lists': ['leads', 'customers', 'prospects'],
+                'customFields': []
+            })
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps(config)
+            }
+        except:
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({
+                    'statuses': ['active', 'inactive', 'do-not-contact'],
+                    'lists': ['leads', 'customers', 'prospects'],
+                    'customFields': []
+                })
+            }
+    
+    elif method == 'POST':
+        body = json.loads(event['body'])
+        config = body.get('config', {})
+        
+        config_item = {
+            'id': 'system_config',
+            'statuses': config.get('statuses', ['active', 'inactive', 'do-not-contact']),
+            'lists': config.get('lists', ['leads', 'customers', 'prospects']),
+            'customFields': config.get('customFields', []),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        config_table.put_item(Item=config_item)
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'message': 'Config saved'})
+        }
