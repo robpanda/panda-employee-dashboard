@@ -920,6 +920,13 @@
             
             // Load admin stats and config
             loadAdminStats();
+            
+            // Test connections on load
+            setTimeout(() => {
+                testEmailConnection();
+                testSMSConnection();
+                testRileyConnection();
+            }, 2000);
         });
         
         async function loadAdminStats() {
@@ -1141,15 +1148,19 @@
             alert('Viewing enriched data results...');
         }
 
-        // CRM & Collections Management - Replace with your actual API Gateway URL
-        const API_BASE = 'https://your-actual-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod';
-        const EMAIL_API = 'https://external-email-api-url.amazonaws.com';
-        const SMS_API = 'https://external-sms-api-url.amazonaws.com';
-        const RILEY_API = 'https://riley-api-url.amazonaws.com';
+        // CRM & Collections Management
+        const API_BASE = 'https://cbtr8iqu56.execute-api.us-east-1.amazonaws.com/prod';
+        const EMAIL_API = 'https://jtpw1iado5.execute-api.us-east-2.amazonaws.com/prod';
+        const SMS_API = 'https://jtpw1iado5.execute-api.us-east-2.amazonaws.com/prod';
+        const RILEY_API = 'https://cbtr8iqu56.execute-api.us-east-1.amazonaws.com/prod';
         const HATCH_API = 'https://api.usehatchapp.com';
         
-        // Use real API - set to true for testing without backend
-        const MOCK_MODE = true;  // Change to false when you have the real API URL
+        // API Keys
+        const PODOPS_API_KEY = 'e2a7aa895e77fcc85fc1b7334264da6fb21f849c499bcf6c2639c5cb905c584a';
+        const RILEY_API_KEY = '46752f4f366f8faffe2dac8fb74b14591a2994a7bd06fadcca012ec0b79d789b';
+        
+        // Use real API
+        const MOCK_MODE = false;
         
         let selectedContacts = [];
         let systemConfig = {
@@ -1796,14 +1807,27 @@
 
         async function launchEmailCampaign(campaignId, stage) {
             try {
-                const response = await fetch(`${EMAIL_API}/campaign`, {
+                // Get recipients from current collection stage
+                const recipients = await getRecipientsForStage(stage);
+                
+                const response = await fetch(`${EMAIL_API}/email/campaign`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-api-key': 'YOUR_EMAIL_API_KEY'
+                        'x-api-key': PODOPS_API_KEY
                     },
-                    body: JSON.stringify({ campaignId, stage, source: 'pandaadmin' })
+                    body: JSON.stringify({
+                        campaignId: campaignId,
+                        campaignName: `PandaAdmin ${stage} Email Campaign`,
+                        stage: stage,
+                        source: 'pandaadmin',
+                        templateId: getTemplateForStage(stage),
+                        recipients: recipients
+                    })
                 });
+                
+                const result = await response.json();
+                console.log('Email campaign result:', result);
                 return response.ok;
             } catch (error) {
                 console.error('Email launch failed:', error);
@@ -1813,14 +1837,27 @@
 
         async function launchSMSCampaign(campaignId, stage) {
             try {
-                const response = await fetch(`${SMS_API}/campaign`, {
+                // Get recipients from current collection stage
+                const recipients = await getRecipientsForStage(stage);
+                
+                const response = await fetch(`${SMS_API}/sms/campaign`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-api-key': 'YOUR_SMS_API_KEY'
+                        'x-api-key': PODOPS_API_KEY
                     },
-                    body: JSON.stringify({ campaignId, stage, source: 'pandaadmin' })
+                    body: JSON.stringify({
+                        campaignId: `sms_${campaignId}`,
+                        campaignName: `PandaAdmin ${stage} SMS Campaign`,
+                        stage: stage,
+                        source: 'pandaadmin',
+                        message: getSMSMessageForStage(stage),
+                        recipients: recipients
+                    })
                 });
+                
+                const result = await response.json();
+                console.log('SMS campaign result:', result);
                 return response.ok;
             } catch (error) {
                 console.error('SMS launch failed:', error);
@@ -1830,36 +1867,56 @@
 
         async function openRileyInterface() {
             try {
-                const response = await apiCall(`${API_BASE}/riley/chat`, {
+                const response = await fetch(`${RILEY_API}/riley/chat`, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': RILEY_API_KEY
+                    },
                     body: JSON.stringify({
-                        user_id: 'admin',
-                        context: { source: 'panda_crm' }
+                        phoneNumber: '+13019736753',
+                        message: 'Opening Riley chat from PandaAdmin CRM',
+                        source: 'pandaadmin'
                     })
                 });
                 
                 const data = await response.json();
-                window.open(data.chat_url, '_blank');
+                if (data.chat_url) {
+                    window.open(data.chat_url, '_blank');
+                } else {
+                    // Fallback to direct Riley interface
+                    window.open('https://riley-chat.pandaexteriors.com', '_blank');
+                }
             } catch (error) {
-                alert('Failed to open Riley chat: ' + error.message);
+                console.error('Riley chat error:', error);
+                window.open('https://riley-chat.pandaexteriors.com', '_blank');
             }
         }
 
         async function openRileyDashboard() {
             try {
-                const response = await apiCall(`${API_BASE}/riley/auth`);
+                const response = await fetch(`${RILEY_API}/riley/auth`, {
+                    method: 'GET',
+                    headers: {
+                        'x-api-key': RILEY_API_KEY
+                    }
+                });
+                
                 const data = await response.json();
                 
                 // Open Riley dashboard with API key
-                const dashboardUrl = `https://riley-dashboard.your-domain.com?api_key=${data.api_key}`;
+                const dashboardUrl = `https://riley-dashboard.pandaexteriors.com?api_key=${data.api_key}`;
                 window.open(dashboardUrl, '_blank');
             } catch (error) {
-                alert('Failed to open Riley dashboard: ' + error.message);
+                console.error('Riley dashboard error:', error);
+                window.open('https://riley-dashboard.pandaexteriors.com', '_blank');
             }
         }
 
         function testEmailConnection() {
-            fetch(`${EMAIL_API}/health`)
+            fetch(`${EMAIL_API}/email/health`, {
+                headers: { 'x-api-key': PODOPS_API_KEY }
+            })
                 .then(r => {
                     document.getElementById('emailStatus').className = r.ok ? 'badge bg-success' : 'badge bg-danger';
                     document.getElementById('emailStatus').textContent = r.ok ? 'Connected' : 'Failed';
@@ -1871,7 +1928,9 @@
         }
 
         function testSMSConnection() {
-            fetch(`${SMS_API}/health`)
+            fetch(`${SMS_API}/sms/health`, {
+                headers: { 'x-api-key': PODOPS_API_KEY }
+            })
                 .then(r => {
                     document.getElementById('smsStatus').className = r.ok ? 'badge bg-success' : 'badge bg-danger';
                     document.getElementById('smsStatus').textContent = r.ok ? 'Connected' : 'Failed';
@@ -1884,11 +1943,16 @@
         
         async function testRileyConnection() {
             try {
-                const response = await apiCall(`${API_BASE}/riley/auth`);
-                const data = await response.json();
+                const response = await fetch(`${RILEY_API}/riley/auth`, {
+                    headers: { 'x-api-key': RILEY_API_KEY }
+                });
                 
-                document.getElementById('rileyStatus').className = 'badge bg-success';
-                document.getElementById('rileyStatus').textContent = 'Connected';
+                if (response.ok) {
+                    document.getElementById('rileyStatus').className = 'badge bg-success';
+                    document.getElementById('rileyStatus').textContent = 'Connected';
+                } else {
+                    throw new Error('Auth failed');
+                }
             } catch (error) {
                 document.getElementById('rileyStatus').className = 'badge bg-danger';
                 document.getElementById('rileyStatus').textContent = 'Failed';
@@ -1899,6 +1963,49 @@
             const stage = document.getElementById('campaignStage').value;
             const type = document.querySelector('input[name="campaignType"]:checked').value;
             alert(`Preview: ${type.toUpperCase()} campaign for ${stage} stage`);
+        }
+        
+        // Helper functions for campaign integration
+        async function getRecipientsForStage(stage) {
+            try {
+                const response = await apiCall(`${API_BASE}/collections`);
+                const data = await response.json();
+                const collections = data.collections || [];
+                
+                return collections
+                    .filter(item => item.stage === stage && item.status === 'active')
+                    .map(item => ({
+                        name: item.name,
+                        email: item.email,
+                        phone: item.phone,
+                        amount: item.amount
+                    }));
+            } catch (error) {
+                console.error('Failed to get recipients:', error);
+                return [];
+            }
+        }
+        
+        function getTemplateForStage(stage) {
+            const templates = {
+                '0-30': 'template_gentle_reminder',
+                '31-60': 'template_follow_up',
+                '61-90': 'template_urgent_notice',
+                '91-plus': 'template_final_notice',
+                'judgment': 'template_legal_notice'
+            };
+            return templates[stage] || 'template_default';
+        }
+        
+        function getSMSMessageForStage(stage) {
+            const messages = {
+                '0-30': 'Hi {{name}}, friendly reminder about your ${{amount}} balance. Please contact us to arrange payment.',
+                '31-60': 'Hello {{name}}, your ${{amount}} payment is now 30+ days overdue. Please call us immediately.',
+                '61-90': 'URGENT: {{name}}, your ${{amount}} balance is seriously overdue. Contact us today to avoid further action.',
+                '91-plus': 'FINAL NOTICE: {{name}}, your ${{amount}} balance will be sent to collections if not paid immediately.',
+                'judgment': 'LEGAL NOTICE: {{name}}, legal proceedings have begun for your ${{amount}} balance.'
+            };
+            return messages[stage] || 'Please contact us regarding your account balance of ${{amount}}.';
         }
     </script>
 </body>
