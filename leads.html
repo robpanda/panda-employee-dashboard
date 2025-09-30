@@ -922,10 +922,10 @@
             loadAdminStats();
             
             // Test connections on load
-            setTimeout(() => {
-                testEmailConnection();
-                testSMSConnection();
-                testRileyConnection();
+            setTimeout(async () => {
+                await testEmailConnection();
+                await testSMSConnection();
+                await testRileyConnection();
             }, 2000);
         });
         
@@ -1913,32 +1913,43 @@
             }
         }
 
-        function testEmailConnection() {
-            fetch(`${EMAIL_API}/email/health`, {
-                headers: { 'x-api-key': PODOPS_API_KEY }
-            })
-                .then(r => {
-                    document.getElementById('emailStatus').className = r.ok ? 'badge bg-success' : 'badge bg-danger';
-                    document.getElementById('emailStatus').textContent = r.ok ? 'Connected' : 'Failed';
-                })
-                .catch(() => {
-                    document.getElementById('emailStatus').className = 'badge bg-danger';
-                    document.getElementById('emailStatus').textContent = 'Failed';
+        async function testEmailConnection() {
+            try {
+                const response = await fetch(`${EMAIL_API}/email/health`, {
+                    headers: { 'x-api-key': PODOPS_API_KEY }
                 });
+                document.getElementById('emailStatus').className = response.ok ? 'badge bg-success' : 'badge bg-danger';
+                document.getElementById('emailStatus').textContent = response.ok ? 'Connected' : 'Failed';
+            } catch (error) {
+                document.getElementById('emailStatus').className = 'badge bg-danger';
+                document.getElementById('emailStatus').textContent = 'Failed';
+            }
         }
 
-        function testSMSConnection() {
-            fetch(`${SMS_API}/sms/health`, {
-                headers: { 'x-api-key': PODOPS_API_KEY }
-            })
-                .then(r => {
-                    document.getElementById('smsStatus').className = r.ok ? 'badge bg-success' : 'badge bg-danger';
-                    document.getElementById('smsStatus').textContent = r.ok ? 'Connected' : 'Failed';
-                })
-                .catch(() => {
-                    document.getElementById('smsStatus').className = 'badge bg-danger';
-                    document.getElementById('smsStatus').textContent = 'Failed';
+        async function testSMSConnection() {
+            try {
+                const response = await fetch(`${SMS_API}/sms/health`, {
+                    headers: { 'x-api-key': PODOPS_API_KEY }
                 });
+                document.getElementById('smsStatus').className = response.ok ? 'badge bg-success' : 'badge bg-danger';
+                document.getElementById('smsStatus').textContent = response.ok ? 'Connected' : 'Failed';
+            } catch (error) {
+                document.getElementById('smsStatus').className = 'badge bg-danger';
+                document.getElementById('smsStatus').textContent = 'Failed';
+            }
+        }
+        
+        function previewContactsFile(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const lines = content.split('\n').slice(0, 5);
+                    alert('File preview (first 5 lines):\n' + lines.join('\n'));
+                };
+                reader.readAsText(file);
+            }
         }
         
         async function testRileyConnection() {
