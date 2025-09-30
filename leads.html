@@ -122,6 +122,11 @@
                     <i class="fas fa-plus-circle me-2"></i>Enrichment
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="collections-tab" data-bs-toggle="tab" data-bs-target="#collections" type="button" role="tab">
+                    <i class="fas fa-dollar-sign me-2"></i>Collections
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="leadTabContent">
@@ -393,6 +398,125 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Collections Tab -->
+            <div class="tab-pane fade" id="collections" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5><i class="fas fa-dollar-sign"></i> Collections Management</h5>
+                                <button class="btn btn-primary btn-sm" onclick="updateCollections()">
+                                    <i class="fas fa-sync"></i> Update Buckets
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="card border-success">
+                                            <div class="card-header bg-success text-white text-center">
+                                                <h6>0-30 Days</h6>
+                                                <span class="badge bg-light text-dark" id="bucket-0-30-count">0</span>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" id="upload-0-30" accept=".csv,.txt">
+                                                </div>
+                                                <button class="btn btn-success btn-sm w-100" onclick="loadLeads('0-30')">
+                                                    Load Leads
+                                                </button>
+                                                <div class="mt-2" id="leads-0-30" style="max-height: 200px; overflow-y: auto;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="card border-warning">
+                                            <div class="card-header bg-warning text-dark text-center">
+                                                <h6>31-60 Days</h6>
+                                                <span class="badge bg-dark" id="bucket-31-60-count">0</span>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" id="upload-31-60" accept=".csv,.txt">
+                                                </div>
+                                                <button class="btn btn-warning btn-sm w-100" onclick="loadLeads('31-60')">
+                                                    Load Leads
+                                                </button>
+                                                <div class="mt-2" id="leads-31-60" style="max-height: 200px; overflow-y: auto;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="card border-danger">
+                                            <div class="card-header bg-danger text-white text-center">
+                                                <h6>61-90 Days</h6>
+                                                <span class="badge bg-light text-dark" id="bucket-61-90-count">0</span>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" id="upload-61-90" accept=".csv,.txt">
+                                                </div>
+                                                <button class="btn btn-danger btn-sm w-100" onclick="loadLeads('61-90')">
+                                                    Load Leads
+                                                </button>
+                                                <div class="mt-2" id="leads-61-90" style="max-height: 200px; overflow-y: auto;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="card border-dark">
+                                            <div class="card-header bg-dark text-white text-center">
+                                                <h6>91+ Days</h6>
+                                                <span class="badge bg-light text-dark" id="bucket-91-plus-count">0</span>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" id="upload-91-plus" accept=".csv,.txt">
+                                                </div>
+                                                <button class="btn btn-dark btn-sm w-100" onclick="loadLeads('91-plus')">
+                                                    Load Leads
+                                                </button>
+                                                <div class="mt-2" id="leads-91-plus" style="max-height: 200px; overflow-y: auto;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="card border-secondary">
+                                            <div class="card-header bg-secondary text-white text-center">
+                                                <h6>In Judgment</h6>
+                                                <span class="badge bg-light text-dark" id="bucket-judgment-count">0</span>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" id="upload-judgment" accept=".csv,.txt">
+                                                </div>
+                                                <button class="btn btn-secondary btn-sm w-100" onclick="loadLeads('judgment')">
+                                                    Load Leads
+                                                </button>
+                                                <div class="mt-2" id="leads-judgment" style="max-height: 200px; overflow-y: auto;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="card border-info">
+                                            <div class="card-header bg-info text-white text-center">
+                                                <h6>Resolved</h6>
+                                                <span class="badge bg-light text-dark" id="bucket-resolved-count">0</span>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <button class="btn btn-info btn-sm w-100 mb-2" onclick="viewResolved()">
+                                                    View Resolved
+                                                </button>
+                                                <div class="mt-2" id="leads-resolved" style="max-height: 200px; overflow-y: auto;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         </div>
     </div>
@@ -404,10 +528,11 @@
             sessionStorage.removeItem('adminUser');
             window.location.href = '/login.html';
         }
-        // Initialize charts
+        // Initialize charts and collections
         document.addEventListener('DOMContentLoaded', function() {
             createStateChart();
             createTrendChart();
+            updateBucketCounts();
         });
 
         function createStateChart() {
@@ -475,6 +600,160 @@
         function viewEnrichment() {
             alert('Viewing enriched data results...');
         }
+
+        // Collections Management
+        let collectionsData = {
+            '0-30': [],
+            '31-60': [],
+            '61-90': [],
+            '91-plus': [],
+            'judgment': [],
+            'resolved': []
+        };
+
+        function loadLeads(bucket) {
+            const fileInput = document.getElementById(`upload-${bucket}`);
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n').filter(line => line.trim());
+                
+                const leads = lines.map((line, index) => {
+                    const parts = line.split(',');
+                    return {
+                        id: `${bucket}-${Date.now()}-${index}`,
+                        name: parts[0] || 'Unknown',
+                        amount: parts[1] || '0',
+                        installDate: parts[2] || new Date().toISOString().split('T')[0],
+                        status: 'active',
+                        bucket: bucket,
+                        addedDate: new Date().toISOString().split('T')[0]
+                    };
+                });
+                
+                collectionsData[bucket] = collectionsData[bucket].concat(leads);
+                displayLeads(bucket);
+                updateBucketCounts();
+                
+                fileInput.value = '';
+                alert(`Loaded ${leads.length} leads into ${bucket} bucket`);
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function displayLeads(bucket) {
+            const container = document.getElementById(`leads-${bucket}`);
+            const leads = collectionsData[bucket];
+            
+            container.innerHTML = leads.map(lead => `
+                <div class="border-bottom py-1 small">
+                    <div class="fw-bold">${lead.name}</div>
+                    <div class="text-muted">$${lead.amount}</div>
+                    <div class="text-muted">${lead.installDate}</div>
+                    <button class="btn btn-outline-success btn-xs mt-1" onclick="markResolved('${lead.id}')">
+                        Resolve
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function updateBucketCounts() {
+            Object.keys(collectionsData).forEach(bucket => {
+                const count = collectionsData[bucket].length;
+                const element = document.getElementById(`bucket-${bucket}-count`);
+                if (element) {
+                    element.textContent = count;
+                }
+            });
+        }
+
+        function markResolved(leadId) {
+            for (let bucket in collectionsData) {
+                const leadIndex = collectionsData[bucket].findIndex(lead => lead.id === leadId);
+                if (leadIndex !== -1) {
+                    const lead = collectionsData[bucket].splice(leadIndex, 1)[0];
+                    lead.status = 'resolved';
+                    lead.resolvedDate = new Date().toISOString().split('T')[0];
+                    collectionsData.resolved.push(lead);
+                    
+                    displayLeads(bucket);
+                    displayLeads('resolved');
+                    updateBucketCounts();
+                    break;
+                }
+            }
+        }
+
+        function updateCollections() {
+            const today = new Date();
+            let moved = 0;
+            
+            ['0-30', '31-60', '61-90', '91-plus'].forEach(bucket => {
+                const leads = [...collectionsData[bucket]];
+                
+                leads.forEach(lead => {
+                    if (lead.status === 'resolved') return;
+                    
+                    const installDate = new Date(lead.installDate);
+                    const daysSince = Math.floor((today - installDate) / (1000 * 60 * 60 * 24));
+                    
+                    let targetBucket = null;
+                    
+                    if (daysSince <= 30) {
+                        targetBucket = '0-30';
+                    } else if (daysSince <= 60) {
+                        targetBucket = '31-60';
+                    } else if (daysSince <= 90) {
+                        targetBucket = '61-90';
+                    } else {
+                        targetBucket = '91-plus';
+                    }
+                    
+                    if (targetBucket !== bucket) {
+                        const leadIndex = collectionsData[bucket].findIndex(l => l.id === lead.id);
+                        if (leadIndex !== -1) {
+                            const movedLead = collectionsData[bucket].splice(leadIndex, 1)[0];
+                            movedLead.bucket = targetBucket;
+                            collectionsData[targetBucket].push(movedLead);
+                            moved++;
+                        }
+                    }
+                });
+            });
+            
+            Object.keys(collectionsData).forEach(bucket => {
+                if (bucket !== 'resolved') {
+                    displayLeads(bucket);
+                }
+            });
+            updateBucketCounts();
+            
+            alert(`Collections updated! Moved ${moved} leads to appropriate buckets.`);
+        }
+
+        function viewResolved() {
+            const resolved = collectionsData.resolved;
+            if (resolved.length === 0) {
+                alert('No resolved leads yet.');
+                return;
+            }
+            
+            const details = resolved.map(lead => 
+                `${lead.name} - $${lead.amount} (Resolved: ${lead.resolvedDate})`
+            ).join('\n');
+            
+            alert(`Resolved Leads (${resolved.length}):\n\n${details}`);
+        }
+
+        setInterval(updateCollections, 24 * 60 * 60 * 1000);
     </script>
 </body>
 </html>
