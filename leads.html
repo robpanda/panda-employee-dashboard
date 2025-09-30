@@ -70,6 +70,13 @@
         .content-area {
             padding: 30px;
         }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .btn-xs {
+            padding: 0.125rem 0.25rem;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -98,13 +105,13 @@
         
         <ul class="nav nav-pills nav-fill mb-4" id="leadTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
-                    <i class="fas fa-chart-bar me-2"></i>Overview
+                <button class="nav-link" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Contacts
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="interactive-tab" data-bs-toggle="tab" data-bs-target="#interactive" type="button" role="tab">
-                    <i class="fas fa-search me-2"></i>Interactive
+                <button class="nav-link" id="collections-tab" data-bs-toggle="tab" data-bs-target="#collections" type="button" role="tab">
+                    <i class="fas fa-dollar-sign me-2"></i>Collections
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -113,23 +120,228 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="validation-tab" data-bs-toggle="tab" data-bs-target="#validation" type="button" role="tab">
-                    <i class="fas fa-check-circle me-2"></i>Validation
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="enrichment-tab" data-bs-toggle="tab" data-bs-target="#enrichment" type="button" role="tab">
-                    <i class="fas fa-plus-circle me-2"></i>Enrichment
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="collections-tab" data-bs-toggle="tab" data-bs-target="#collections" type="button" role="tab">
-                    <i class="fas fa-dollar-sign me-2"></i>Collections
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-chart-bar me-2"></i>Overview
                 </button>
             </li>
         </ul>
 
         <div class="tab-content" id="leadTabContent">
+            <!-- Contacts Tab -->
+            <div class="tab-pane fade" id="contacts" role="tabpanel">
+                <!-- Contact Management Header -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-users"></i> Contact Management</h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" onclick="showAddContact()">
+                                <i class="fas fa-plus"></i> Add Contact
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="showBulkUpload()">
+                                <i class="fas fa-upload"></i> Bulk Upload
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="exportContacts()">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Search and Filters -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="contactSearch" placeholder="Search contacts..." onkeyup="filterContacts()">
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="statusFilter" onchange="filterContacts()">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="do-not-contact">Do Not Contact</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="listFilter" onchange="filterContacts()">
+                                    <option value="">All Lists</option>
+                                    <option value="leads">Leads</option>
+                                    <option value="customers">Customers</option>
+                                    <option value="prospects">Prospects</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-primary w-100" onclick="refreshContacts()">
+                                    <i class="fas fa-sync"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Bulk Actions -->
+                        <div class="row mb-3 d-none" id="bulkActions">
+                            <div class="col-md-12">
+                                <div class="alert alert-info d-flex justify-content-between align-items-center">
+                                    <span><span id="selectedCount">0</span> contacts selected</span>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-success" onclick="bulkAddToList()">
+                                            <i class="fas fa-plus"></i> Add to List
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="bulkUpdateStatus()">
+                                            <i class="fas fa-edit"></i> Update Status
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="bulkDelete()">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contacts Table -->
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="40">
+                                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Lists</th>
+                                        <th>Created</th>
+                                        <th width="120">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contactsTable">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collections Tab -->
+            <div class="tab-pane fade" id="collections" role="tabpanel">
+                <!-- Collections Upload -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-upload"></i> Import Collections</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label">Upload CSV File</label>
+                                <input type="file" class="form-control" id="collectionsFile" accept=".csv" onchange="previewCollectionsFile()">
+                                <small class="text-muted">Format: Name, Email, Phone, Amount, Install Date</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Collection Stage</label>
+                                <select class="form-select" id="collectionStage">
+                                    <option value="0-30">0-30 Days</option>
+                                    <option value="31-60">31-60 Days</option>
+                                    <option value="61-90">61-90 Days</option>
+                                    <option value="91-plus">91+ Days</option>
+                                    <option value="judgment">In Judgment</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary" onclick="uploadCollections()" disabled id="uploadCollectionsBtn">
+                                    <i class="fas fa-database"></i> Save Collections
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collections Dashboard -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between">
+                        <h5><i class="fas fa-chart-pie"></i> Collections Overview</h5>
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshCollections()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-success bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('0-30')">
+                                    <h4 class="text-success" id="count-0-30">0</h4>
+                                    <small>0-30 Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-warning bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('31-60')">
+                                    <h4 class="text-warning" id="count-31-60">0</h4>
+                                    <small>31-60 Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-danger bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('61-90')">
+                                    <h4 class="text-danger" id="count-61-90">0</h4>
+                                    <small>61-90 Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-dark bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('91-plus')">
+                                    <h4 class="text-dark" id="count-91-plus">0</h4>
+                                    <small>91+ Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-secondary bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('judgment')">
+                                    <h4 class="text-secondary" id="count-judgment">0</h4>
+                                    <small>In Judgment</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-info bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('resolved')">
+                                    <h4 class="text-info" id="count-resolved">0</h4>
+                                    <small>Resolved</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collections List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-list"></i> Collections Details</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Amount</th>
+                                        <th>Stage</th>
+                                        <th>Install Date</th>
+                                        <th>Days Overdue</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="collectionsTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-3 text-muted">No collections data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Overview Tab -->
             <div class="tab-pane fade show active" id="overview" role="tabpanel">
                 <div class="row mb-4">
@@ -207,52 +419,7 @@
                 </div>
             </div>
 
-            <!-- Interactive Tab -->
-            <div class="tab-pane fade" id="interactive" role="tabpanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-search"></i> Interactive Lead Explorer</h5>
-                    </div>
-                    <div class="card-body">
-                        <p>Click on any stat card to drill down into lead details.</p>
-                        
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="card border-primary cursor-pointer" onclick="showLeadDetails('all')">
-                                    <div class="card-body text-center">
-                                        <h4 class="text-primary">141</h4>
-                                        <p>All Leads</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-info cursor-pointer" onclick="showLeadDetails('md')">
-                                    <div class="card-body text-center">
-                                        <h4 class="text-info">34</h4>
-                                        <p>Maryland</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-warning cursor-pointer" onclick="showLeadDetails('nj')">
-                                    <div class="card-body text-center">
-                                        <h4 class="text-warning">31</h4>
-                                        <p>New Jersey</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-secondary cursor-pointer" onclick="showLeadDetails('pa')">
-                                    <div class="card-body text-center">
-                                        <h4 class="text-secondary">26</h4>
-                                        <p>Pennsylvania</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- Campaigns Tab -->
             <div class="tab-pane fade" id="campaigns" role="tabpanel">
@@ -401,235 +568,7 @@
                 </div>
             </div>
 
-            <!-- Validation Tab -->
-            <div class="tab-pane fade" id="validation" role="tabpanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-check-circle"></i> Contact Validation</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <div class="card bg-success text-white text-center">
-                                    <div class="card-body">
-                                        <h4>139</h4>
-                                        <p>Valid Emails</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card bg-warning text-dark text-center">
-                                    <div class="card-body">
-                                        <h4>2</h4>
-                                        <p>Invalid Emails</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card bg-info text-white text-center">
-                                    <div class="card-body">
-                                        <h4>99%</h4>
-                                        <p>Validation Rate</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button class="btn btn-primary" onclick="runValidation()">
-                            <i class="fas fa-play"></i> Run Validation
-                        </button>
-                        <button class="btn btn-success" onclick="exportValid()">
-                            <i class="fas fa-download"></i> Export Valid Contacts
-                        </button>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Enrichment Tab -->
-            <div class="tab-pane fade" id="enrichment" role="tabpanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-plus-circle"></i> Data Enrichment</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-4">
-                            <div class="col-md-3">
-                                <div class="card border-primary text-center">
-                                    <div class="card-body">
-                                        <h4>85%</h4>
-                                        <p>Phone Numbers</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-success text-center">
-                                    <div class="card-body">
-                                        <h4>92%</h4>
-                                        <p>Addresses</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-warning text-center">
-                                    <div class="card-body">
-                                        <h4>78%</h4>
-                                        <p>Social Profiles</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card border-info text-center">
-                                    <div class="card-body">
-                                        <h4>65%</h4>
-                                        <p>Company Info</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button class="btn btn-primary" onclick="enrichData()">
-                            <i class="fas fa-magic"></i> Enrich Data
-                        </button>
-                        <button class="btn btn-info" onclick="viewEnrichment()">
-                            <i class="fas fa-eye"></i> View Enriched Data
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Collections Tab -->
-            <div class="tab-pane fade" id="collections" role="tabpanel">
-                <!-- Upload Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-upload"></i> Import Collections Data</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row align-items-end">
-                            <div class="col-md-4">
-                                <label class="form-label">Upload CSV File</label>
-                                <input type="file" class="form-control" id="collectionsFile" accept=".csv" onchange="previewFile()">
-                                <small class="text-muted">Format: Name, Email, Phone, Amount, Install Date</small>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Collection Stage</label>
-                                <select class="form-select" id="collectionStage">
-                                    <option value="0-30">0-30 Days</option>
-                                    <option value="31-60">31-60 Days</option>
-                                    <option value="61-90">61-90 Days</option>
-                                    <option value="91-plus">91+ Days</option>
-                                    <option value="judgment">In Judgment</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-primary" onclick="uploadCollections()" disabled id="uploadBtn">
-                                    <i class="fas fa-database"></i> Save to Database
-                                </button>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="text-center">
-                                    <div class="spinner-border text-primary d-none" id="uploadSpinner"></div>
-                                    <div id="uploadStatus"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Collections Dashboard -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between">
-                        <h5><i class="fas fa-chart-pie"></i> Collections Overview</h5>
-                        <button class="btn btn-outline-primary btn-sm" onclick="refreshCollections()">
-                            <i class="fas fa-sync"></i> Refresh
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-2">
-                                <div class="border rounded p-3 bg-success bg-opacity-10">
-                                    <h4 class="text-success" id="count-0-30">0</h4>
-                                    <small>0-30 Days</small>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="border rounded p-3 bg-warning bg-opacity-10">
-                                    <h4 class="text-warning" id="count-31-60">0</h4>
-                                    <small>31-60 Days</small>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="border rounded p-3 bg-danger bg-opacity-10">
-                                    <h4 class="text-danger" id="count-61-90">0</h4>
-                                    <small>61-90 Days</small>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="border rounded p-3 bg-dark bg-opacity-10">
-                                    <h4 class="text-dark" id="count-91-plus">0</h4>
-                                    <small>91+ Days</small>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="border rounded p-3 bg-secondary bg-opacity-10">
-                                    <h4 class="text-secondary" id="count-judgment">0</h4>
-                                    <small>In Judgment</small>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="border rounded p-3 bg-info bg-opacity-10">
-                                    <h4 class="text-info" id="count-resolved">0</h4>
-                                    <small>Resolved</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Campaign Integration -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-paper-plane"></i> Campaign Actions</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="card border-primary">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
-                                        <h6>Email Campaigns</h6>
-                                        <button class="btn btn-primary btn-sm" onclick="launchEmailCampaign()">
-                                            Launch Email
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card border-success">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-sms fa-2x text-success mb-2"></i>
-                                        <h6>SMS Campaigns</h6>
-                                        <button class="btn btn-success btn-sm" onclick="launchSMSCampaign()">
-                                            Launch SMS
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card border-info">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-robot fa-2x text-info mb-2"></i>
-                                        <h6>Riley Chat Agent</h6>
-                                        <button class="btn btn-info btn-sm" onclick="openRileyInterface()">
-                                            Open Riley
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
         </div>
     </div>
@@ -646,6 +585,16 @@
             createStateChart();
             createTrendChart();
             refreshCollections();
+            refreshContacts();
+            loadCollectionsTable();
+            restoreActiveTab();
+            
+            // Add tab change listeners
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(e) {
+                    saveActiveTab(e.target.id);
+                });
+            });
         });
 
         function createStateChart() {
@@ -714,15 +663,151 @@
             alert('Viewing enriched data results...');
         }
 
-        // Collections & Campaign Management
+        // CRM & Collections Management
         const API_BASE = 'https://your-api-gateway-url.amazonaws.com';
         const EMAIL_API = 'https://external-email-api-url.amazonaws.com';
         const SMS_API = 'https://external-sms-api-url.amazonaws.com';
         const RILEY_API = 'https://riley-api-url.amazonaws.com';
+        const HATCH_API = 'https://api.usehatchapp.com';
         
-        function previewFile() {
+        let selectedContacts = [];
+        
+        // Tab persistence
+        function saveActiveTab(tabId) {
+            localStorage.setItem('activeLeadTab', tabId);
+        }
+        
+        function restoreActiveTab() {
+            const activeTab = localStorage.getItem('activeLeadTab');
+            if (activeTab) {
+                const tab = document.getElementById(activeTab);
+                if (tab) {
+                    tab.click();
+                }
+            }
+        }
+        
+        // Contact Management
+        async function refreshContacts() {
+            try {
+                const response = await fetch(`${API_BASE}/contacts`);
+                const contacts = await response.json();
+                displayContacts(contacts);
+            } catch (error) {
+                console.error('Failed to load contacts:', error);
+            }
+        }
+        
+        function displayContacts(contacts) {
+            const tbody = document.getElementById('contactsTable');
+            if (!contacts.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3 text-muted">No contacts found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = contacts.map(contact => `
+                <tr>
+                    <td><input type="checkbox" class="contact-checkbox" value="${contact.id}" onchange="updateSelection()"></td>
+                    <td>${contact.name}</td>
+                    <td>${contact.email}</td>
+                    <td>${contact.phone || '-'}</td>
+                    <td><span class="badge bg-${contact.status === 'active' ? 'success' : 'secondary'}">${contact.status}</span></td>
+                    <td>${contact.lists?.join(', ') || '-'}</td>
+                    <td>${new Date(contact.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary btn-xs" onclick="editContact('${contact.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-xs" onclick="deleteContact('${contact.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function updateSelection() {
+            const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
+            selectedContacts = Array.from(checkboxes).map(cb => cb.value);
+            document.getElementById('selectedCount').textContent = selectedContacts.length;
+            document.getElementById('bulkActions').classList.toggle('d-none', selectedContacts.length === 0);
+        }
+        
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.contact-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateSelection();
+        }
+        
+        function filterContacts() {
+            const search = document.getElementById('contactSearch').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const list = document.getElementById('listFilter').value;
+            
+            // Apply filters to table rows
+            const rows = document.querySelectorAll('#contactsTable tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 2) return;
+                
+                const name = cells[1].textContent.toLowerCase();
+                const email = cells[2].textContent.toLowerCase();
+                const rowStatus = cells[4].textContent.toLowerCase();
+                const rowLists = cells[5].textContent.toLowerCase();
+                
+                const matchesSearch = !search || name.includes(search) || email.includes(search);
+                const matchesStatus = !status || rowStatus.includes(status);
+                const matchesList = !list || rowLists.includes(list);
+                
+                row.style.display = matchesSearch && matchesStatus && matchesList ? '' : 'none';
+            });
+        }
+        
+        function showAddContact() {
+            // Modal or form for adding new contact
+            const name = prompt('Contact Name:');
+            const email = prompt('Email:');
+            const phone = prompt('Phone (optional):');
+            
+            if (name && email) {
+                addContact({ name, email, phone });
+            }
+        }
+        
+        async function addContact(contact) {
+            try {
+                const response = await fetch(`${API_BASE}/contacts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(contact)
+                });
+                
+                if (response.ok) {
+                    refreshContacts();
+                } else {
+                    alert('Failed to add contact');
+                }
+            } catch (error) {
+                alert('Error adding contact: ' + error.message);
+            }
+        }
+        
+        function showBulkUpload() {
+            document.getElementById('contacts-tab').click();
+            // Focus on file input or show modal
+        }
+        
+        function exportContacts() {
+            window.open(`${API_BASE}/contacts/export`, '_blank');
+        }
+        
+        // Collections Management
+        function previewCollectionsFile() {
             const file = document.getElementById('collectionsFile').files[0];
-            document.getElementById('uploadBtn').disabled = !file;
+            document.getElementById('uploadCollectionsBtn').disabled = !file;
         }
 
         async function uploadCollections() {
@@ -731,15 +816,13 @@
             
             if (!file) return;
             
-            document.getElementById('uploadSpinner').classList.remove('d-none');
-            document.getElementById('uploadStatus').innerHTML = '<small class="text-info">Processing...</small>';
-            
             const text = await file.text();
             const lines = text.split('\n').filter(line => line.trim());
             
-            const leads = lines.map(line => {
+            const collections = lines.map(line => {
                 const [name, email, phone, amount, installDate] = line.split(',');
                 return {
+                    contactId: null, // Will be created/linked
                     name: name?.trim(),
                     email: email?.trim(),
                     phone: phone?.trim(),
@@ -749,28 +832,29 @@
                     status: 'active',
                     createdAt: new Date().toISOString()
                 };
-            }).filter(lead => lead.name && lead.email);
+            }).filter(item => item.name && item.email);
             
             try {
+                // Save to collections table (separate from contacts)
                 const response = await fetch(`${API_BASE}/collections`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ leads })
+                    body: JSON.stringify({ collections })
                 });
                 
                 if (response.ok) {
-                    document.getElementById('uploadStatus').innerHTML = `<small class="text-success">✓ ${leads.length} leads saved</small>`;
+                    alert(`${collections.length} collections saved successfully`);
                     refreshCollections();
+                    loadCollectionsTable();
                 } else {
                     throw new Error('Upload failed');
                 }
             } catch (error) {
-                document.getElementById('uploadStatus').innerHTML = '<small class="text-danger">✗ Upload failed</small>';
+                alert('Upload failed: ' + error.message);
             }
             
-            document.getElementById('uploadSpinner').classList.add('d-none');
             document.getElementById('collectionsFile').value = '';
-            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadCollectionsBtn').disabled = true;
         }
 
         async function refreshCollections() {
@@ -785,6 +869,74 @@
             } catch (error) {
                 console.error('Failed to refresh collections:', error);
             }
+        }
+        
+        async function loadCollectionsTable() {
+            try {
+                const response = await fetch(`${API_BASE}/collections`);
+                const collections = await response.json();
+                displayCollectionsTable(collections);
+            } catch (error) {
+                console.error('Failed to load collections:', error);
+            }
+        }
+        
+        function displayCollectionsTable(collections) {
+            const tbody = document.getElementById('collectionsTable');
+            if (!collections.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No collections data</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = collections.map(item => {
+                const installDate = new Date(item.installDate);
+                const today = new Date();
+                const daysOverdue = Math.floor((today - installDate) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>$${item.amount.toLocaleString()}</td>
+                        <td><span class="badge bg-${getStageColor(item.stage)}">${item.stage}</span></td>
+                        <td>${installDate.toLocaleDateString()}</td>
+                        <td>${daysOverdue} days</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-success btn-xs" onclick="resolveCollection('${item.id}')">
+                                    Resolve
+                                </button>
+                                <button class="btn btn-outline-primary btn-xs" onclick="addToCampaign('${item.id}')">
+                                    Campaign
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function getStageColor(stage) {
+            const colors = {
+                '0-30': 'success',
+                '31-60': 'warning', 
+                '61-90': 'danger',
+                '91-plus': 'dark',
+                'judgment': 'secondary',
+                'resolved': 'info'
+            };
+            return colors[stage] || 'secondary';
+        }
+        
+        function viewCollectionStage(stage) {
+            // Filter table by stage
+            const rows = document.querySelectorAll('#collectionsTable tr');
+            rows.forEach(row => {
+                const stageCell = row.querySelector('td:nth-child(3)');
+                if (stageCell) {
+                    const rowStage = stageCell.textContent.toLowerCase();
+                    row.style.display = stage === 'all' || rowStage.includes(stage) ? '' : 'none';
+                }
+            });
         }
 
         async function createDripCampaign() {
