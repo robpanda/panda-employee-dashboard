@@ -32,7 +32,7 @@ def lambda_handler(event, context):
                 return get_employees(event)
             elif http_method == 'POST':
                 return create_employee(event)
-        elif http_method == 'PUT' and path.startswith('/employees/'):
+        elif http_method == 'PUT' and '/employees/' in path:
             return update_employee(event)
         elif http_method == 'DELETE' and '/employees/' in path:
             return delete_employee(event)
@@ -243,25 +243,25 @@ def update_employee(event):
         
         print(f'UPDATE: Updating employee {employee_id} with data: {body}')
         
-        # Get existing employee
+        # Find employee by scanning for matching ID
         try:
-            response = employees_table.get_item(Key={'id': employee_id})
-            if 'Item' not in response:
-                print(f'UPDATE: Employee {employee_id} not found, searching by employee_id')
-                response = employees_table.scan(
-                    FilterExpression='employee_id = :emp_id OR #eid = :emp_id',
-                    ExpressionAttributeNames={'#eid': 'Employee Id'},
-                    ExpressionAttributeValues={':emp_id': employee_id}
-                )
-                if not response['Items']:
-                    return {
-                        'statusCode': 404,
-                        'headers': {'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'Employee not found'})
-                    }
-                employee = response['Items'][0]
-            else:
-                employee = response['Item']
+            response = employees_table.scan(
+                FilterExpression='id = :emp_id OR employee_id = :emp_id OR #eid = :emp_id',
+                ExpressionAttributeNames={'#eid': 'Employee Id'},
+                ExpressionAttributeValues={':emp_id': employee_id}
+            )
+            
+            if not response['Items']:
+                print(f'UPDATE: Employee {employee_id} not found')
+                return {
+                    'statusCode': 404,
+                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Employee not found'})
+                }
+            
+            employee = response['Items'][0]
+            print(f'UPDATE: Found employee {employee.get("First Name")} {employee.get("Last Name")}')
+            
         except Exception as e:
             print(f'UPDATE ERROR: Failed to find employee: {e}')
             return {
