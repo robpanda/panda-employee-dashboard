@@ -113,39 +113,53 @@ def create_employee(event):
         employees_data = body['employees']
         
         # Clear existing data and insert new
-        response = employees_table.scan()
-        with employees_table.batch_writer() as batch:
-            for item in response['Items']:
-                batch.delete_item(Key={'id': item.get('id', item.get('employee_id', ''))})
+        try:
+            response = employees_table.scan()
+            with employees_table.batch_writer() as batch:
+                for item in response['Items']:
+                    key_value = item.get('id', item.get('employee_id', item.get('Employee Id', '')))
+                    if key_value:
+                        batch.delete_item(Key={'id': key_value})
+        except Exception as e:
+            print(f'Error clearing existing data: {e}')
         
         # Insert new employees
+        success_count = 0
         with employees_table.batch_writer() as batch:
             for emp_data in employees_data:
-                # Handle both frontend format and API format
-                emp_id = emp_data.get('Employee Id', emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))))
-                employee = {
-                    'id': emp_id,
-                    'employee_id': emp_id,
-                    'Employee Id': emp_id,
-                    'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
-                    'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
-                    'Department': emp_data.get('Department', emp_data.get('department', '')),
-                    'Position': emp_data.get('Position', emp_data.get('position', '')),
-                    'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
-                    'Years of Service': emp_data.get('Years of Service', emp_data.get('years_of_service', '')),
-                    'Email': emp_data.get('Email', emp_data.get('email', '')),
-                    'Phone': emp_data.get('Phone', emp_data.get('phone', '')),
-                    'office': emp_data.get('office', ''),
-                    'supervisor': emp_data.get('supervisor', ''),
-                    'is_supervisor': emp_data.get('is_supervisor', 'No'),
-                    'Merch Requested': emp_data.get('Merch Requested', emp_data.get('merch_requested', '')),
-                    'Merch Sent': emp_data.get('Merch Sent', emp_data.get('merch_sent', 'No')),
-                    'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
-                    'Terminated': emp_data.get('Terminated', emp_data.get('terminated', 'No')),
-                    'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
-                    'updated_at': datetime.now().isoformat()
-                }
-                batch.put_item(Item=employee)
+                try:
+                    # Handle both frontend format and API format
+                    emp_id = emp_data.get('Employee Id', emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))))
+                    if not emp_id:
+                        emp_id = str(uuid.uuid4())
+                    
+                    employee = {
+                        'id': str(emp_id),
+                        'employee_id': str(emp_id),
+                        'Employee Id': str(emp_id),
+                        'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
+                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
+                        'Department': emp_data.get('Department', emp_data.get('department', '')),
+                        'Position': emp_data.get('Position', emp_data.get('position', '')),
+                        'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
+                        'Years of Service': emp_data.get('Years of Service', emp_data.get('years_of_service', '')),
+                        'Email': emp_data.get('Email', emp_data.get('email', '')),
+                        'Phone': emp_data.get('Phone', emp_data.get('phone', '')),
+                        'office': emp_data.get('office', ''),
+                        'supervisor': emp_data.get('supervisor', ''),
+                        'is_supervisor': emp_data.get('is_supervisor', 'No'),
+                        'Merch Requested': emp_data.get('Merch Requested', emp_data.get('merch_requested', '')),
+                        'Merch Sent': emp_data.get('Merch Sent', emp_data.get('merch_sent', 'No')),
+                        'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
+                        'Terminated': emp_data.get('Terminated', emp_data.get('terminated', 'No')),
+                        'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
+                        'updated_at': datetime.now().isoformat()
+                    }
+                    batch.put_item(Item=employee)
+                    success_count += 1
+                except Exception as e:
+                    print(f'Error inserting employee {emp_data}: {e}')
+                    continue
         
         return {
             'statusCode': 200,
@@ -155,7 +169,7 @@ def create_employee(event):
                 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
-            'body': json.dumps({'message': f'{len(employees_data)} employees saved successfully'})
+            'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
         }
     
     # Handle single employee from admin form
@@ -163,9 +177,9 @@ def create_employee(event):
     current_date = datetime.now().isoformat()
     
     employee = {
-        'id': employee_id,
-        'employee_id': employee_id,
-        'Employee Id': employee_id,
+        'id': str(employee_id),
+        'employee_id': str(employee_id),
+        'Employee Id': str(employee_id),
         'First Name': body.get('first_name', ''),
         'Last Name': body.get('last_name', ''),
         'Email': body.get('email', ''),
@@ -177,6 +191,10 @@ def create_employee(event):
         'office': body.get('office', ''),
         'supervisor': body.get('manager', ''),
         'is_supervisor': 'No',
+        'Merch Requested': '',
+        'Merch Sent': 'No',
+        'Merch Sent Date': '',
+        'Termination Date': '',
         'updated_at': current_date
     }
     
