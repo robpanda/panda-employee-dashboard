@@ -32,9 +32,9 @@ def lambda_handler(event, context):
                 return get_employees(event)
             elif http_method == 'POST':
                 return create_employee(event)
-        elif http_method == 'PUT' and '/employees/' in path:
+        elif path.startswith('/employees/') and http_method == 'PUT':
             return update_employee(event)
-        elif http_method == 'DELETE' and '/employees/' in path:
+        elif path.startswith('/employees/') and http_method == 'DELETE':
             return delete_employee(event)
         elif path == '/contacts':
             return handle_contacts(event)
