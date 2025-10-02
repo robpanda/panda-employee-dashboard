@@ -27,10 +27,11 @@ def lambda_handler(event, context):
                 },
                 'body': ''
             }
-        elif http_method == 'GET' and path == '/employees':
-            return get_employees(event)
-        elif http_method == 'POST' and path == '/employees':
-            return create_employee(event)
+        elif path == '/employees':
+            if http_method == 'GET':
+                return get_employees(event)
+            elif http_method == 'POST':
+                return create_employee(event)
         elif http_method == 'PUT' and '/employees/' in path:
             return update_employee(event)
         elif http_method == 'DELETE' and '/employees/' in path:
@@ -123,19 +124,28 @@ def create_employee(event):
     # Handle bulk employee data
     if 'employees' in body:
         employees_data = body['employees']
-        print(f'Processing {len(employees_data)} employees')
+        print(f'Processing {len(employees_data)} employees for bulk import')
         
-        # Clear existing data and insert new
+        # Clear existing data
         try:
             response = employees_table.scan()
+            print(f'Found {len(response["Items"])} existing employees to clear')
             with employees_table.batch_writer() as batch:
                 for item in response['Items']:
                     key_value = item.get('id', item.get('employee_id', item.get('Employee Id', '')))
                     if key_value:
                         batch.delete_item(Key={'id': key_value})
-            print('Cleared existing data')
+            print('Successfully cleared existing data')
         except Exception as e:
             print(f'Error clearing data: {e}')
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': f'Failed to clear data: {str(e)}'})
+            }
         
         # Insert new employees
         success_count = 0
