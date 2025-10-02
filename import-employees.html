@@ -225,27 +225,33 @@
                 updateProgress(70);
 
                 try {
-                    console.log('Sending data:', { employees: allEmployees });
+                    console.log('IMPORT: Sending', allEmployees.length, 'employees');
+                    console.log('IMPORT: Sample employee:', allEmployees[0]);
+                    
                     const response = await fetch(`${API_URL}/employees`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
                         body: JSON.stringify({ employees: allEmployees })
                     });
 
                     updateProgress(100);
                     
+                    console.log('IMPORT: Response status:', response.status);
                     const responseText = await response.text();
-                    console.log('Response:', responseText);
+                    console.log('IMPORT: Response body:', responseText);
                     
                     if (response.ok) {
                         const result = JSON.parse(responseText);
-                        showResults(`✅ Successfully imported ${employees.length} active employees and marked ${terminatedEmployees.length} as terminated`, employees, supervisors, terminatedEmployees);
+                        showResults(`✅ Import completed: ${result.message}`, employees, supervisors, terminatedEmployees);
                     } else {
-                        throw new Error(`Server error (${response.status}): ${responseText}`);
+                        throw new Error(`HTTP ${response.status}: ${responseText}`);
                     }
                 } catch (error) {
-                    console.error('Import error:', error);
-                    showResults(`❌ Error: ${error.message}`, [], new Set(), []);
+                    console.error('IMPORT ERROR:', error);
+                    showResults(`❌ Import failed: ${error.message}`, [], new Set(), []);
                 }
             };
             reader.readAsText(file);

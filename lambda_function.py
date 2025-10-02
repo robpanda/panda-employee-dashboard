@@ -32,7 +32,7 @@ def lambda_handler(event, context):
                 return get_employees(event)
             elif http_method == 'POST':
                 return create_employee(event)
-        elif http_method == 'PUT' and '/employees/' in path:
+        elif http_method == 'PUT' and path.startswith('/employees/'):
             return update_employee(event)
         elif http_method == 'DELETE' and '/employees/' in path:
             return delete_employee(event)
@@ -236,68 +236,69 @@ def create_employee(event):
     }
 
 def update_employee(event):
-    # Extract employee ID from path
-    path_parts = event['path'].split('/')
-    employee_id = path_parts[-1]  # Get last part of path
-    body = json.loads(event['body'])
-    
-    # Get existing employee by id or employee_id
-    response = employees_table.get_item(Key={'id': employee_id})
-    if 'Item' not in response:
-        # Try with employee_id as key
-        response = employees_table.scan(
-            FilterExpression='employee_id = :emp_id',
-            ExpressionAttributeValues={':emp_id': employee_id}
-        )
-        if not response['Items']:
-            return {
-                'statusCode': 404,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({'error': 'Employee not found'})
-            }
-        employee = response['Items'][0]
-    else:
-        employee = response['Item']
-    
-    # Update fields - handle both admin format and dashboard format
-    for key, value in body.items():
-        if key not in ['id', 'employee_id']:  # Don't allow updating primary keys
-            employee[key] = value
-    
-    # Recalculate employment metrics if employment date changed
-    employment_date_field = body.get('Employment Date', body.get('employment_date'))
-    if employment_date_field:
+    try:
+        path_parts = event['path'].split('/')
+        employee_id = path_parts[-1]
+        body = json.loads(event['body'])
+        
+        print(f'UPDATE: Updating employee {employee_id} with data: {body}')
+        
+        # Get existing employee
         try:
-            if 'T' in employment_date_field:
-                employment_datetime = datetime.fromisoformat(employment_date_field)
+            response = employees_table.get_item(Key={'id': employee_id})
+            if 'Item' not in response:
+                print(f'UPDATE: Employee {employee_id} not found, searching by employee_id')
+                response = employees_table.scan(
+                    FilterExpression='employee_id = :emp_id OR #eid = :emp_id',
+                    ExpressionAttributeNames={'#eid': 'Employee Id'},
+                    ExpressionAttributeValues={':emp_id': employee_id}
+                )
+                if not response['Items']:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Employee not found'})
+                    }
+                employee = response['Items'][0]
             else:
-                employment_datetime = datetime.strptime(employment_date_field, '%Y-%m-%d')
-            
-            days_employed = (datetime.now() - employment_datetime).days
-            years_worked = round(days_employed / 365.25, 1)
-            employee['Employment Date'] = employment_date_field
-            employee['days_employed'] = days_employed
-            employee['Years of Service'] = str(years_worked)
-        except:
-            pass  # Skip if date parsing fails
-    
-    employee['updated_at'] = datetime.now().isoformat()
-    
-    employees_table.put_item(Item=employee)
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-        },
-        'body': json.dumps({'message': 'Employee updated successfully'})
-    }
+                employee = response['Item']
+        except Exception as e:
+            print(f'UPDATE ERROR: Failed to find employee: {e}')
+            return {
+                'statusCode': 500,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': f'Database error: {str(e)}'})
+            }
+        
+        # Update fields
+        for key, value in body.items():
+            if key not in ['id']:
+                employee[key] = value
+        
+        employee['updated_at'] = datetime.now().isoformat()
+        
+        # Save updated employee
+        employees_table.put_item(Item=employee)
+        print(f'UPDATE: Successfully updated employee {employee_id}')
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'message': 'Employee updated successfully'})
+        }
+        
+    except Exception as e:
+        print(f'UPDATE ERROR: {e}')
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)})
+        }
 
 def delete_employee(event):
     employee_id = event['pathParameters']['employee_id']
