@@ -122,9 +122,11 @@ def create_employee(event):
         with employees_table.batch_writer() as batch:
             for emp_data in employees_data:
                 # Handle both frontend format and API format
+                emp_id = emp_data.get('Employee Id', emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))))
                 employee = {
-                    'id': emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))),
-                    'employee_id': emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))),
+                    'id': emp_id,
+                    'employee_id': emp_id,
+                    'Employee Id': emp_id,
                     'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
                     'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
                     'Department': emp_data.get('Department', emp_data.get('department', '')),
@@ -133,6 +135,9 @@ def create_employee(event):
                     'Years of Service': emp_data.get('Years of Service', emp_data.get('years_of_service', '')),
                     'Email': emp_data.get('Email', emp_data.get('email', '')),
                     'Phone': emp_data.get('Phone', emp_data.get('phone', '')),
+                    'office': emp_data.get('office', ''),
+                    'supervisor': emp_data.get('supervisor', ''),
+                    'is_supervisor': emp_data.get('is_supervisor', 'No'),
                     'Merch Requested': emp_data.get('Merch Requested', emp_data.get('merch_requested', '')),
                     'Merch Sent': emp_data.get('Merch Sent', emp_data.get('merch_sent', 'No')),
                     'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
@@ -154,12 +159,13 @@ def create_employee(event):
         }
     
     # Handle single employee from admin form
-    employee_id = str(uuid.uuid4())
+    employee_id = body.get('employee_id', str(uuid.uuid4()))
     current_date = datetime.now().isoformat()
     
     employee = {
         'id': employee_id,
         'employee_id': employee_id,
+        'Employee Id': employee_id,
         'First Name': body.get('first_name', ''),
         'Last Name': body.get('last_name', ''),
         'Email': body.get('email', ''),
@@ -169,7 +175,8 @@ def create_employee(event):
         'Employment Date': body.get('employment_date', current_date.split('T')[0]),
         'Terminated': body.get('terminated', 'No'),
         'office': body.get('office', ''),
-        'manager': body.get('manager', ''),
+        'supervisor': body.get('manager', ''),
+        'is_supervisor': 'No',
         'updated_at': current_date
     }
     

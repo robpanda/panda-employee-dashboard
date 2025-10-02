@@ -505,11 +505,14 @@
                                     <h5><i class="fas fa-upload"></i> Bulk Employee Import</h5>
                                 </div>
                                 <div class="card-body">
-                                    <input type="file" class="form-control mb-3" id="bulkEmployeeFile" accept=".csv,.xlsx">
-                                    <button class="btn btn-primary w-100" onclick="bulkImportEmployees()">
-                                        <i class="fas fa-upload"></i> Import Employees
+                                    <button class="btn btn-primary w-100 mb-3" onclick="window.open('/import-employees.html', '_blank')">
+                                        <i class="fas fa-file-csv"></i> Import Active Headcount CSV
                                     </button>
-                                    <small class="text-muted mt-2 d-block">CSV format: FirstName, LastName, Email, EmployeeID, Department, Manager, Office</small>
+                                    <input type="file" class="form-control mb-3" id="bulkEmployeeFile" accept=".csv,.xlsx">
+                                    <button class="btn btn-outline-primary w-100" onclick="bulkImportEmployees()">
+                                        <i class="fas fa-upload"></i> Import Custom CSV
+                                    </button>
+                                    <small class="text-muted mt-2 d-block">Use Active Headcount CSV for official updates, or upload custom format</small>
                                 </div>
                             </div>
                         </div>
@@ -964,25 +967,21 @@
         }
 
         function loadManagers() {
-            // Get all employees as potential managers
-            const allEmployeeNames = employees.map(e => {
-                return e['First Name'] && e['Last Name'] ? 
-                    `${e['First Name']} ${e['Last Name']}` : 
-                    (e.name || `${e.first_name || ''} ${e.last_name || ''}`);
-            }).filter(Boolean);
-            
-            const uniqueManagers = [...new Set(allEmployeeNames)];
+            // Get supervisors from employee data
+            const supervisors = employees.filter(e => e.is_supervisor === 'Yes' || e.supervisor);
+            const uniqueSupervisors = [...new Set(supervisors.map(e => e.supervisor || `${e['First Name']} ${e['Last Name']}`).filter(Boolean))];
             
             const container = document.getElementById('managersList');
-            container.innerHTML = uniqueManagers.map(manager => {
-                const teamSize = Math.floor(Math.random() * 8) + 1; // Placeholder team size
+            container.innerHTML = uniqueSupervisors.map(supervisor => {
+                const teamMembers = employees.filter(e => e.supervisor === supervisor);
+                const teamSize = teamMembers.length;
                 return `
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
                         <div>
-                            <strong>${manager}</strong>
+                            <strong>${supervisor}</strong>
                             <br><small class="text-muted">Team: ${teamSize} employees</small>
                         </div>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewManagerTeam('${manager}')">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewManagerTeam('${supervisor}')">
                             <i class="fas fa-users"></i> View Team
                         </button>
                     </div>
@@ -991,19 +990,21 @@
 
             // Update managers table
             const tbody = document.getElementById('managersTable');
-            tbody.innerHTML = uniqueManagers.map(manager => {
-                const teamSize = Math.floor(Math.random() * 8) + 1;
+            tbody.innerHTML = uniqueSupervisors.map(supervisor => {
+                const teamMembers = employees.filter(e => e.supervisor === supervisor);
+                const teamSize = teamMembers.length;
                 const budget = teamSize * 100; // $100 per team member per quarter
+                const departments = [...new Set(teamMembers.map(e => e['Department'] || e.department).filter(Boolean))];
                 return `
                     <tr>
-                        <td>${manager}</td>
-                        <td>Multiple</td>
+                        <td>${supervisor}</td>
+                        <td>${departments.join(', ') || 'Multiple'}</td>
                         <td>${teamSize}</td>
                         <td>$${budget}</td>
                         <td>$0</td>
                         <td>$${budget}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="adjustBudget('${manager}')">
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustBudget('${supervisor}')">
                                 <i class="fas fa-edit"></i> Adjust
                             </button>
                         </td>
@@ -1039,9 +1040,14 @@
             }
         }
 
-        function viewManagerTeam(manager) {
-            const team = employees.filter(e => (e.manager || e.supervisor) === manager);
-            alert(`${manager}'s Team (${team.length} employees):\n\n${team.map(e => `• ${e.name} (${e.department})`).join('\n')}`);
+        function viewManagerTeam(supervisor) {
+            const team = employees.filter(e => e.supervisor === supervisor);
+            const teamList = team.map(e => {
+                const name = e['First Name'] && e['Last Name'] ? `${e['First Name']} ${e['Last Name']}` : e.name;
+                const dept = e['Department'] || e.department || 'Unknown';
+                return `• ${name} (${dept})`;
+            }).join('\n');
+            alert(`${supervisor}'s Team (${team.length} employees):\n\n${teamList}`);
         }
 
         function adjustBudget(manager) {
