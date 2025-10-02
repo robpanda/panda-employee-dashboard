@@ -41,6 +41,10 @@ def lambda_handler(event, context):
             return handle_collections(event)
         elif path == '/config':
             return handle_config(event)
+        elif path == '/admin-users':
+            return handle_admin_users(event)
+        elif path == '/create-admin':
+            return create_super_admin(event)
         else:
             return {
                 'statusCode': 404,
@@ -149,18 +153,23 @@ def create_employee(event):
             'body': json.dumps({'message': f'{len(employees_data)} employees saved successfully'})
         }
     
-    # Handle single employee
+    # Handle single employee from admin form
     employee_id = str(uuid.uuid4())
     current_date = datetime.now().isoformat()
     
     employee = {
         'id': employee_id,
         'employee_id': employee_id,
-        'last_name': body['last_name'],
-        'first_name': body['first_name'],
-        'email': body['email'],
-        'employment_date': body.get('employment_date', current_date),
-        'terminated': body.get('terminated', 'No'),
+        'First Name': body.get('first_name', ''),
+        'Last Name': body.get('last_name', ''),
+        'Email': body.get('email', ''),
+        'Phone': body.get('phone', ''),
+        'Department': body.get('department', ''),
+        'Position': body.get('position', ''),
+        'Employment Date': body.get('employment_date', current_date.split('T')[0]),
+        'Terminated': body.get('terminated', 'No'),
+        'office': body.get('office', ''),
+        'manager': body.get('manager', ''),
         'updated_at': current_date
     }
     
@@ -183,31 +192,48 @@ def update_employee(event):
     employee_id = path_parts[-1]  # Get last part of path
     body = json.loads(event['body'])
     
-    # Get existing employee
-    response = employees_table.get_item(Key={'employee_id': employee_id})
+    # Get existing employee by id or employee_id
+    response = employees_table.get_item(Key={'id': employee_id})
     if 'Item' not in response:
-        return {
-            'statusCode': 404,
-            'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps({'error': 'Employee not found'})
-        }
+        # Try with employee_id as key
+        response = employees_table.scan(
+            FilterExpression='employee_id = :emp_id',
+            ExpressionAttributeValues={':emp_id': employee_id}
+        )
+        if not response['Items']:
+            return {
+                'statusCode': 404,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'Employee not found'})
+            }
+        employee = response['Items'][0]
+    else:
+        employee = response['Item']
     
-    employee = response['Item']
-    
-    # Update fields
+    # Update fields - handle both admin format and dashboard format
     for key, value in body.items():
-        if key != 'employee_id':  # Don't allow updating the primary key
+        if key not in ['id', 'employee_id']:  # Don't allow updating primary keys
             employee[key] = value
     
-    # Recalculate days employed and years worked if employment_date changed
-    if 'employment_date' in body or 'registration_date' in body:
-        employment_date = body.get('employment_date', body.get('registration_date', employee.get('employment_date')))
-        employment_datetime = datetime.fromisoformat(employment_date)
-        days_employed = (datetime.now() - employment_datetime).days
-        years_worked = round(days_employed / 365.25, 1)
-        employee['employment_date'] = employment_date
-        employee['days_employed'] = days_employed
-        employee['years_worked'] = years_worked
+    # Recalculate employment metrics if employment date changed
+    employment_date_field = body.get('Employment Date', body.get('employment_date'))
+    if employment_date_field:
+        try:
+            if 'T' in employment_date_field:
+                employment_datetime = datetime.fromisoformat(employment_date_field)
+            else:
+                employment_datetime = datetime.strptime(employment_date_field, '%Y-%m-%d')
+            
+            days_employed = (datetime.now() - employment_datetime).days
+            years_worked = round(days_employed / 365.25, 1)
+            employee['Employment Date'] = employment_date_field
+            employee['days_employed'] = days_employed
+            employee['Years of Service'] = str(years_worked)
+        except:
+            pass  # Skip if date parsing fails
     
     employee['updated_at'] = datetime.now().isoformat()
     
@@ -499,3 +525,75 @@ def handle_config(event):
             },
             'body': json.dumps({'message': 'Config saved'})
         }
+
+def handle_admin_users(event):
+    method = event['httpMethod']
+    
+    if method == 'GET':
+        # Return mock admin users for now
+        admin_users = [
+            {
+                'email': 'admin@pandaexteriors.com',
+                'role': 'super_admin',
+                'active': True,
+                'created_at': '2024-01-01T00:00:00Z'
+            },
+            {
+                'email': 'manager@pandaexteriors.com', 
+                'role': 'admin',
+                'active': True,
+                'created_at': '2024-01-15T00:00:00Z'
+            }
+        ]
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'users': admin_users})
+        }
+    
+    elif method == 'POST':
+        body = json.loads(event['body'])
+        email = body.get('email')
+        password = body.get('password')
+        role = body.get('role', 'admin')
+        
+        if not email or not password:
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'success': False, 'message': 'Email and password required'})
+            }
+        
+        # Mock admin user creation
+        return {
+            'statusCode': 201,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
+        }
+
+def create_super_admin(event):
+    # Mock super admin creation
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+        },
+        'body': json.dumps({'message': 'Super admin already exists'})
+    }

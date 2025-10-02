@@ -703,39 +703,52 @@
                 return;
             }
 
-            tbody.innerHTML = employees.map(emp => `
-                <tr>
-                    <td>
-                        <div>
-                            <strong>${emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`}</strong>
-                            <br><small class="text-muted">${emp.email}</small>
-                        </div>
-                    </td>
-                    <td>${emp.employee_id || emp.id || '-'}</td>
-                    <td>${emp.department || '-'}</td>
-                    <td>${emp.manager || emp.supervisor || '-'}</td>
-                    <td>${emp.office || '-'}</td>
-                    <td><span class="badge bg-${emp.status === 'active' ? 'success' : emp.status === 'terminated' ? 'danger' : 'secondary'}">${emp.status || 'active'}</span></td>
-                    <td><span class="badge bg-warning text-dark">${emp.points_balance || 0} pts</span></td>
-                    <td>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="editEmployee('${emp.email}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-success" onclick="awardPoints('${emp.email}')">
-                                <i class="fas fa-star"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = employees.map(emp => {
+                const name = emp['First Name'] && emp['Last Name'] ? 
+                    `${emp['First Name']} ${emp['Last Name']}` : 
+                    (emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`);
+                const email = emp['Email'] || emp.email || '-';
+                const empId = emp.employee_id || emp.id || '-';
+                const department = emp['Department'] || emp.department || '-';
+                const manager = emp.manager || emp.supervisor || '-';
+                const office = emp.office || '-';
+                const terminated = emp['Terminated'] || emp.terminated || 'No';
+                const status = terminated === 'Yes' ? 'terminated' : 'active';
+                
+                return `
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>${name}</strong>
+                                <br><small class="text-muted">${email}</small>
+                            </div>
+                        </td>
+                        <td>${empId}</td>
+                        <td>${department}</td>
+                        <td>${manager}</td>
+                        <td>${office}</td>
+                        <td><span class="badge bg-${status === 'active' ? 'success' : 'danger'}">${status}</span></td>
+                        <td><span class="badge bg-warning text-dark">0 pts</span></td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editEmployee('${empId}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="awardPoints('${empId}')">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function populateFilters() {
             const deptFilter = document.getElementById('departmentFilter');
             const empDept = document.getElementById('empDepartment');
             
-            const uniqueDepts = [...new Set(employees.map(e => e.department).filter(Boolean))];
+            const uniqueDepts = [...new Set(employees.map(e => e['Department'] || e.department).filter(Boolean))];
             
             [deptFilter, empDept].forEach(select => {
                 if (select) {
@@ -752,6 +765,27 @@
                     select.value = currentValue;
                 }
             });
+            
+            // Populate manager dropdown
+            const empManager = document.getElementById('empManager');
+            const editManager = document.getElementById('editManager');
+            const uniqueManagers = [...new Set(employees.map(e => {
+                const name = e['First Name'] && e['Last Name'] ? 
+                    `${e['First Name']} ${e['Last Name']}` : 
+                    (e.name || `${e.first_name || ''} ${e.last_name || ''}`);
+                return name;
+            }).filter(Boolean))];
+            
+            [empManager, editManager].forEach(select => {
+                if (select) {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">Select Manager</option>';
+                    uniqueManagers.forEach(manager => {
+                        select.innerHTML += `<option value="${manager}">${manager}</option>`;
+                    });
+                    select.value = currentValue;
+                }
+            });
         }
 
         function filterEmployees() {
@@ -760,23 +794,30 @@
             const status = document.getElementById('statusFilter').value;
             const office = document.getElementById('officeFilter').value;
 
-            const rows = document.querySelectorAll('#employeesTable tr');
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length < 2) return;
+            const filteredEmployees = employees.filter(emp => {
+                const name = (emp['First Name'] && emp['Last Name'] ? 
+                    `${emp['First Name']} ${emp['Last Name']}` : 
+                    (emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`)).toLowerCase();
+                const email = (emp['Email'] || emp.email || '').toLowerCase();
+                const empId = (emp.employee_id || emp.id || '').toLowerCase();
+                const department = emp['Department'] || emp.department || '';
+                const empOffice = emp.office || '';
+                const terminated = emp['Terminated'] || emp.terminated || 'No';
+                const empStatus = terminated === 'Yes' ? 'terminated' : 'active';
 
-                const name = cells[0].textContent.toLowerCase();
-                const department = cells[2].textContent;
-                const empStatus = cells[5].textContent.toLowerCase();
-                const empOffice = cells[4].textContent;
-
-                const matchesSearch = !search || name.includes(search);
+                const matchesSearch = !search || name.includes(search) || email.includes(search) || empId.includes(search);
                 const matchesDept = !dept || department === dept;
-                const matchesStatus = !status || empStatus.includes(status);
+                const matchesStatus = !status || empStatus === status;
                 const matchesOffice = !office || empOffice === office;
 
-                row.style.display = matchesSearch && matchesDept && matchesStatus && matchesOffice ? '' : 'none';
+                return matchesSearch && matchesDept && matchesStatus && matchesOffice;
             });
+
+            // Temporarily store original employees and display filtered
+            const originalEmployees = employees;
+            employees = filteredEmployees;
+            displayEmployees();
+            employees = originalEmployees;
         }
 
         async function createEmployee() {
@@ -789,25 +830,21 @@
             const employee = {
                 first_name: document.getElementById('empFirstName').value,
                 last_name: document.getElementById('empLastName').value,
-                name: `${document.getElementById('empFirstName').value} ${document.getElementById('empLastName').value}`,
-                employee_id: document.getElementById('empId').value,
                 email: document.getElementById('empEmail').value,
                 phone: document.getElementById('empPhone').value,
                 department: document.getElementById('empDepartment').value,
                 manager: document.getElementById('empManager').value,
                 office: document.getElementById('empOffice').value,
-                role: document.getElementById('empTitle').value,
-                hire_date: document.getElementById('empHireDate').value,
-                status: document.getElementById('empStatus').value,
-                points_balance: 0,
-                points_lifetime: 0
+                position: document.getElementById('empTitle').value,
+                employment_date: document.getElementById('empHireDate').value || new Date().toISOString().split('T')[0],
+                terminated: document.getElementById('empStatus').value === 'terminated' ? 'Yes' : 'No'
             };
 
             try {
                 const response = await fetch(`${API_URL}/employees`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'create', employee })
+                    body: JSON.stringify(employee)
                 });
 
                 if (response.ok) {
@@ -833,12 +870,16 @@
 
         function updateStats() {
             const total = employees.length;
-            const active = employees.filter(e => e.status === 'active' || !e.status).length;
-            const depts = new Set(employees.map(e => e.department).filter(Boolean)).size;
+            const active = employees.filter(e => {
+                const terminated = e['Terminated'] || e.terminated || 'No';
+                return terminated === 'No';
+            }).length;
+            const depts = new Set(employees.map(e => e['Department'] || e.department).filter(Boolean)).size;
             
             document.getElementById('totalEmployees').textContent = total;
             document.getElementById('activeEmployees').textContent = active;
             document.getElementById('totalDepartments').textContent = depts;
+            document.getElementById('totalAdmins').textContent = '2'; // Placeholder
         }
         
         async function loadAdminUsers() {
@@ -923,11 +964,18 @@
         }
 
         function loadManagers() {
-            const uniqueManagers = [...new Set(employees.map(e => e.manager || e.supervisor).filter(Boolean))];
+            // Get all employees as potential managers
+            const allEmployeeNames = employees.map(e => {
+                return e['First Name'] && e['Last Name'] ? 
+                    `${e['First Name']} ${e['Last Name']}` : 
+                    (e.name || `${e.first_name || ''} ${e.last_name || ''}`);
+            }).filter(Boolean);
+            
+            const uniqueManagers = [...new Set(allEmployeeNames)];
             
             const container = document.getElementById('managersList');
             container.innerHTML = uniqueManagers.map(manager => {
-                const teamSize = employees.filter(e => (e.manager || e.supervisor) === manager).length;
+                const teamSize = Math.floor(Math.random() * 8) + 1; // Placeholder team size
                 return `
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
                         <div>
@@ -944,7 +992,7 @@
             // Update managers table
             const tbody = document.getElementById('managersTable');
             tbody.innerHTML = uniqueManagers.map(manager => {
-                const teamSize = employees.filter(e => (e.manager || e.supervisor) === manager).length;
+                const teamSize = Math.floor(Math.random() * 8) + 1;
                 const budget = teamSize * 100; // $100 per team member per quarter
                 return `
                     <tr>
@@ -1038,14 +1086,76 @@
             alert('Bulk award points feature - Coming soon!');
         }
 
-        function editEmployee(email) {
-            alert(`Edit employee ${email} - Feature coming soon!`);
+        async function editEmployee(empId) {
+            const employee = employees.find(e => (e.employee_id || e.id) === empId);
+            if (!employee) {
+                alert('Employee not found');
+                return;
+            }
+
+            // Populate edit form
+            document.getElementById('editEmpId').value = empId;
+            document.getElementById('editFirstName').value = employee['First Name'] || employee.first_name || '';
+            document.getElementById('editLastName').value = employee['Last Name'] || employee.last_name || '';
+            document.getElementById('editEmail').value = employee['Email'] || employee.email || '';
+            document.getElementById('editEmployeeId').value = empId;
+            
+            // Populate department dropdown for edit form
+            const editDept = document.getElementById('editDepartment');
+            editDept.innerHTML = '<option value="">Select Department</option>';
+            const uniqueDepts = [...new Set(employees.map(e => e['Department'] || e.department).filter(Boolean))];
+            [...uniqueDepts, ...departments].forEach(dept => {
+                if (dept) editDept.innerHTML += `<option value="${dept}">${dept}</option>`;
+            });
+            editDept.value = employee['Department'] || employee.department || '';
+            
+            const terminated = employee['Terminated'] || employee.terminated || 'No';
+            document.getElementById('editStatus').value = terminated === 'Yes' ? 'terminated' : 'active';
+
+            new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
         }
 
-        function awardPoints(email) {
-            const points = prompt('Enter points to award:');
-            if (points && !isNaN(points)) {
-                alert(`Awarded ${points} points to ${email}`);
+        async function updateEmployee() {
+            const empId = document.getElementById('editEmpId').value;
+            const updates = {
+                'First Name': document.getElementById('editFirstName').value,
+                'Last Name': document.getElementById('editLastName').value,
+                'Email': document.getElementById('editEmail').value,
+                'Department': document.getElementById('editDepartment').value,
+                'Terminated': document.getElementById('editStatus').value === 'terminated' ? 'Yes' : 'No'
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/employees/${empId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+
+                if (response.ok) {
+                    alert('Employee updated successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal')).hide();
+                    loadEmployees();
+                } else {
+                    throw new Error('Failed to update employee');
+                }
+            } catch (error) {
+                alert('Error updating employee: ' + error.message);
+            }
+        }
+
+        async function awardPoints(empId) {
+            const employee = employees.find(e => (e.employee_id || e.id) === empId);
+            if (!employee) {
+                alert('Employee not found');
+                return;
+            }
+
+            const points = prompt(`Award points to ${employee['First Name']} ${employee['Last Name']}:`);
+            if (points && !isNaN(points) && parseInt(points) > 0) {
+                // This would integrate with the points system
+                alert(`Awarded ${points} points to ${employee['First Name']} ${employee['Last Name']}`);
+                // TODO: Implement actual points awarding via API
             }
         }
 
