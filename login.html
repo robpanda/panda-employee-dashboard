@@ -11,30 +11,39 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%); 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: #fafbfc; 
             min-height: 100vh; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
+            color: #374151;
         }
         .login-container { 
             background: white; 
-            padding: 40px; 
-            border-radius: 15px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+            padding: 48px; 
+            border-radius: 16px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
             width: 400px; 
             text-align: center; 
+            border: 1px solid #f3f4f6;
         }
         .logo { 
-            font-size: 3em; 
-            margin-bottom: 20px; 
+            margin-bottom: 32px; 
+        }
+        .logo img {
+            max-width: 180px;
+            height: auto;
         }
         h1 { 
-            color: #2c3e50; 
-            margin-bottom: 30px; 
+            color: #111827; 
+            margin-bottom: 32px; 
+            font-size: 24px;
+            font-weight: 600;
         }
         .form-group { 
             margin-bottom: 20px; 
@@ -42,45 +51,50 @@
         }
         label { 
             display: block; 
-            margin-bottom: 5px; 
-            font-weight: 600; 
-            color: #2c3e50; 
+            margin-bottom: 6px; 
+            font-weight: 500; 
+            color: #374151; 
+            font-size: 14px;
         }
         input { 
             width: 100%; 
-            padding: 12px; 
-            border: 2px solid #ecf0f1; 
+            padding: 12px 16px; 
+            border: 1px solid #e5e7eb; 
             border-radius: 8px; 
             font-size: 14px; 
-            transition: border-color 0.3s; 
+            transition: all 0.15s ease; 
+            font-family: inherit;
         }
         input:focus { 
-            border-color: #2c5530; 
+            border-color: #3b82f6; 
             outline: none; 
-            box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.1); 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); 
         }
         .btn { 
             width: 100%; 
-            background: linear-gradient(135deg, #2c5530, #1a3d1f); 
+            background: #3b82f6; 
             color: white; 
-            padding: 12px; 
+            padding: 12px 16px; 
             border: none; 
             border-radius: 8px; 
-            font-size: 16px; 
-            font-weight: 600; 
+            font-size: 14px; 
+            font-weight: 500; 
             cursor: pointer; 
-            transition: transform 0.2s; 
+            transition: all 0.15s ease; 
+            font-family: inherit;
         }
         .btn:hover { 
-            transform: translateY(-1px); 
+            background: #2563eb; 
         }
         .error { 
-            background: #e74c3c; 
-            color: white; 
-            padding: 10px; 
-            border-radius: 5px; 
+            background: #fef2f2; 
+            color: #dc2626; 
+            padding: 12px 16px; 
+            border-radius: 8px; 
             margin-bottom: 20px; 
             display: none; 
+            border: 1px solid #fecaca;
+            font-size: 14px;
         }
         .loading { 
             display: none; 
