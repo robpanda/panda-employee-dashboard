@@ -1132,20 +1132,25 @@
             };
 
             try {
+                console.log('Updating employee:', empId, 'with data:', updates);
                 const response = await fetch(`${API_URL}/employees/${empId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
                 });
 
+                const responseText = await response.text();
+                console.log('Update response:', response.status, responseText);
+
                 if (response.ok) {
                     alert('Employee updated successfully!');
                     bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal')).hide();
-                    loadEmployees();
+                    await loadEmployees();
                 } else {
-                    throw new Error('Failed to update employee');
+                    throw new Error(`Server error: ${responseText}`);
                 }
             } catch (error) {
+                console.error('Update error:', error);
                 alert('Error updating employee: ' + error.message);
             }
         }
