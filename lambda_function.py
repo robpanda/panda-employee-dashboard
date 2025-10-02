@@ -106,11 +106,24 @@ def get_employees(event):
     }
 
 def create_employee(event):
-    body = json.loads(event['body'])
+    try:
+        body = json.loads(event['body'])
+        print(f'Received body keys: {list(body.keys())}')
+    except Exception as e:
+        print(f'Error parsing body: {e}')
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': 'Invalid JSON body'})
+        }
     
     # Handle bulk employee data
     if 'employees' in body:
         employees_data = body['employees']
+        print(f'Processing {len(employees_data)} employees')
         
         # Clear existing data and insert new
         try:
@@ -120,8 +133,9 @@ def create_employee(event):
                     key_value = item.get('id', item.get('employee_id', item.get('Employee Id', '')))
                     if key_value:
                         batch.delete_item(Key={'id': key_value})
+            print('Cleared existing data')
         except Exception as e:
-            print(f'Error clearing existing data: {e}')
+            print(f'Error clearing data: {e}')
         
         # Insert new employees
         success_count = 0

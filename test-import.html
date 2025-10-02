@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Import</title>
+</head>
+<body>
+    <h1>Test CSV Import</h1>
+    <button onclick="testImport()">Test Import Function</button>
+    <div id="result"></div>
+
+    <script>
+        const API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws';
+        
+        async function testImport() {
+            const testData = {
+                employees: [
+                    {
+                        'Employee Id': 'TEST001',
+                        'First Name': 'Test',
+                        'Last Name': 'Employee',
+                        'Email': 'test@test.com',
+                        'Department': 'Test Dept',
+                        'Position': 'Test Position',
+                        'Employment Date': '2024-01-01',
+                        'Terminated': 'No',
+                        'office': 'Test Office',
+                        'supervisor': 'Test Manager',
+                        'is_supervisor': 'No'
+                    }
+                ]
+            };
+
+            try {
+                console.log('Sending test data:', testData);
+                const response = await fetch(`${API_URL}/employees`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+
+                const responseText = await response.text();
+                console.log('Response status:', response.status);
+                console.log('Response text:', responseText);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>Response:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Response: ${responseText}</p>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
