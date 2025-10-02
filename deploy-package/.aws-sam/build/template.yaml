@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Panda CRM System
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+    - dev
+    - prod
+  RileyApiKey:
+    Type: String
+    Description: Riley Platform API Key
+    NoEcho: true
+    Default: riley_api_key_placeholder
+Resources:
+  RileyApiSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name:
+        Fn::Sub: panda-riley-api-${Environment}
+      Description: Riley Platform API Key for Panda CRM
+      SecretString:
+        Fn::Sub: "{\n  \"api_key\": \"${RileyApiKey}\",\n  \"platform\": \"riley\"\
+          ,\n  \"environment\": \"${Environment}\"\n}\n"
+  ContactsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: panda-contacts-${Environment}
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  CollectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: panda-collections-${Environment}
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  ConfigTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: panda-config-${Environment}
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  EmployeesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: panda-employees-${Environment}
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  PandaCRMFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: panda-crm-${Environment}
+      CodeUri: PandaCRMFunction
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      Environment:
+        Variables:
+          EMPLOYEES_TABLE:
+            Ref: EmployeesTable
+          CONTACTS_TABLE:
+            Ref: ContactsTable
+          COLLECTIONS_TABLE:
+            Ref: CollectionsTable
+          CONFIG_TABLE:
+            Ref: ConfigTable
+          RILEY_SECRET_ARN:
+            Ref: RileyApiSecret
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: ContactsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: CollectionsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: ConfigTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: EmployeesTable
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          Resource:
+            Ref: RileyApiSecret
+      Events:
+        ApiGateway:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId:
+              Ref: PandaAPI
+    Metadata:
+      SamResourceId: PandaCRMFunction
+  PandaAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name:
+        Fn::Sub: panda-crm-api-${Environment}
+      StageName:
+        Ref: Environment
+      Cors:
+        AllowMethods: '''GET,POST,PUT,DELETE,OPTIONS'''
+        AllowHeaders: '''Content-Type,Authorization,Accept'''
+        AllowOrigin: '''*'''
+Outputs:
+  ApiUrl:
+    Description: API Gateway URL
+    Value:
+      Fn::Sub: https://${PandaAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-ApiUrl
+  ContactsTable:
+    Description: Contacts DynamoDB Table
+    Value:
+      Ref: ContactsTable
+  CollectionsTable:
+    Description: Collections DynamoDB Table
+    Value:
+      Ref: CollectionsTable
+  RileySecretId:
+    Description: Riley API Secret ID
+    Value:
+      Ref: RileyApiSecret
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-RileySecretId
+  RileySecretArn:
+    Description: Riley API Secret ARN
+    Value:
+      Ref: RileyApiSecret
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-RileySecretArn

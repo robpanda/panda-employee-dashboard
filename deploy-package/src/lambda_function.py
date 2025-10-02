@@ -6,28 +6,16 @@ from decimal import Decimal
 import uuid
 
 dynamodb = boto3.resource('dynamodb')
-secretsmanager = boto3.client('secretsmanager')
 employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'panda-employees'))
 contacts_table = dynamodb.Table(os.environ.get('CONTACTS_TABLE', 'panda-contacts'))
 collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-collections'))
 config_table = dynamodb.Table(os.environ.get('CONFIG_TABLE', 'panda-config'))
 
-def get_riley_api_key():
-    try:
-        secret_arn = os.environ.get('RILEY_SECRET_ARN')
-        if not secret_arn:
-            return None
-        
-        response = secretsmanager.get_secret_value(SecretId=secret_arn)
-        secret = json.loads(response['SecretString'])
-        return secret.get('api_key')
-    except Exception as e:
-        print(f'Error getting Riley API key: {e}')
-        return None
-
 def lambda_handler(event, context):
     http_method = event['httpMethod']
     path = event['path']
+    
+    print(f'LAMBDA DEBUG: Method={http_method}, Path={path}')
     
     try:
         if http_method == 'OPTIONS':
@@ -41,13 +29,19 @@ def lambda_handler(event, context):
                 },
                 'body': ''
             }
-        elif http_method == 'GET' and path == '/employees':
-            return get_employees(event)
-        elif http_method == 'POST' and path == '/employees':
-            return create_employee(event)
-        elif http_method == 'PUT' and '/employees/' in path:
+        elif path == '/employees':
+            print(f'LAMBDA DEBUG: Matched /employees route')
+            if http_method == 'GET':
+                print(f'LAMBDA DEBUG: Calling get_employees')
+                return get_employees(event)
+            elif http_method == 'POST':
+                print(f'LAMBDA DEBUG: Calling create_employee')
+                return create_employee(event)
+        elif path.startswith('/employees/') and http_method == 'PUT':
+            print(f'LAMBDA DEBUG: Matched PUT /employees/ route')
             return update_employee(event)
-        elif http_method == 'DELETE' and '/employees/' in path:
+        elif path.startswith('/employees/') and http_method == 'DELETE':
+            print(f'LAMBDA DEBUG: Matched DELETE /employees/ route')
             return delete_employee(event)
         elif path == '/contacts':
             return handle_contacts(event)
@@ -55,10 +49,16 @@ def lambda_handler(event, context):
             return handle_collections(event)
         elif path == '/config':
             return handle_config(event)
-        elif path == '/riley/auth':
-            return handle_riley_auth(event)
-        elif path == '/riley/chat':
-            return handle_riley_chat(event)
+        elif path == '/admin-users':
+            return handle_admin_users(event)
+        elif path == '/create-admin':
+            return create_super_admin(event)
+        elif path == '/test':
+            return {
+                'statusCode': 200,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'message': f'Test successful - Method: {http_method}, Path: {path}'})
+            }
         else:
             return {
                 'statusCode': 404,
@@ -120,41 +120,83 @@ def get_employees(event):
     }
 
 def create_employee(event):
-    body = json.loads(event['body'])
+    try:
+        body = json.loads(event['body'])
+        print(f'Received body keys: {list(body.keys())}')
+    except Exception as e:
+        print(f'Error parsing body: {e}')
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': 'Invalid JSON body'})
+        }
     
     # Handle bulk employee data
     if 'employees' in body:
         employees_data = body['employees']
+        print(f'Processing {len(employees_data)} employees for bulk import')
         
-        # Clear existing data and insert new
-        response = employees_table.scan()
-        with employees_table.batch_writer() as batch:
-            for item in response['Items']:
-                batch.delete_item(Key={'id': item.get('id', item.get('employee_id', ''))})
+        # Clear existing data
+        try:
+            response = employees_table.scan()
+            print(f'Found {len(response["Items"])} existing employees to clear')
+            with employees_table.batch_writer() as batch:
+                for item in response['Items']:
+                    key_value = item.get('id', item.get('employee_id', item.get('Employee Id', '')))
+                    if key_value:
+                        batch.delete_item(Key={'id': key_value})
+            print('Successfully cleared existing data')
+        except Exception as e:
+            print(f'Error clearing data: {e}')
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': f'Failed to clear data: {str(e)}'})
+            }
         
         # Insert new employees
+        success_count = 0
         with employees_table.batch_writer() as batch:
             for emp_data in employees_data:
-                # Handle both frontend format and API format
-                employee = {
-                    'id': emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))),
-                    'employee_id': emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))),
-                    'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
-                    'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
-                    'Department': emp_data.get('Department', emp_data.get('department', '')),
-                    'Position': emp_data.get('Position', emp_data.get('position', '')),
-                    'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
-                    'Years of Service': emp_data.get('Years of Service', emp_data.get('years_of_service', '')),
-                    'Email': emp_data.get('Email', emp_data.get('email', '')),
-                    'Phone': emp_data.get('Phone', emp_data.get('phone', '')),
-                    'Merch Requested': emp_data.get('Merch Requested', emp_data.get('merch_requested', '')),
-                    'Merch Sent': emp_data.get('Merch Sent', emp_data.get('merch_sent', 'No')),
-                    'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
-                    'Terminated': emp_data.get('Terminated', emp_data.get('terminated', 'No')),
-                    'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
-                    'updated_at': datetime.now().isoformat()
-                }
-                batch.put_item(Item=employee)
+                try:
+                    # Handle both frontend format and API format
+                    emp_id = emp_data.get('Employee Id', emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))))
+                    if not emp_id:
+                        emp_id = str(uuid.uuid4())
+                    
+                    employee = {
+                        'id': str(emp_id),
+                        'employee_id': str(emp_id),
+                        'Employee Id': str(emp_id),
+                        'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
+                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
+                        'Department': emp_data.get('Department', emp_data.get('department', '')),
+                        'Position': emp_data.get('Position', emp_data.get('position', '')),
+                        'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
+                        'Years of Service': emp_data.get('Years of Service', emp_data.get('years_of_service', '')),
+                        'Email': emp_data.get('Email', emp_data.get('email', '')),
+                        'Phone': emp_data.get('Phone', emp_data.get('phone', '')),
+                        'office': emp_data.get('office', ''),
+                        'supervisor': emp_data.get('supervisor', ''),
+                        'is_supervisor': emp_data.get('is_supervisor', 'No'),
+                        'Merch Requested': emp_data.get('Merch Requested', emp_data.get('merch_requested', '')),
+                        'Merch Sent': emp_data.get('Merch Sent', emp_data.get('merch_sent', 'No')),
+                        'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
+                        'Terminated': emp_data.get('Terminated', emp_data.get('terminated', 'No')),
+                        'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
+                        'updated_at': datetime.now().isoformat()
+                    }
+                    batch.put_item(Item=employee)
+                    success_count += 1
+                except Exception as e:
+                    print(f'Error inserting employee {emp_data}: {e}')
+                    continue
         
         return {
             'statusCode': 200,
@@ -164,21 +206,32 @@ def create_employee(event):
                 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
-            'body': json.dumps({'message': f'{len(employees_data)} employees saved successfully'})
+            'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
         }
     
-    # Handle single employee
-    employee_id = str(uuid.uuid4())
+    # Handle single employee from admin form
+    employee_id = body.get('employee_id', str(uuid.uuid4()))
     current_date = datetime.now().isoformat()
     
     employee = {
-        'id': employee_id,
-        'employee_id': employee_id,
-        'last_name': body['last_name'],
-        'first_name': body['first_name'],
-        'email': body['email'],
-        'employment_date': body.get('employment_date', current_date),
-        'terminated': body.get('terminated', 'No'),
+        'id': str(employee_id),
+        'employee_id': str(employee_id),
+        'Employee Id': str(employee_id),
+        'First Name': body.get('first_name', ''),
+        'Last Name': body.get('last_name', ''),
+        'Email': body.get('email', ''),
+        'Phone': body.get('phone', ''),
+        'Department': body.get('department', ''),
+        'Position': body.get('position', ''),
+        'Employment Date': body.get('employment_date', current_date.split('T')[0]),
+        'Terminated': body.get('terminated', 'No'),
+        'office': body.get('office', ''),
+        'supervisor': body.get('manager', ''),
+        'is_supervisor': 'No',
+        'Merch Requested': '',
+        'Merch Sent': 'No',
+        'Merch Sent Date': '',
+        'Termination Date': '',
         'updated_at': current_date
     }
     
@@ -196,51 +249,69 @@ def create_employee(event):
     }
 
 def update_employee(event):
-    # Extract employee ID from path
-    path_parts = event['path'].split('/')
-    employee_id = path_parts[-1]  # Get last part of path
-    body = json.loads(event['body'])
-    
-    # Get existing employee
-    response = employees_table.get_item(Key={'employee_id': employee_id})
-    if 'Item' not in response:
+    try:
+        path_parts = event['path'].split('/')
+        employee_id = path_parts[-1]
+        body = json.loads(event['body'])
+        
+        print(f'UPDATE: Updating employee {employee_id} with data: {body}')
+        
+        # Find employee by scanning for matching ID
+        try:
+            response = employees_table.scan(
+                FilterExpression='id = :emp_id OR employee_id = :emp_id OR #eid = :emp_id',
+                ExpressionAttributeNames={'#eid': 'Employee Id'},
+                ExpressionAttributeValues={':emp_id': employee_id}
+            )
+            
+            if not response['Items']:
+                print(f'UPDATE: Employee {employee_id} not found')
+                return {
+                    'statusCode': 404,
+                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Employee not found'})
+                }
+            
+            employee = response['Items'][0]
+            print(f'UPDATE: Found employee {employee.get("First Name")} {employee.get("Last Name")}')
+            
+        except Exception as e:
+            print(f'UPDATE ERROR: Failed to find employee: {e}')
+            return {
+                'statusCode': 500,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': f'Database error: {str(e)}'})
+            }
+        
+        # Update fields
+        for key, value in body.items():
+            if key not in ['id']:
+                employee[key] = value
+        
+        employee['updated_at'] = datetime.now().isoformat()
+        
+        # Save updated employee
+        employees_table.put_item(Item=employee)
+        print(f'UPDATE: Successfully updated employee {employee_id}')
+        
         return {
-            'statusCode': 404,
-            'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps({'error': 'Employee not found'})
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'message': 'Employee updated successfully'})
         }
-    
-    employee = response['Item']
-    
-    # Update fields
-    for key, value in body.items():
-        if key != 'employee_id':  # Don't allow updating the primary key
-            employee[key] = value
-    
-    # Recalculate days employed and years worked if employment_date changed
-    if 'employment_date' in body or 'registration_date' in body:
-        employment_date = body.get('employment_date', body.get('registration_date', employee.get('employment_date')))
-        employment_datetime = datetime.fromisoformat(employment_date)
-        days_employed = (datetime.now() - employment_datetime).days
-        years_worked = round(days_employed / 365.25, 1)
-        employee['employment_date'] = employment_date
-        employee['days_employed'] = days_employed
-        employee['years_worked'] = years_worked
-    
-    employee['updated_at'] = datetime.now().isoformat()
-    
-    employees_table.put_item(Item=employee)
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-        },
-        'body': json.dumps({'message': 'Employee updated successfully'})
-    }
+        
+    except Exception as e:
+        print(f'UPDATE ERROR: {e}')
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)})
+        }
 
 def delete_employee(event):
     employee_id = event['pathParameters']['employee_id']
@@ -518,23 +589,25 @@ def handle_config(event):
             'body': json.dumps({'message': 'Config saved'})
         }
 
-def handle_riley_auth(event):
+def handle_admin_users(event):
     method = event['httpMethod']
     
     if method == 'GET':
-        api_key = get_riley_api_key()
-        
-        if not api_key:
-            return {
-                'statusCode': 404,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                },
-                'body': json.dumps({'error': 'Riley API key not configured'})
+        # Return mock admin users for now
+        admin_users = [
+            {
+                'email': 'admin@pandaexteriors.com',
+                'role': 'super_admin',
+                'active': True,
+                'created_at': '2024-01-01T00:00:00Z'
+            },
+            {
+                'email': 'manager@pandaexteriors.com', 
+                'role': 'admin',
+                'active': True,
+                'created_at': '2024-01-15T00:00:00Z'
             }
+        ]
         
         return {
             'statusCode': 200,
@@ -544,52 +617,46 @@ def handle_riley_auth(event):
                 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
-            'body': json.dumps({
-                'api_key': api_key,
-                'platform': 'riley',
-                'status': 'active'
-            })
+            'body': json.dumps({'users': admin_users})
+        }
+    
+    elif method == 'POST':
+        body = json.loads(event['body'])
+        email = body.get('email')
+        password = body.get('password')
+        role = body.get('role', 'admin')
+        
+        if not email or not password:
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'success': False, 'message': 'Email and password required'})
+            }
+        
+        # Mock admin user creation
+        return {
+            'statusCode': 201,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
         }
 
-def handle_riley_chat(event):
-    method = event['httpMethod']
-    
-    if method == 'POST':
-        body = json.loads(event['body'])
-        api_key = get_riley_api_key()
-        
-        if not api_key:
-            return {
-                'statusCode': 401,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                },
-                'body': json.dumps({'error': 'Riley API key not available'})
-            }
-        
-        # Create chat session with Riley
-        chat_session = {
-            'session_id': str(uuid.uuid4()),
-            'user_id': body.get('user_id', 'anonymous'),
-            'context': body.get('context', {}),
-            'api_key': api_key,
-            'created_at': datetime.now().isoformat()
-        }
-        
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
-            'body': json.dumps({
-                'session_id': chat_session['session_id'],
-                'chat_url': f'https://riley-chat.your-domain.com/session/{chat_session["session_id"]}',
-                'api_key': api_key
-            })
-        }
+def create_super_admin(event):
+    # Mock super admin creation
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+        },
+        'body': json.dumps({'message': 'Super admin already exists'})
+    }
