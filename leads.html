@@ -8,135 +8,186 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
             min-height: 100vh;
-            padding: 20px;
+            color: #374151;
+            font-weight: 400;
         }
         .main-container {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             overflow: hidden;
             max-width: 1400px;
-            margin: 0 auto;
-            border: 1px solid rgba(0,0,0,0.05);
+            margin: 20px auto;
+            border: 1px solid #f3f4f6;
         }
         .utility-nav {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            padding: 20px 30px;
+            background: white;
+            padding: 16px 24px;
             display: flex;
             align-items: center;
-            gap: 30px;
-            border-bottom: 1px solid #e2e8f0;
+            gap: 24px;
+            border-bottom: 1px solid #f3f4f6;
         }
         .nav-links {
             display: flex;
-            gap: 8px;
+            gap: 4px;
             flex: 1;
         }
         .nav-link {
-            color: #64748b;
+            color: #6b7280;
             text-decoration: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            font-weight: 400;
             font-size: 14px;
         }
         .nav-link:hover {
-            background: #f1f5f9;
-            color: #334155;
+            background: #f9fafb;
+            color: #374151;
             text-decoration: none;
-            transform: translateY(-1px);
         }
         .nav-link.active {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: #3b82f6;
             color: white;
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            font-weight: 500;
         }
         .logout-btn {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
+            background: #f3f4f6;
+            color: #6b7280;
             border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            font-weight: 400;
+            transition: all 0.15s ease;
         }
         .logout-btn:hover { 
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+            background: #ef4444;
+            color: white;
         }
         .header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: white;
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
+            color: #374151;
+            padding: 32px 40px;
+            border-bottom: 1px solid #f3f4f6;
         }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="%23ffffff" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
-            pointer-events: none;
-        }
-        .logo img { height: 50px; }
+        .logo img { height: 40px; }
         .header h1 { 
-            margin: 20px 0 10px 0; 
-            font-size: 2.5em; 
-            font-weight: 700;
-            position: relative;
+            margin: 16px 0 8px 0; 
+            font-size: 28px; 
+            font-weight: 600;
+            color: #111827;
         }
         .header p { 
-            opacity: 0.8; 
+            color: #6b7280;
             margin-bottom: 0;
-            font-size: 1.1em;
-            position: relative;
+            font-size: 16px;
+            font-weight: 400;
         }
         .content-area {
-            padding: 40px;
-            background: #fafbfc;
+            padding: 32px 40px;
+            background: white;
         }
         .cursor-pointer {
             cursor: pointer;
         }
         .btn-xs {
-            padding: 0.125rem 0.25rem;
-            font-size: 0.75rem;
+            padding: 4px 8px;
+            font-size: 12px;
         }
         .card {
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-radius: 16px;
-            transition: all 0.2s ease;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border-radius: 12px;
+            transition: all 0.15s ease;
+            background: white;
         }
         .card:hover {
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #e5e7eb;
+        }
+        .card-header {
+            background: #fafbfc;
+            border-bottom: 1px solid #f3f4f6;
+            padding: 16px 20px;
+            font-weight: 500;
+            color: #374151;
+        }
+        .card-body {
+            padding: 20px;
         }
         .nav-pills .nav-link {
-            border-radius: 12px;
-            font-weight: 500;
+            border-radius: 8px;
+            font-weight: 400;
+            color: #6b7280;
+            padding: 12px 20px;
         }
         .nav-pills .nav-link.active {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            background: #3b82f6;
+            color: white;
+            font-weight: 500;
+        }
+        .nav-pills .nav-link:hover {
+            background: #f9fafb;
+            color: #374151;
+        }
+        .btn {
+            font-weight: 400;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        .btn-success {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        .btn-success:hover {
+            background: #059669;
+            border-color: #059669;
+        }
+        .form-control, .form-select {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .table {
+            font-size: 14px;
+        }
+        .table th {
+            background: #fafbfc;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 500;
+            color: #374151;
+            padding: 12px;
+        }
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .badge {
+            font-weight: 400;
+            font-size: 12px;
         }
     </style>
 </head>
