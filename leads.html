@@ -147,12 +147,12 @@
                 <img src="panda-logo.png" alt="Panda Exteriors">
             </div>
             <div class="nav-links">
-                <a href="/employee" class="nav-link">👥 Employees</a>
-                <a href="/points" class="nav-link">⭐ Points</a>
-                <a href="/leads" class="nav-link active">📊 Leads</a>
-                <a href="/referrals" class="nav-link">🤝 Referrals</a>
-                <a href="/assets" class="nav-link">📦 Assets</a>
-                <a href="/admin" class="nav-link">⚙️ Admin</a>
+                <a href="#" onclick="navigate('/employee')" class="nav-link">👥 Employees</a>
+                <a href="#" onclick="navigate('/points')" class="nav-link">⭐ Points</a>
+                <a href="#" onclick="navigate('/leads')" class="nav-link active">📊 Leads</a>
+                <a href="#" onclick="navigate('/referrals')" class="nav-link">🤝 Referrals</a>
+                <a href="#" onclick="navigate('/assets')" class="nav-link">📦 Assets</a>
+                <a href="#" onclick="navigate('/admin')" class="nav-link">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
@@ -927,6 +927,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
+        function navigate(path) {
+            window.location.href = `https://www.pandaadmin.com${path}`;
+        }
+        
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
             sessionStorage.removeItem('adminUser');
