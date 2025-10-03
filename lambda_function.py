@@ -62,6 +62,8 @@ def lambda_handler(event, context):
             return handle_points_history(event)
         elif path == '/referrals' or path.startswith('/referrals/'):
             return handle_referrals(event)
+        elif path == '/employee-login':
+            return handle_employee_login(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -939,6 +941,107 @@ def handle_referrals(event):
         'headers': {'Content-Type': 'application/json'},
         'body': json.dumps({'error': 'Referrals endpoint not found'})
     }
+
+def handle_employee_login(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'POST')
+    
+    if method != 'POST':
+        return {
+            'statusCode': 405,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': 'Method not allowed'})
+        }
+    
+    try:
+        body = json.loads(event.get('body', '{}'))
+        email = body.get('email', '').strip().lower()
+        password = body.get('password', '')
+        
+        if not email or not password:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'error': 'Email and password required'})
+            }
+        
+        # Find employee by email
+        try:
+            response = employees_table.scan(
+                FilterExpression='#email = :email',
+                ExpressionAttributeNames={'#email': 'Email'},
+                ExpressionAttributeValues={':email': email}
+            )
+            
+            if not response['Items']:
+                return {
+                    'statusCode': 401,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Invalid email or password'})
+                }
+            
+            employee = response['Items'][0]
+            
+            # Check if employee is terminated
+            if employee.get('Terminated', 'No') == 'Yes':
+                return {
+                    'statusCode': 401,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Account is inactive'})
+                }
+            
+            # Check password - default is "Panda2025!" or custom password if set
+            stored_password = employee.get('password', 'Panda2025!')
+            
+            if password != stored_password:
+                return {
+                    'statusCode': 401,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Invalid email or password'})
+                }
+            
+            # Successful login - return employee data
+            employee_data = {
+                'id': employee.get('id', employee.get('employee_id', '')),
+                'employee_id': employee.get('id', employee.get('employee_id', '')),
+                'name': f"{employee.get('First Name', '')} {employee.get('Last Name', '')}".strip(),
+                'first_name': employee.get('First Name', ''),
+                'last_name': employee.get('Last Name', ''),
+                'email': employee.get('Email', ''),
+                'department': employee.get('Department', ''),
+                'position': employee.get('Position', ''),
+                'points': employee.get('points', employee.get('Panda Points', 0)),
+                'supervisor': employee.get('supervisor', ''),
+                'office': employee.get('office', '')
+            }
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({
+                    'success': True,
+                    'employee': employee_data,
+                    'message': 'Login successful'
+                })
+            }
+            
+        except Exception as e:
+            print(f'Database error during login: {e}')
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'error': 'Database error'})
+            }
+            
+    except Exception as e:
+        print(f'Login error: {e}')
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': 'Server error'})
+        }
 
 def create_super_admin(event):
     return {
