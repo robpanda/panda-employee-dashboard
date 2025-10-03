@@ -70,6 +70,12 @@ def lambda_handler(event, context):
             return handle_config(event)
         elif path == '/admin-users':
             return handle_admin_users(event)
+        elif path == '/' and 'action' in json.loads(event.get('body', '{}')):
+            # Handle action-based requests to root path
+            body = json.loads(event.get('body', '{}'))
+            action = body.get('action')
+            if action == 'get_admin_users':
+                return handle_admin_users(event)
         elif path == '/create-admin':
             return create_super_admin(event)
         elif path == '/points' or path.startswith('/points/'):
@@ -622,6 +628,14 @@ def handle_admin_users(event):
         method = event['requestContext']['http']['method']
     else:
         method = event.get('httpMethod', 'GET')
+    
+    # Handle action-based requests
+    try:
+        body = json.loads(event.get('body', '{}'))
+        if body.get('action') == 'get_admin_users':
+            method = 'GET'
+    except:
+        pass
     
     if method == 'GET':
         try:
