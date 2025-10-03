@@ -1,0 +1,8 @@
+{
+    "Variables": {
+        "EMPLOYEES_TABLE": "panda-employees",
+        "CONTACTS_TABLE": "panda-contacts",
+        "COLLECTIONS_TABLE": "panda-collections",
+        "CONFIG_TABLE": "panda-config"
+    }
+}
