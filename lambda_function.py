@@ -6,6 +6,7 @@ from decimal import Decimal
 import uuid
 
 dynamodb = boto3.resource('dynamodb')
+ses = boto3.client('ses', region_name='us-east-2')
 employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'panda-employees'))
 contacts_table = dynamodb.Table(os.environ.get('CONTACTS_TABLE', 'panda-contacts'))
 collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-collections'))
@@ -899,6 +900,12 @@ def handle_referrals(event):
             
             referrals_table.put_item(Item=referral_item)
             
+            # Send email notification
+            try:
+                send_referral_notification(referral_item)
+            except Exception as e:
+                print(f'Email notification failed: {e}')
+            
             return {
                 'statusCode': 201,
                 'headers': {'Content-Type': 'application/json'},
@@ -1077,6 +1084,57 @@ def handle_employee_login(event):
             },
             'body': json.dumps({'error': 'Server error'})
         }
+
+def send_referral_notification(referral_data):
+    try:
+        subject = f"New Employee Referral: {referral_data['name']}"
+        
+        body_html = f"""
+        <html>
+        <body>
+            <h2>New Employee Referral Submitted</h2>
+            <p><strong>Referral Details:</strong></p>
+            <ul>
+                <li><strong>Name:</strong> {referral_data['name']}</li>
+                <li><strong>Email:</strong> {referral_data['email']}</li>
+                <li><strong>Phone:</strong> {referral_data['phone']}</li>
+                <li><strong>Preferred Department(s):</strong> {referral_data['department']}</li>
+                <li><strong>Referred By:</strong> {referral_data['referred_by_name']} (ID: {referral_data['referred_by_id']})</li>
+                <li><strong>Date Submitted:</strong> {referral_data['created_at']}</li>
+            </ul>
+            {f'<p><strong>Notes:</strong> {referral_data["notes"]}</p>' if referral_data.get('notes') else ''}
+        </body>
+        </html>
+        """
+        
+        body_text = f"""
+        New Employee Referral Submitted
+        
+        Referral Details:
+        Name: {referral_data['name']}
+        Email: {referral_data['email']}
+        Phone: {referral_data['phone']}
+        Preferred Department(s): {referral_data['department']}
+        Referred By: {referral_data['referred_by_name']} (ID: {referral_data['referred_by_id']})
+        Date Submitted: {referral_data['created_at']}
+        {f'Notes: {referral_data["notes"]}' if referral_data.get('notes') else ''}
+        """
+        
+        ses.send_email(
+            Source='noreply@pandaexteriors.com',
+            Destination={'ToAddresses': ['robwinters@pandaexteriors.com']},
+            Message={
+                'Subject': {'Data': subject},
+                'Body': {
+                    'Html': {'Data': body_html},
+                    'Text': {'Data': body_text}
+                }
+            }
+        )
+        print(f'Email notification sent for referral: {referral_data["name"]}')
+    except Exception as e:
+        print(f'Failed to send email notification: {e}')
+        raise e
 
 def create_super_admin(event):
     return {
