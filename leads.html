@@ -1959,6 +1959,45 @@
                 const response = await fetch(`${RILEY_API}/riley/auth`, {
                     method: 'GET',
                     headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': RILEY_API_KEY
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.dashboard_url) {
+                    window.open(data.dashboard_url, '_blank');
+                } else {
+                    window.open('https://riley-dashboard.pandaexteriors.com', '_blank');
+                }
+            } catch (error) {
+                console.error('Riley dashboard error:', error);
+                window.open('https://riley-dashboard.pandaexteriors.com', '_blank');
+            }
+        }
+    </script>
+    <script src="auth-check.js"></script>
+    <script>
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!sessionStorage.getItem('pandaAdmin')) {
+                window.location.href = '/login.html';
+                return;
+            }
+        });
+        
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = '/login.html';
+        }
+        
+        function navigate(page) {
+            window.location.href = page;
+        }
+    </script>
+</body>
+</html>ers: {
                         'x-api-key': RILEY_API_KEY
                     }
                 });
