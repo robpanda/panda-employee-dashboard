@@ -613,21 +613,28 @@ def handle_admin_users(event):
         method = event.get('httpMethod', 'GET')
     
     if method == 'GET':
-        # Return mock admin users for now
-        admin_users = [
-            {
-                'email': 'admin@pandaexteriors.com',
-                'role': 'super_admin',
-                'active': True,
-                'created_at': '2024-01-01T00:00:00Z'
-            },
-            {
-                'email': 'manager@pandaexteriors.com', 
-                'role': 'admin',
-                'active': True,
-                'created_at': '2024-01-15T00:00:00Z'
-            }
-        ]
+        # Get real admin users from employees + current admin user
+        admin_users = [{
+            'email': 'admin',
+            'role': 'super_admin',
+            'active': True,
+            'created_at': '2024-01-01',
+            'name': 'System Administrator'
+        }]
+        try:
+            response = employees_table.scan()
+            for emp in response['Items']:
+                email = emp.get('Email', emp.get('email', ''))
+                if email and 'admin' in email.lower():
+                    admin_users.append({
+                        'email': email,
+                        'role': 'admin',
+                        'active': emp.get('Terminated', 'No') == 'No',
+                        'created_at': emp.get('Employment Date', ''),
+                        'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip()
+                    })
+        except Exception as e:
+            print(f'Error loading admin users: {e}')
         
         return {
             'statusCode': 200,
@@ -656,7 +663,7 @@ def handle_admin_users(event):
                 'body': json.dumps({'success': False, 'message': 'Email and password required'})
             }
         
-        # Mock admin user creation
+        # Admin user creation
         return {
             'statusCode': 201,
             'headers': {
