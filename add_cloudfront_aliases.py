@@ -9,10 +9,17 @@ def add_cloudfront_aliases():
     config = response['DistributionConfig']
     etag = response['ETag']
     
-    # Add domain aliases
+    # Add domain aliases and SSL certificate
     config['Aliases'] = {
         'Quantity': 2,
         'Items': ['mypandapoints.com', 'www.mypandapoints.com']
+    }
+    
+    # Add SSL certificate
+    config['ViewerCertificate'] = {
+        'ACMCertificateArn': 'arn:aws:acm:us-east-1:679128292059:certificate/d65782ab-1abe-4725-8031-3e78cf69f576',
+        'SSLSupportMethod': 'sni-only',
+        'MinimumProtocolVersion': 'TLSv1.2_2021'
     }
     
     # Update distribution
