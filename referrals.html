@@ -8,7 +8,72 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #fafbfc; }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
+            min-height: 100vh;
+            color: #374151;
+            font-weight: 400;
+        }
+        .main-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 20px auto;
+            border: 1px solid #f3f4f6;
+        }
+        .utility-nav {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            font-weight: 400;
+            font-size: 14px;
+        }
+        .nav-link:hover {
+            background: #f9fafb;
+            color: #374151;
+            text-decoration: none;
+        }
+        .nav-link.active {
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .logout-btn {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.15s ease;
+        }
+        .logout-btn:hover { 
+            background: #ef4444;
+            color: white;
+        }
         .card { border: 1px solid #f3f4f6; border-radius: 12px; }
         .kanban-column { background: #f8f9fa; border-radius: 8px; min-height: 500px; }
         .kanban-card { cursor: pointer; transition: all 0.2s; }
@@ -23,7 +88,23 @@
     </style>
 </head>
 <body>
-    <div class="container-fluid mt-4">
+    <div class="main-container">
+        <div class="utility-nav">
+            <div class="logo">
+                <img src="panda-logo.png" alt="Panda Exteriors">
+            </div>
+            <div class="nav-links">
+                <a href="/admin.html" class="nav-link">👥 Employees</a>
+                <a href="/points.html" class="nav-link">⭐ Points</a>
+                <a href="/leads" class="nav-link">📊 Leads</a>
+                <a href="/referrals" class="nav-link active">🤝 Referrals</a>
+                <a href="/assets" class="nav-link">📦 Assets</a>
+                <a href="/admin.html" class="nav-link">⚙️ Admin</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="container-fluid mt-4">
         <!-- Header -->
         <div class="row mb-4">
             <div class="col-12">
@@ -195,8 +276,16 @@
         </div>
     </div>
 
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = '/login.html';
+        }
+        
         const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
         let referrals = [];
         let currentReferral = null;
