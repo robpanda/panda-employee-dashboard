@@ -967,22 +967,23 @@ def handle_employee_login(event):
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
-        # Find employee by email
+        # Find employee by email (case insensitive)
         try:
-            response = employees_table.scan(
-                FilterExpression='#email = :email',
-                ExpressionAttributeNames={'#email': 'Email'},
-                ExpressionAttributeValues={':email': email}
-            )
+            response = employees_table.scan()
+            employee = None
             
-            if not response['Items']:
+            for item in response['Items']:
+                item_email = item.get('Email', '').strip().lower()
+                if item_email == email:
+                    employee = item
+                    break
+            
+            if not employee:
                 return {
                     'statusCode': 401,
                     'headers': {'Content-Type': 'application/json'},
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
-            
-            employee = response['Items'][0]
             
             # Check if employee is terminated
             if employee.get('Terminated', 'No') == 'Yes':
