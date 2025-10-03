@@ -666,18 +666,25 @@
                                 </div>
                             </div>
                             <div class="row mt-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label">Panda Points Balance</label>
                                     <input type="number" class="form-control" id="editPoints" min="0">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <label class="form-label">Is Supervisor</label>
+                                    <select class="form-select" id="editIsSupervisor">
+                                        <option value="No">No</option>
+                                        <option value="Yes">Yes</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
                                     <label class="form-label">Points Manager</label>
                                     <select class="form-select" id="editPointsManager">
                                         <option value="No">No</option>
                                         <option value="Yes">Yes</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label">Quarterly Points Budget</label>
                                     <input type="number" class="form-control" id="editPointsBudget" value="500" min="0">
                                 </div>
@@ -1530,6 +1537,7 @@
             
             // Set points balance and manager status
             document.getElementById('editPoints').value = employee.points || employee['Panda Points'] || 0;
+            document.getElementById('editIsSupervisor').value = employee.is_supervisor || 'No';
             document.getElementById('editPointsManager').value = employee.points_manager || 'No';
             document.getElementById('editPointsBudget').value = employee.points_budget || 500;
 
@@ -1547,6 +1555,7 @@
                 'Terminated': document.getElementById('editStatus').value === 'terminated' ? 'Yes' : 'No',
                 'points': parseInt(document.getElementById('editPoints').value) || 0,
                 'Panda Points': parseInt(document.getElementById('editPoints').value) || 0,
+                'is_supervisor': document.getElementById('editIsSupervisor').value,
                 'points_manager': document.getElementById('editPointsManager').value,
                 'points_budget': parseInt(document.getElementById('editPointsBudget').value) || 500
             };
