@@ -14,19 +14,24 @@ points_history_table = dynamodb.Table(os.environ.get('POINTS_HISTORY_TABLE', 'pa
 referrals_table = dynamodb.Table(os.environ.get('REFERRALS_TABLE', 'panda-referrals'))
 
 def lambda_handler(event, context):
+    print(f'LAMBDA DEBUG: Full event: {json.dumps(event, default=str)}')
+    
     # Handle both API Gateway and Function URL event formats
     if 'requestContext' in event and 'http' in event['requestContext']:
         # Function URL format
         http_method = event['requestContext']['http']['method']
         path = event['requestContext']['http']['path']
+        print(f'LAMBDA DEBUG: Using Function URL format')
     elif 'httpMethod' in event:
         # API Gateway format
         http_method = event['httpMethod']
         path = event.get('path', '/')
+        print(f'LAMBDA DEBUG: Using API Gateway format')
     else:
         # Default fallback
         http_method = 'GET'
         path = '/'
+        print(f'LAMBDA DEBUG: Using fallback format')
     
     print(f'LAMBDA DEBUG: Method={http_method}, Path={path}, Event keys: {list(event.keys())}')
     
@@ -67,6 +72,7 @@ def lambda_handler(event, context):
         elif path == '/referrals' or path.startswith('/referrals/'):
             return handle_referrals(event)
         elif path == '/employee-login':
+            print(f'LAMBDA DEBUG: Calling handle_employee_login')
             return handle_employee_login(event)
         elif path == '/test':
             return {
