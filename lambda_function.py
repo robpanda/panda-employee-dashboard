@@ -963,7 +963,10 @@ def handle_employee_login(event):
         if not email or not password:
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
@@ -981,7 +984,10 @@ def handle_employee_login(event):
             if not employee:
                 return {
                     'statusCode': 401,
-                    'headers': {'Content-Type': 'application/json'},
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
@@ -989,7 +995,10 @@ def handle_employee_login(event):
             if employee.get('Terminated', 'No') == 'Yes':
                 return {
                     'statusCode': 401,
-                    'headers': {'Content-Type': 'application/json'},
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
                     'body': json.dumps({'error': 'Account is inactive'})
                 }
             
@@ -999,7 +1008,10 @@ def handle_employee_login(event):
             if password != stored_password:
                 return {
                     'statusCode': 401,
-                    'headers': {'Content-Type': 'application/json'},
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
@@ -1020,7 +1032,11 @@ def handle_employee_login(event):
             
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
                 'body': json.dumps({
                     'success': True,
                     'employee': employee_data,
@@ -1032,7 +1048,10 @@ def handle_employee_login(event):
             print(f'Database error during login: {e}')
             return {
                 'statusCode': 500,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
                 'body': json.dumps({'error': 'Database error'})
             }
             
@@ -1040,7 +1059,10 @@ def handle_employee_login(event):
         print(f'Login error: {e}')
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
             'body': json.dumps({'error': 'Server error'})
         }
 
