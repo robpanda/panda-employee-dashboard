@@ -174,7 +174,7 @@
                 <a href="/leads" class="nav-link">📊 Leads</a>
                 <a href="/referrals" class="nav-link">🤝 Referrals</a>
                 <a href="/assets" class="nav-link">📦 Assets</a>
-                <a href="/admin" class="nav-link active">⚙️ Admin</a>
+                <a href="/admin.html" class="nav-link active">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
@@ -694,15 +694,7 @@
     <script>
         // Suppress webpack dev server console logs
         if (typeof console !== 'undefined') {
-            const originalLog = console.log;
             const originalError = console.error;
-            console.log = function(...args) {
-                if (args[0] && typeof args[0] === 'string' && 
-                    (args[0].includes('[webpack-dev-server]') || args[0].includes('[HMR]'))) {
-                    return;
-                }
-                originalLog.apply(console, args);
-            };
             console.error = function(...args) {
                 if (args[0] && typeof args[0] === 'string' && 
                     (args[0].includes('WebSocket connection') || args[0].includes('webpack-dev-server'))) {
