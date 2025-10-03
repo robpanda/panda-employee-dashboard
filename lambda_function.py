@@ -19,10 +19,14 @@ def lambda_handler(event, context):
         # Function URL format
         http_method = event['requestContext']['http']['method']
         path = event['requestContext']['http']['path']
-    else:
+    elif 'httpMethod' in event:
         # API Gateway format
-        http_method = event.get('httpMethod', 'GET')
+        http_method = event['httpMethod']
         path = event.get('path', '/')
+    else:
+        # Default fallback
+        http_method = 'GET'
+        path = '/'
     
     print(f'LAMBDA DEBUG: Method={http_method}, Path={path}, Event keys: {list(event.keys())}')
     
@@ -945,8 +949,10 @@ def handle_referrals(event):
 def handle_employee_login(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
         method = event['requestContext']['http']['method']
+    elif 'httpMethod' in event:
+        method = event['httpMethod']
     else:
-        method = event.get('httpMethod', 'POST')
+        method = 'POST'
     
     if method != 'POST':
         return {
