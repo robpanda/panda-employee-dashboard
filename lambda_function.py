@@ -10,6 +10,7 @@ employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'panda-employ
 contacts_table = dynamodb.Table(os.environ.get('CONTACTS_TABLE', 'panda-contacts'))
 collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-collections'))
 config_table = dynamodb.Table(os.environ.get('CONFIG_TABLE', 'panda-config'))
+points_history_table = dynamodb.Table(os.environ.get('POINTS_HISTORY_TABLE', 'panda-points-history'))
 
 def lambda_handler(event, context):
     # Handle both API Gateway and Function URL event formats
@@ -56,6 +57,8 @@ def lambda_handler(event, context):
             return create_super_admin(event)
         elif path == '/points' or path.startswith('/points/'):
             return handle_points(event)
+        elif path == '/points-history':
+            return handle_points_history(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -744,6 +747,65 @@ def handle_points(event):
                     'headers': {'Content-Type': 'application/json'},
                     'body': json.dumps({'error': str(e)})
                 }
+
+def handle_points_history(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'GET')
+    
+    if method == 'GET':
+        try:
+            response = points_history_table.scan()
+            items = response['Items']
+            
+            # Convert Decimal to float for JSON serialization
+            for item in items:
+                for key, value in item.items():
+                    if isinstance(value, Decimal):
+                        item[key] = float(value)
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'history': items})
+            }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'error': str(e), 'history': []})
+            }
+    
+    elif method == 'POST':
+        try:
+            body = json.loads(event.get('body', '{}'))
+            
+            history_item = {
+                'id': str(uuid.uuid4()),
+                'employee_id': body.get('employee_id', ''),
+                'employee_name': body.get('employee_name', ''),
+                'points': int(body.get('points', 0)),
+                'reason': body.get('reason', ''),
+                'awarded_by': body.get('awarded_by', ''),
+                'awarded_by_name': body.get('awarded_by_name', ''),
+                'date': body.get('date', datetime.now().isoformat()),
+                'created_at': datetime.now().isoformat()
+            }
+            
+            points_history_table.put_item(Item=history_item)
+            
+            return {
+                'statusCode': 201,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'message': 'Points history recorded successfully'})
+            }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'error': str(e)})
+            }
 
 def create_super_admin(event):
     return {
