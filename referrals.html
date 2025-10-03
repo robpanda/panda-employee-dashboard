@@ -101,6 +101,7 @@
                 <a href="/points.html" class="nav-link">⭐ Points</a>
                 <a href="/leads" class="nav-link">📊 Leads</a>
                 <a href="/referrals" class="nav-link active">🤝 Referrals</a>
+                <a href="#" class="nav-link" onclick="showReports(); return false;">📈 Reports</a>
                 <a href="/assets" class="nav-link">📦 Assets</a>
                 <a href="/admin.html" class="nav-link">⚙️ Admin</a>
             </div>
@@ -172,7 +173,7 @@
         </div>
 
         <!-- Kanban Board -->
-        <div class="row">
+        <div class="row" id="kanbanSection">
             <div class="col-md-12">
                 <div class="row" id="kanbanBoard">
                     <div class="col-md-1-7 mb-3">
@@ -215,6 +216,50 @@
                         <div class="kanban-column p-3">
                             <h6 class="text-center mb-3"><span class="badge badge-hired">Hired</span> (<span id="count-hired">0</span>)</h6>
                             <div id="column-hired" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reportsSection" class="row" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h3><i class="fas fa-chart-bar"></i> Referral Reports</h3>
+                                <p class="text-muted mb-0">Employee referral performance and bonus tracking</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <select class="form-select" id="monthFilter" onchange="filterReports()">
+                                    <option value="">All Time</option>
+                                </select>
+                                <button class="btn btn-success" onclick="exportReports()">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                                <button class="btn btn-secondary" onclick="hideReports()">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th onclick="sortReports('employee')" style="cursor: pointer;">Employee <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('total')" style="cursor: pointer;">Total Referrals <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('screened')" style="cursor: pointer;">Phone Screens <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('hired')" style="cursor: pointer;">Hired <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('bonus')" style="cursor: pointer;">Bonus Earned <i class="fas fa-sort"></i></th>
+                                        <th>Referrals</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -408,6 +453,210 @@
 
         function refreshReferrals() {
             loadReferrals();
+        }
+
+        function showReports() {
+            document.getElementById('kanbanSection').style.display = 'none';
+            document.getElementById('reportsSection').style.display = 'block';
+            loadReports();
+            populateMonthFilter();
+        }
+
+        function hideReports() {
+            document.getElementById('reportsSection').style.display = 'none';
+            document.getElementById('kanbanSection').style.display = 'block';
+        }
+
+        function populateMonthFilter() {
+            const monthFilter = document.getElementById('monthFilter');
+            const months = new Set();
+            
+            referrals.forEach(r => {
+                const date = new Date(r.created_at);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                months.add(monthYear);
+            });
+            
+            const sortedMonths = Array.from(months).sort().reverse();
+            monthFilter.innerHTML = '<option value="">All Time</option>' + 
+                sortedMonths.map(month => {
+                    const [year, monthNum] = month.split('-');
+                    const monthName = new Date(year, monthNum - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    return `<option value="${month}">${monthName}</option>`;
+                }).join('');
+        }
+
+        let reportsData = [];
+        let sortDirection = {};
+
+        function loadReports() {
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                const empId = referral.referred_by_id;
+                const empName = referral.referred_by_name;
+                
+                if (!employeeStats[empId]) {
+                    employeeStats[empId] = {
+                        employee: empName,
+                        total: 0,
+                        screened: 0,
+                        hired: 0,
+                        bonus: 0,
+                        referrals: []
+                    };
+                }
+                
+                employeeStats[empId].total++;
+                employeeStats[empId].referrals.push(referral);
+                
+                if (referral.phone_screen_complete) {
+                    employeeStats[empId].screened++;
+                    employeeStats[empId].bonus += 25; // $25 per phone screen
+                }
+                
+                if (referral.status === 'hired') {
+                    employeeStats[empId].hired++;
+                    employeeStats[empId].bonus += 1975; // Additional $1975 for hire ($2000 total)
+                }
+            });
+            
+            reportsData = Object.values(employeeStats);
+            displayReports(reportsData);
+        }
+
+        function filterReports() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            
+            if (!selectedMonth) {
+                displayReports(reportsData);
+                return;
+            }
+            
+            const filteredData = reportsData.map(emp => {
+                const filteredReferrals = emp.referrals.filter(r => {
+                    const date = new Date(r.created_at);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    return monthYear === selectedMonth;
+                });
+                
+                const screened = filteredReferrals.filter(r => r.phone_screen_complete).length;
+                const hired = filteredReferrals.filter(r => r.status === 'hired').length;
+                
+                return {
+                    employee: emp.employee,
+                    total: filteredReferrals.length,
+                    screened: screened,
+                    hired: hired,
+                    bonus: (screened * 25) + (hired * 1975),
+                    referrals: filteredReferrals
+                };
+            }).filter(emp => emp.total > 0);
+            
+            displayReports(filteredData);
+        }
+
+        function displayReports(data) {
+            const tbody = document.getElementById('reportsTableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No referrals found for selected period</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.map(emp => `
+                <tr>
+                    <td><strong>${emp.employee}</strong></td>
+                    <td><span class="badge bg-primary">${emp.total}</span></td>
+                    <td><span class="badge bg-info">${emp.screened}</span></td>
+                    <td><span class="badge bg-success">${emp.hired}</span></td>
+                    <td><strong class="text-success">$${emp.bonus}</strong></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showReferralDetails('${emp.employee}')">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function sortReports(column) {
+            const currentData = Array.from(document.querySelectorAll('#reportsTableBody tr')).length > 0 ? 
+                getCurrentDisplayData() : reportsData;
+            
+            const direction = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+            sortDirection[column] = direction;
+            
+            currentData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (column === 'employee') {
+                    return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                }
+                
+                return direction === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+            
+            displayReports(currentData);
+        }
+
+        function getCurrentDisplayData() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            return selectedMonth ? reportsData.map(emp => {
+                const filteredReferrals = emp.referrals.filter(r => {
+                    const date = new Date(r.created_at);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    return monthYear === selectedMonth;
+                });
+                
+                const screened = filteredReferrals.filter(r => r.phone_screen_complete).length;
+                const hired = filteredReferrals.filter(r => r.status === 'hired').length;
+                
+                return {
+                    employee: emp.employee,
+                    total: filteredReferrals.length,
+                    screened: screened,
+                    hired: hired,
+                    bonus: (screened * 25) + (hired * 1975),
+                    referrals: filteredReferrals
+                };
+            }).filter(emp => emp.total > 0) : reportsData;
+        }
+
+        function showReferralDetails(employeeName) {
+            const emp = reportsData.find(e => e.employee === employeeName);
+            if (!emp) return;
+            
+            const selectedMonth = document.getElementById('monthFilter').value;
+            const referralsToShow = selectedMonth ? 
+                emp.referrals.filter(r => {
+                    const date = new Date(r.created_at);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    return monthYear === selectedMonth;
+                }) : emp.referrals;
+            
+            const details = referralsToShow.map(r => 
+                `${r.name} (${r.department}) - ${r.status}${r.phone_screen_complete ? ' - Screened' : ''}`
+            ).join('\n');
+            
+            alert(`${employeeName}'s Referrals:\n\n${details}`);
+        }
+
+        function exportReports() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            const data = getCurrentDisplayData();
+            
+            const csv = 'Employee,Total Referrals,Phone Screens,Hired,Bonus Earned\n' + 
+                data.map(emp => `${emp.employee},${emp.total},${emp.screened},${emp.hired},$${emp.bonus}`).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `referral-reports${selectedMonth ? '-' + selectedMonth : ''}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
     </script>
 </body>
