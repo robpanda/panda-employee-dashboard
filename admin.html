@@ -441,8 +441,11 @@
                         </div>
                         <div class="col-md-6">
                             <div class="card">
-                                <div class="card-header">
+                                <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5><i class="fas fa-user-tie"></i> Manager Assignments</h5>
+                                    <button class="btn btn-primary btn-sm" onclick="showAddManager()">
+                                        <i class="fas fa-plus"></i> Add Manager
+                                    </button>
                                 </div>
                                 <div class="card-body">
                                     <div id="managersList"></div>
@@ -1313,6 +1316,89 @@
 
         function bulkAwardPoints() {
             showToast('Bulk award points feature - Coming soon!', 'info');
+        }
+        
+        function showAddManager() {
+            const availableEmployees = employees.filter(e => {
+                const terminated = e['Terminated'] || e.terminated || 'No';
+                return terminated === 'No';
+            }).sort((a, b) => {
+                const nameA = `${a['First Name'] || ''} ${a['Last Name'] || ''}`.trim();
+                const nameB = `${b['First Name'] || ''} ${b['Last Name'] || ''}`.trim();
+                return nameA.localeCompare(nameB);
+            });
+            
+            const employeeOptions = availableEmployees.map(emp => {
+                const name = `${emp['First Name'] || ''} ${emp['Last Name'] || ''}`.trim();
+                const dept = emp['Department'] || emp.department || 'No Department';
+                return `<option value="${name}">${name} (${dept})</option>`;
+            }).join('');
+            
+            showModal('Add Manager', `
+                <div class="mb-3">
+                    <label class="form-label">Select Employee to Promote to Manager</label>
+                    <select class="form-select" id="newManagerSelect">
+                        <option value="">Choose an employee...</option>
+                        ${employeeOptions}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Department</label>
+                    <select class="form-select" id="managerDepartment">
+                        <option value="">Select Department</option>
+                        ${[...new Set(employees.map(e => e['Department'] || e.department).filter(Boolean))].map(dept => 
+                            `<option value="${dept}">${dept}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    This will update the employee's supervisor status and allow them to manage team members.
+                </div>
+            `, async () => {
+                const selectedManager = document.getElementById('newManagerSelect').value;
+                const department = document.getElementById('managerDepartment').value;
+                
+                if (!selectedManager) {
+                    showToast('Please select an employee', 'warning');
+                    return;
+                }
+                
+                if (!department) {
+                    showToast('Please select a department', 'warning');
+                    return;
+                }
+                
+                // Find the employee and update their supervisor status
+                const employee = employees.find(e => {
+                    const name = `${e['First Name'] || ''} ${e['Last Name'] || ''}`.trim();
+                    return name === selectedManager;
+                });
+                
+                if (employee) {
+                    try {
+                        const empId = employee.id || employee.employee_id;
+                        const response = await fetch(`${API_URL}/employees/${empId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                'is_supervisor': 'Yes',
+                                'Department': department
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            showToast(`${selectedManager} has been promoted to manager of ${department}`, 'success');
+                            await loadEmployees();
+                            loadManagers();
+                        } else {
+                            throw new Error('Failed to update employee');
+                        }
+                    } catch (error) {
+                        showToast('Error promoting employee to manager: ' + error.message, 'error');
+                    }
+                }
+            });
         }
 
         async function editEmployee(empId) {
