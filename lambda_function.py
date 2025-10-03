@@ -28,12 +28,6 @@ def lambda_handler(event, context):
         if http_method == 'OPTIONS':
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization,Accept',
-                    'Access-Control-Allow-Credentials': 'false'
-                },
                 'body': ''
             }
         elif path == '/employees':
@@ -63,29 +57,18 @@ def lambda_handler(event, context):
         elif path == '/test':
             return {
                 'statusCode': 200,
-                'headers': {'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'message': f'Test successful - Method: {http_method}, Path: {path}'})
             }
         else:
             return {
                 'statusCode': 404,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                },
+                'headers': {'Content-Type': 'application/json'},
                 'body': json.dumps({'error': 'Not found'})
             }
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+            'headers': {'Content-Type': 'application/json'},
             'body': json.dumps({'error': str(e)})
         }
 
@@ -124,22 +107,14 @@ def get_employees(event):
         print(f'GET_EMPLOYEES: Returning {len(items)} employees')
         return {
             'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+            'headers': {'Content-Type': 'application/json'},
             'body': json.dumps({'employees': items})
         }
     except Exception as e:
         print(f'GET_EMPLOYEES ERROR: {str(e)}')
         return {
             'statusCode': 500,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+            'headers': {'Content-Type': 'application/json'},
             'body': json.dumps({'error': f'Failed to get employees: {str(e)}'})
         }
 
@@ -226,8 +201,8 @@ def create_employee(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                
+                
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
             'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
@@ -265,8 +240,8 @@ def create_employee(event):
         'statusCode': 201,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            
+            
             'Access-Control-Allow-Headers': 'Content-Type,Authorization'
         },
         'body': json.dumps({'employee_id': employee_id, 'message': 'Employee created successfully'})
@@ -330,8 +305,8 @@ def update_employee(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                
+                
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
             'body': json.dumps({'message': 'Employee updated successfully'})
@@ -354,8 +329,8 @@ def delete_employee(event):
         'statusCode': 200,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            
+            
             'Access-Control-Allow-Headers': 'Content-Type,Authorization'
         },
         'body': json.dumps({'message': 'Employee deleted successfully'})
@@ -377,8 +352,8 @@ def handle_contacts(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                
+                
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
             'body': json.dumps({'contacts': items})
@@ -409,8 +384,8 @@ def handle_contacts(event):
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps({'message': f'{len(contacts)} contacts created'})
@@ -435,8 +410,8 @@ def handle_contacts(event):
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps({'id': contact_item['id'], 'message': 'Contact created'})
@@ -469,8 +444,8 @@ def handle_collections(event):
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps({'counts': counts})
@@ -489,8 +464,8 @@ def handle_collections(event):
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps({'collections': items})
@@ -523,8 +498,8 @@ def handle_collections(event):
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps({'message': f'{len(collections)} collections created'})
@@ -551,8 +526,8 @@ def handle_collections(event):
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps({'id': collection_item['id'], 'message': 'Collection created'})
@@ -574,8 +549,8 @@ def handle_config(event):
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps(config)
@@ -585,8 +560,8 @@ def handle_config(event):
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    
+                    
                     'Access-Control-Allow-Headers': 'Content-Type,Authorization'
                 },
                 'body': json.dumps({
@@ -614,8 +589,8 @@ def handle_config(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                
+                
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
             'body': json.dumps({'message': 'Config saved'})
@@ -645,8 +620,8 @@ def handle_admin_users(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                
+                
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
             'body': json.dumps({'users': admin_users})
@@ -673,8 +648,8 @@ def handle_admin_users(event):
             'statusCode': 201,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                
+                
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization'
             },
             'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
@@ -686,8 +661,8 @@ def create_super_admin(event):
         'statusCode': 200,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            
+            
             'Access-Control-Allow-Headers': 'Content-Type,Authorization'
         },
         'body': json.dumps({'message': 'Super admin already exists'})
