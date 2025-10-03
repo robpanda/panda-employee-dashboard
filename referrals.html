@@ -446,8 +446,12 @@
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Employee Name</th>
-                                    <th>Total Referrals</th>
+                                    <th style="cursor: pointer;" onclick="sortEmployeeReport('name')">
+                                        Employee Name <span id="name-sort-icon">↕️</span>
+                                    </th>
+                                    <th style="cursor: pointer;" onclick="sortEmployeeReport('count')">
+                                        Total Referrals <span id="count-sort-icon">↕️</span>
+                                    </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -474,6 +478,9 @@
         const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
         let referrals = [];
         let currentReferral = null;
+        let employeeReportData = [];
+        let employeeReportSortField = 'count';
+        let employeeReportSortDirection = 'desc';
 
         // Custom CSS for 7 columns
         const style = document.createElement('style');
@@ -925,11 +932,41 @@
                 employeeStats[empName].byMonth[monthKey]++;
             });
             
-            const reportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
-            displayEmployeeReport(reportData);
+            employeeReportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            sortEmployeeReport('count'); // Default sort by count descending
             populateMonthFilterReport();
         }
 
+        function sortEmployeeReport(field) {
+            if (employeeReportSortField === field) {
+                employeeReportSortDirection = employeeReportSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                employeeReportSortField = field;
+                employeeReportSortDirection = field === 'count' ? 'desc' : 'asc';
+            }
+            
+            // Update sort icons
+            document.getElementById('name-sort-icon').textContent = '↕️';
+            document.getElementById('count-sort-icon').textContent = '↕️';
+            
+            const icon = employeeReportSortDirection === 'asc' ? '↑' : '↓';
+            document.getElementById(field === 'name' ? 'name-sort-icon' : 'count-sort-icon').textContent = icon;
+            
+            // Sort data
+            employeeReportData.sort((a, b) => {
+                let aVal = field === 'name' ? a.name : a.total;
+                let bVal = field === 'name' ? b.name : b.total;
+                
+                if (field === 'name') {
+                    return employeeReportSortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return employeeReportSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+            
+            displayEmployeeReport(employeeReportData);
+        }
+        
         function displayEmployeeReport(data) {
             const tbody = document.getElementById('employeeReportTableBody');
             
@@ -999,8 +1036,8 @@
                 employeeStats[empName].total++;
             });
             
-            const reportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
-            displayEmployeeReport(reportData);
+            employeeReportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            sortEmployeeReport('count'); // Default sort by count descending
         }
 
         function showMonthlyBreakdown(employeeName) {
