@@ -45,10 +45,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 200,
                 'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-                },
+                    },
                 'body': ''
             }
         elif path == '/employees':
@@ -97,9 +94,7 @@ def lambda_handler(event, context):
                 'statusCode': 200,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({
                     'method': http_method,
                     'path': path,
@@ -117,9 +112,7 @@ def lambda_handler(event, context):
                 'statusCode': 404,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-                },
+                    },
                 'body': json.dumps({'error': 'Not found'})
             }
     except Exception as e:
@@ -127,9 +120,7 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-            },
+                },
             'body': json.dumps({'error': str(e)})
         }
 
@@ -170,9 +161,7 @@ def get_employees(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
             'body': json.dumps({'employees': items})
         }
     except Exception as e:
@@ -181,9 +170,7 @@ def get_employees(event):
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
             'body': json.dumps({'error': f'Failed to get employees: {str(e)}'})
         }
 
@@ -197,8 +184,7 @@ def create_employee(event):
             'statusCode': 400,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+                },
             'body': json.dumps({'error': 'Invalid JSON body'})
         }
     
@@ -223,8 +209,7 @@ def create_employee(event):
                 'statusCode': 500,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                    },
                 'body': json.dumps({'error': f'Failed to clear data: {str(e)}'})
             }
         
@@ -270,9 +255,7 @@ def create_employee(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
             'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
         }
     
@@ -308,9 +291,7 @@ def create_employee(event):
         'statusCode': 201,
         'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
         'body': json.dumps({'employee_id': employee_id, 'message': 'Employee created successfully'})
     }
 
@@ -342,7 +323,7 @@ def update_employee(event):
                 print(f'UPDATE: Employee {employee_id} not found')
                 return {
                     'statusCode': 404,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'headers': {},
                     'body': json.dumps({'error': 'Employee not found'})
                 }
             
@@ -353,7 +334,7 @@ def update_employee(event):
             print(f'UPDATE ERROR: Failed to find employee: {e}')
             return {
                 'statusCode': 500,
-                'headers': {'Access-Control-Allow-Origin': '*'},
+                'headers': {},
                 'body': json.dumps({'error': f'Database error: {str(e)}'})
             }
         
@@ -372,9 +353,7 @@ def update_employee(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
             'body': json.dumps({'message': 'Employee updated successfully'})
         }
         
@@ -382,7 +361,7 @@ def update_employee(event):
         print(f'UPDATE ERROR: {e}')
         return {
             'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
+            'headers': {},
             'body': json.dumps({'error': str(e)})
         }
 
@@ -395,9 +374,7 @@ def delete_employee(event):
         'statusCode': 200,
         'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
         'body': json.dumps({'message': 'Employee deleted successfully'})
     }
 
@@ -420,9 +397,7 @@ def handle_contacts(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
             'body': json.dumps({'contacts': items})
         }
     
@@ -451,9 +426,7 @@ def handle_contacts(event):
                 'statusCode': 201,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'message': f'{len(contacts)} contacts created'})
             }
         
@@ -476,9 +449,7 @@ def handle_contacts(event):
                 'statusCode': 201,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'id': contact_item['id'], 'message': 'Contact created'})
             }
 
@@ -512,9 +483,7 @@ def handle_collections(event):
                 'statusCode': 200,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'counts': counts})
             }
         
@@ -531,9 +500,7 @@ def handle_collections(event):
                 'statusCode': 200,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'collections': items})
             }
     
@@ -564,9 +531,7 @@ def handle_collections(event):
                 'statusCode': 201,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'message': f'{len(collections)} collections created'})
             }
         
@@ -591,9 +556,7 @@ def handle_collections(event):
                 'statusCode': 201,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'id': collection_item['id'], 'message': 'Collection created'})
             }
 
@@ -616,9 +579,7 @@ def handle_config(event):
                 'statusCode': 200,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps(config)
             }
         except:
@@ -626,9 +587,7 @@ def handle_config(event):
                 'statusCode': 200,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({
                     'statuses': ['active', 'inactive', 'do-not-contact'],
                     'lists': ['leads', 'customers', 'prospects'],
@@ -654,9 +613,7 @@ def handle_config(event):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
             'body': json.dumps({'message': 'Config saved'})
         }
 
@@ -683,9 +640,7 @@ def handle_admin_users(event):
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                },
+                    },
                 'body': json.dumps({'users': admin_users})
             }
         except Exception as e:
@@ -694,8 +649,7 @@ def handle_admin_users(event):
                 'statusCode': 500,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                    },
                 'body': json.dumps({'success': False, 'message': 'Error loading admin users'})
             }
     
@@ -712,8 +666,7 @@ def handle_admin_users(event):
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
+                        },
                     'body': json.dumps({'success': False, 'message': 'Email and password required'})
                 }
             
@@ -724,8 +677,7 @@ def handle_admin_users(event):
                         'statusCode': 400,
                         'headers': {
                             'Content-Type': 'application/json',
-                            'Access-Control-Allow-Origin': '*'
-                        },
+                            },
                         'body': json.dumps({'success': False, 'message': 'Admin user already exists'})
                     }
             except Exception as e:
@@ -746,9 +698,7 @@ def handle_admin_users(event):
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                },
+                    },
                 'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
             }
         except Exception as e:
@@ -757,8 +707,7 @@ def handle_admin_users(event):
                 'statusCode': 500,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                    },
                 'body': json.dumps({'success': False, 'message': 'Error creating admin user'})
             }
 
@@ -786,9 +735,7 @@ def handle_points(event):
                         'statusCode': 200,
                         'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                         'body': json.dumps({
                             'employee_id': emp_id,
                             'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
@@ -802,9 +749,7 @@ def handle_points(event):
                         'statusCode': 404,
                         'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                         'body': json.dumps({'error': 'Employee not found'})
                     }
             except Exception as e:
@@ -812,9 +757,7 @@ def handle_points(event):
                     'statusCode': 500,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'error': str(e)})
                 }
         else:
@@ -834,9 +777,7 @@ def handle_points(event):
                     'statusCode': 200,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'employees': points_data})
                 }
             except Exception as e:
@@ -844,9 +785,7 @@ def handle_points(event):
                     'statusCode': 500,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'error': str(e)})
                 }
 
@@ -871,9 +810,7 @@ def handle_points_history(event):
                 'statusCode': 200,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'history': items})
             }
         except Exception as e:
@@ -881,9 +818,7 @@ def handle_points_history(event):
                 'statusCode': 500,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'error': str(e), 'history': []})
             }
     
@@ -909,9 +844,7 @@ def handle_points_history(event):
                 'statusCode': 201,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'message': 'Points history recorded successfully'})
             }
         except Exception as e:
@@ -919,9 +852,7 @@ def handle_points_history(event):
                 'statusCode': 500,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'error': str(e)})
             }
 
@@ -952,9 +883,7 @@ def handle_referrals(event):
                     'statusCode': 200,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'referrals': referrals})
                 }
             except Exception as e:
@@ -962,9 +891,7 @@ def handle_referrals(event):
                     'statusCode': 500,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'error': str(e), 'referrals': []})
                 }
         else:
@@ -981,9 +908,7 @@ def handle_referrals(event):
                     'statusCode': 200,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'referrals': referrals})
                 }
             except Exception as e:
@@ -991,9 +916,7 @@ def handle_referrals(event):
                     'statusCode': 500,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'error': str(e), 'referrals': []})
                 }
     
@@ -1028,9 +951,7 @@ def handle_referrals(event):
                 'statusCode': 201,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'message': 'Referral created successfully', 'id': referral_item['id']})
             }
         except Exception as e:
@@ -1038,9 +959,7 @@ def handle_referrals(event):
                 'statusCode': 500,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'error': str(e)})
             }
     
@@ -1055,9 +974,7 @@ def handle_referrals(event):
                     'statusCode': 404,
                     'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                     'body': json.dumps({'error': 'Referral not found'})
                 }
             
@@ -1075,9 +992,7 @@ def handle_referrals(event):
                 'statusCode': 200,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'message': 'Referral updated successfully'})
             }
         except Exception as e:
@@ -1085,9 +1000,7 @@ def handle_referrals(event):
                 'statusCode': 500,
                 'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
                 'body': json.dumps({'error': str(e)})
             }
     
@@ -1095,9 +1008,7 @@ def handle_referrals(event):
         'statusCode': 404,
         'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
         'body': json.dumps({'error': 'Referrals endpoint not found'})
     }
 
@@ -1114,9 +1025,7 @@ def handle_employee_login(event):
             'statusCode': 405,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
@@ -1130,8 +1039,7 @@ def handle_employee_login(event):
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                    },
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
@@ -1151,8 +1059,7 @@ def handle_employee_login(event):
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
+                        },
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
@@ -1162,8 +1069,7 @@ def handle_employee_login(event):
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
+                        },
                     'body': json.dumps({'error': 'Account is inactive'})
                 }
             
@@ -1175,8 +1081,7 @@ def handle_employee_login(event):
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
+                        },
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
@@ -1199,9 +1104,7 @@ def handle_employee_login(event):
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                },
+                    },
                 'body': json.dumps({
                     'success': True,
                     'employee': employee_data,
@@ -1215,8 +1118,7 @@ def handle_employee_login(event):
                 'statusCode': 500,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                    },
                 'body': json.dumps({'error': 'Database error'})
             }
             
@@ -1226,8 +1128,7 @@ def handle_employee_login(event):
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+                },
             'body': json.dumps({'error': 'Server error'})
         }
 
@@ -1293,7 +1194,7 @@ def handle_admin_login(event):
     if method != 'POST':
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', },
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
@@ -1305,7 +1206,7 @@ def handle_admin_login(event):
         if not email or not password:
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', },
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
@@ -1320,9 +1221,7 @@ def handle_admin_login(event):
                             'statusCode': 200,
                             'headers': {
                                 'Content-Type': 'application/json',
-                                'Access-Control-Allow-Origin': '*',
-                                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                            },
+                                },
                             'body': json.dumps({
                                 'success': True,
                                 'admin': {
@@ -1343,9 +1242,7 @@ def handle_admin_login(event):
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-                },
+                    },
                 'body': json.dumps({
                     'success': True,
                     'admin': {
@@ -1360,7 +1257,7 @@ def handle_admin_login(event):
         
         return {
             'statusCode': 401,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', },
             'body': json.dumps({'error': 'Invalid email or password'})
         }
         
@@ -1368,7 +1265,7 @@ def handle_admin_login(event):
         print(f'Admin login error: {e}')
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', },
             'body': json.dumps({'error': 'Server error'})
         }
 
@@ -1377,8 +1274,6 @@ def create_super_admin(event):
         'statusCode': 200,
         'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
+                },
         'body': json.dumps({'message': 'Super admin already exists'})
     }
