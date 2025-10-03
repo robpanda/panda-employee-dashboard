@@ -12,10 +12,17 @@ collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-co
 config_table = dynamodb.Table(os.environ.get('CONFIG_TABLE', 'panda-config'))
 
 def lambda_handler(event, context):
-    http_method = event['httpMethod']
-    path = event['path']
+    # Handle both API Gateway and Function URL event formats
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        # Function URL format
+        http_method = event['requestContext']['http']['method']
+        path = event['requestContext']['http']['path']
+    else:
+        # API Gateway format
+        http_method = event.get('httpMethod', 'GET')
+        path = event.get('path', '/')
     
-    print(f'LAMBDA DEBUG: Method={http_method}, Path={path}')
+    print(f'LAMBDA DEBUG: Method={http_method}, Path={path}, Event keys: {list(event.keys())}')
     
     try:
         if http_method == 'OPTIONS':
@@ -121,7 +128,7 @@ def get_employees(event):
 
 def create_employee(event):
     try:
-        body = json.loads(event['body'])
+        body = json.loads(event.get('body', '{}'))
         print(f'Received body keys: {list(body.keys())}')
     except Exception as e:
         print(f'Error parsing body: {e}')
@@ -250,9 +257,9 @@ def create_employee(event):
 
 def update_employee(event):
     try:
-        path_parts = event['path'].split('/')
+        path_parts = path.split('/')
         employee_id = path_parts[-1]
-        body = json.loads(event['body'])
+        body = json.loads(event.get('body', '{}'))
         
         print(f'UPDATE: Updating employee {employee_id} with data: {body}')
         
