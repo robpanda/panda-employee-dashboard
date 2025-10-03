@@ -13,6 +13,10 @@ collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-co
 config_table = dynamodb.Table(os.environ.get('CONFIG_TABLE', 'panda-config'))
 points_history_table = dynamodb.Table(os.environ.get('POINTS_HISTORY_TABLE', 'panda-points-history'))
 referrals_table = dynamodb.Table(os.environ.get('REFERRALS_TABLE', 'panda-referrals'))
+try:
+    admin_users_table = dynamodb.Table('panda-admin-users')
+except:
+    admin_users_table = None
 
 def lambda_handler(event, context):
     print(f'LAMBDA DEBUG: Full event: {json.dumps(event, default=str)}')
@@ -75,6 +79,9 @@ def lambda_handler(event, context):
         elif path == '/employee-login':
             print(f'LAMBDA DEBUG: Calling handle_employee_login')
             return handle_employee_login(event)
+        elif path == '/admin-login':
+            print(f'LAMBDA DEBUG: Calling handle_admin_login')
+            return handle_admin_login(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -627,74 +634,106 @@ def handle_config(event):
         }
 
 def handle_admin_users(event):
-    # Handle both API Gateway and Function URL event formats
     if 'requestContext' in event and 'http' in event['requestContext']:
         method = event['requestContext']['http']['method']
     else:
         method = event.get('httpMethod', 'GET')
     
     if method == 'GET':
-        # Get real admin users from employees + current admin user
-        admin_users = [{
-            'email': 'admin',
-            'role': 'super_admin',
-            'active': True,
-            'created_at': '2024-01-01',
-            'name': 'System Administrator'
-        }]
         try:
-            response = employees_table.scan()
-            for emp in response['Items']:
-                email = emp.get('Email', emp.get('email', ''))
-                if email and 'admin' in email.lower():
-                    admin_users.append({
-                        'email': email,
-                        'role': 'admin',
-                        'active': emp.get('Terminated', 'No') == 'No',
-                        'created_at': emp.get('Employment Date', ''),
-                        'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip()
-                    })
+            if admin_users_table:
+                response = admin_users_table.scan()
+                admin_users = response['Items']
+                
+                for user in admin_users:
+                    for key, value in user.items():
+                        if isinstance(value, Decimal):
+                            user[key] = float(value)
+            else:
+                admin_users = []
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'users': admin_users})
+            }
         except Exception as e:
             print(f'Error loading admin users: {e}')
-        
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                
-                
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
-            'body': json.dumps({'users': admin_users})
-        }
-    
-    elif method == 'POST':
-        body = json.loads(event['body'])
-        email = body.get('email')
-        password = body.get('password')
-        role = body.get('role', 'admin')
-        
-        if not email or not password:
             return {
-                'statusCode': 400,
+                'statusCode': 500,
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                'body': json.dumps({'success': False, 'message': 'Email and password required'})
+                'body': json.dumps({'success': False, 'message': 'Error loading admin users'})
             }
-        
-        # Admin user creation
-        return {
-            'statusCode': 201,
-            'headers': {
-                'Content-Type': 'application/json',
-                
-                
-                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-            },
-            'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
-        }
+    
+    elif method == 'POST':
+        try:
+            body = json.loads(event['body'])
+            email = body.get('email')
+            password = body.get('password')
+            role = body.get('role', 'admin')
+            permissions = body.get('permissions', [])
+            
+            if not email or not password or not admin_users_table:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({'success': False, 'message': 'Email and password required'})
+                }
+            
+            try:
+                existing = admin_users_table.get_item(Key={'email': email})
+                if 'Item' in existing:
+                    return {
+                        'statusCode': 400,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'body': json.dumps({'success': False, 'message': 'Admin user already exists'})
+                    }
+            except Exception as e:
+                print(f'Error checking existing user: {e}')
+            
+            admin_user = {
+                'email': email,
+                'password': password,
+                'role': role,
+                'permissions': permissions,
+                'active': True,
+                'created_at': datetime.now().isoformat()
+            }
+            
+            admin_users_table.put_item(Item=admin_user)
+            
+            return {
+                'statusCode': 201,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
+            }
+        except Exception as e:
+            print(f'Error creating admin user: {e}')
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'success': False, 'message': 'Error creating admin user'})
+            }
 
 def handle_points(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
@@ -1135,6 +1174,96 @@ def send_referral_notification(referral_data):
     except Exception as e:
         print(f'Failed to send email notification: {e}')
         raise e
+
+def handle_admin_login(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    elif 'httpMethod' in event:
+        method = event['httpMethod']
+    else:
+        method = 'POST'
+    
+    if method != 'POST':
+        return {
+            'statusCode': 405,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Method not allowed'})
+        }
+    
+    try:
+        body = json.loads(event.get('body', '{}'))
+        email = body.get('email', '').strip().lower()
+        password = body.get('password', '')
+        
+        if not email or not password:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Email and password required'})
+            }
+        
+        # Check admin users table
+        if admin_users_table:
+            try:
+                response = admin_users_table.get_item(Key={'email': email})
+                if 'Item' in response:
+                    admin = response['Item']
+                    if admin.get('password') == password and admin.get('active', True):
+                        return {
+                            'statusCode': 200,
+                            'headers': {
+                                'Content-Type': 'application/json',
+                                'Access-Control-Allow-Origin': '*',
+                                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                            },
+                            'body': json.dumps({
+                                'success': True,
+                                'admin': {
+                                    'email': admin['email'],
+                                    'role': admin.get('role', 'admin'),
+                                    'permissions': admin.get('permissions', []),
+                                    'name': admin.get('name', email)
+                                },
+                                'message': 'Login successful'
+                            })
+                        }
+            except Exception as e:
+                print(f'Error checking admin users: {e}')
+        
+        # Fallback to hardcoded admin
+        if email == 'admin' and password == 'admin123':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+                },
+                'body': json.dumps({
+                    'success': True,
+                    'admin': {
+                        'email': 'admin',
+                        'role': 'super_admin',
+                        'permissions': ['employees', 'points', 'referrals', 'leads'],
+                        'name': 'System Administrator'
+                    },
+                    'message': 'Login successful'
+                })
+            }
+        
+        return {
+            'statusCode': 401,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Invalid email or password'})
+        }
+        
+    except Exception as e:
+        print(f'Admin login error: {e}')
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Server error'})
+        }
 
 def create_super_admin(event):
     return {

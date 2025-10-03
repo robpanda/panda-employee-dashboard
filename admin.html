@@ -602,9 +602,32 @@
                             <div class="mb-3">
                                 <label for="userRole" class="form-label">Role</label>
                                 <select class="form-select" id="userRole">
-                                    <option value="admin">Admin</option>
+                                    <option value="admin">Full Admin</option>
+                                    <option value="referrals_admin">Referrals Admin</option>
+                                    <option value="points_admin">Points Admin</option>
                                     <option value="super_admin">Super Admin</option>
                                 </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Permissions</label>
+                                <div class="mt-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permEmployees" value="employees">
+                                        <label class="form-check-label" for="permEmployees">Employee Management</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permPoints" value="points">
+                                        <label class="form-check-label" for="permPoints">Points Management</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permReferrals" value="referrals" checked>
+                                        <label class="form-check-label" for="permReferrals">Referrals Management</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permLeads" value="leads">
+                                        <label class="form-check-label" for="permLeads">Leads Management</label>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -768,6 +791,29 @@
             loadDepartments();
             loadManagers();
             updateStats();
+            
+            // Setup role-based permission selection
+            const roleSelect = document.getElementById('userRole');
+            if (roleSelect) {
+                roleSelect.addEventListener('change', function() {
+                    const role = this.value;
+                    // Reset all checkboxes
+                    document.querySelectorAll('#addUserModal input[type="checkbox"]').forEach(cb => cb.checked = false);
+                    
+                    // Set permissions based on role
+                    if (role === 'super_admin') {
+                        document.querySelectorAll('#addUserModal input[type="checkbox"]').forEach(cb => cb.checked = true);
+                    } else if (role === 'admin') {
+                        document.getElementById('permEmployees').checked = true;
+                        document.getElementById('permPoints').checked = true;
+                        document.getElementById('permReferrals').checked = true;
+                    } else if (role === 'referrals_admin') {
+                        document.getElementById('permReferrals').checked = true;
+                    } else if (role === 'points_admin') {
+                        document.getElementById('permPoints').checked = true;
+                    }
+                });
+            }
         });
 
         function toggleEmployeeForm() {
