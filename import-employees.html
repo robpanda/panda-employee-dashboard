@@ -52,6 +52,26 @@
     </div>
 
     <script>
+        // Suppress webpack dev server console logs
+        if (typeof console !== 'undefined') {
+            const originalLog = console.log;
+            const originalError = console.error;
+            console.log = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && 
+                    (args[0].includes('[webpack-dev-server]') || args[0].includes('[HMR]'))) {
+                    return;
+                }
+                originalLog.apply(console, args);
+            };
+            console.error = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && 
+                    (args[0].includes('WebSocket connection') || args[0].includes('webpack-dev-server'))) {
+                    return;
+                }
+                originalError.apply(console, args);
+            };
+        }
+        
         const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
         let csvData = [];
 

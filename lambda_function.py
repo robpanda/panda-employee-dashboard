@@ -337,7 +337,10 @@ def delete_employee(event):
     }
 
 def handle_contacts(event):
-    method = event['httpMethod']
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'GET')
     
     if method == 'GET':
         response = contacts_table.scan()
@@ -418,7 +421,10 @@ def handle_contacts(event):
             }
 
 def handle_collections(event):
-    method = event['httpMethod']
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'GET')
     query_params = event.get('queryStringParameters') or {}
     
     if method == 'GET':
@@ -534,7 +540,10 @@ def handle_collections(event):
             }
 
 def handle_config(event):
-    method = event['httpMethod']
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'GET')
     
     if method == 'GET':
         try:
@@ -597,7 +606,11 @@ def handle_config(event):
         }
 
 def handle_admin_users(event):
-    method = event['httpMethod']
+    # Handle both API Gateway and Function URL event formats
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'GET')
     
     if method == 'GET':
         # Return mock admin users for now
