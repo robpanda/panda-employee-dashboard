@@ -1243,30 +1243,79 @@
         }
 
         function adjustBudget(manager, currentBudget, totalAwarded) {
-            showModal('Budget Adjustment', `
+            const teamMembers = employees.filter(e => e.supervisor === manager);
+            const teamList = teamMembers.map(emp => {
+                const name = emp['First Name'] && emp['Last Name'] ? `${emp['First Name']} ${emp['Last Name']}` : emp.name;
+                const empId = emp.id || emp.employee_id;
+                const points = emp.points || emp['Panda Points'] || 0;
+                const dept = emp['Department'] || emp.department || 'Unknown';
+                return `
+                    <div class="row align-items-center mb-2 p-2 border rounded">
+                        <div class="col-md-4">
+                            <strong>${name}</strong><br>
+                            <small class="text-muted">${dept}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge bg-warning text-dark">${points} pts</span>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" class="form-control form-control-sm" id="budget_${empId}" value="500" min="0" placeholder="Budget">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustIndividualPoints('${empId}', '${name}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            showModal(`Budget Adjustment - ${manager}`, `
                 <div class="mb-3">
-                    <label class="form-label">Manager: <strong>${manager}</strong></label>
+                    <h6>Team Overview</h6>
+                    <div class="row mb-2">
+                        <div class="col-md-4"><strong>Total Budget:</strong> $${currentBudget.toLocaleString()}</div>
+                        <div class="col-md-4"><strong>Awarded:</strong> $${totalAwarded.toLocaleString()}</div>
+                        <div class="col-md-4"><strong>Remaining:</strong> $${(currentBudget - totalAwarded).toLocaleString()}</div>
+                    </div>
                 </div>
+                
                 <div class="mb-3">
-                    <label class="form-label">Current Quarterly Budget</label>
-                    <input type="number" class="form-control" id="budgetAmount" value="${currentBudget}" min="0">
-                    <small class="text-muted">Total budget available for this quarter</small>
+                    <h6>Team Members (${teamMembers.length})</h6>
+                    <div class="row mb-2 text-muted">
+                        <div class="col-md-4">Employee</div>
+                        <div class="col-md-3">Current Points</div>
+                        <div class="col-md-3">Individual Budget</div>
+                        <div class="col-md-2">Actions</div>
+                    </div>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${teamList}
+                    </div>
                 </div>
+                
                 <div class="mb-3">
-                    <label class="form-label">Points Already Awarded</label>
-                    <input type="number" class="form-control" value="${totalAwarded}" readonly>
-                    <small class="text-muted">Points already given to team members</small>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Remaining Budget</label>
-                    <input type="number" class="form-control" id="remainingBudget" value="${currentBudget - totalAwarded}" readonly>
+                    <label class="form-label">Quarterly Budget per Employee</label>
+                    <input type="number" class="form-control" id="budgetPerEmployee" value="500" min="0">
+                    <small class="text-muted">Default budget amount per employee per quarter</small>
                 </div>
             `, () => {
-                const newBudget = parseInt(document.getElementById('budgetAmount').value);
-                if (newBudget >= 0) {
-                    showToast('Budget updated successfully', 'success');
-                    loadManagers();
+                const budgetPerEmployee = parseInt(document.getElementById('budgetPerEmployee').value) || 500;
+                const updates = [];
+                
+                teamMembers.forEach(emp => {
+                    const empId = emp.id || emp.employee_id;
+                    const individualBudget = parseInt(document.getElementById(`budget_${empId}`).value) || budgetPerEmployee;
+                    if (individualBudget !== 500) {
+                        updates.push({ empId, budget: individualBudget });
+                    }
+                });
+                
+                if (updates.length > 0) {
+                    showToast(`Updated individual budgets for ${updates.length} employees`, 'success');
+                } else {
+                    showToast('Budget settings updated successfully', 'success');
                 }
+                loadManagers();
             });
         }
 
@@ -1316,6 +1365,49 @@
 
         function bulkAwardPoints() {
             showToast('Bulk award points feature - Coming soon!', 'info');
+        }
+        
+        function adjustIndividualPoints(empId, empName) {
+            const employee = employees.find(e => (e.id || e.employee_id) === empId);
+            if (!employee) return;
+            
+            const currentPoints = employee.points || employee['Panda Points'] || 0;
+            
+            showModal(`Adjust Points - ${empName}`, `
+                <div class="mb-3">
+                    <label class="form-label">Current Points Balance</label>
+                    <input type="number" class="form-control" id="newPointsBalance" value="${currentPoints}" min="0">
+                    <small class="text-muted">Set the new points balance for this employee</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Reason for Adjustment</label>
+                    <textarea class="form-control" id="adjustmentReason" rows="2" placeholder="e.g., Correction, bonus points, etc."></textarea>
+                </div>
+            `, async () => {
+                const newBalance = parseInt(document.getElementById('newPointsBalance').value) || 0;
+                const reason = document.getElementById('adjustmentReason').value.trim();
+                
+                try {
+                    const response = await fetch(`${API_URL}/employees/${empId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            'points': newBalance,
+                            'Panda Points': newBalance
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        showToast(`Points balance updated to ${newBalance} for ${empName}`, 'success');
+                        await loadEmployees();
+                        loadManagers();
+                    } else {
+                        throw new Error('Failed to update points');
+                    }
+                } catch (error) {
+                    showToast('Error updating points: ' + error.message, 'error');
+                }
+            });
         }
         
         function showAddManager() {

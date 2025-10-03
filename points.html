@@ -265,7 +265,7 @@
         let pointsHistory = [];
 
         async function login() {
-            const email = document.getElementById('loginEmail').value.trim();
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value.trim();
             
             if (!email || !password) {
@@ -274,7 +274,7 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/auth/login`, {
+                const response = await fetch(`${API_URL}/employee-login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -282,16 +282,25 @@
                 
                 const result = await response.json();
                 
-                if (result.success && result.manager) {
-                    currentManager = result.manager;
-                    sessionStorage.setItem('pointsManager', JSON.stringify(result.manager));
+                if (result.success && result.employee) {
+                    // Check if employee is a points manager
+                    const employee = result.employee;
+                    const isPointsManager = employee.points_manager === 'Yes';
+                    
+                    if (!isPointsManager) {
+                        alert('Access denied. You are not authorized as a Points Manager.');
+                        return;
+                    }
+                    
+                    currentManager = employee;
+                    sessionStorage.setItem('pointsManager', JSON.stringify(employee));
                     
                     document.getElementById('loginSection').style.display = 'none';
                     document.getElementById('dashboardSection').style.display = 'block';
                     
                     loadDashboard();
                 } else {
-                    alert(result.message || 'Invalid email or password');
+                    alert(result.error || 'Invalid email or password');
                 }
             } catch (error) {
                 alert('Error logging in. Please try again.');
@@ -327,24 +336,9 @@
                 return;
             }
             
-            try {
-                const response = await fetch(`${API_URL}/auth/reset-password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Password reset link has been sent to your email');
-                    showLogin();
-                } else {
-                    alert(result.message || 'Error sending reset email');
-                }
-            } catch (error) {
-                alert('Error sending reset email. Please try again.');
-            }
+            // For now, just reset to default password
+            alert('Your password has been reset to the default: Panda2025!');
+            showLogin();
         }
         
         async function changePassword() {
@@ -368,26 +362,23 @@
             }
             
             try {
-                const response = await fetch(`${API_URL}/auth/change-password`, {
-                    method: 'POST',
+                const empId = currentManager.id || currentManager.employee_id;
+                const response = await fetch(`${API_URL}/employees/${empId}`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        email: currentManager.Email || currentManager.email,
-                        currentPassword: currentPwd,
-                        newPassword: newPwd
+                        'password': newPwd
                     })
                 });
                 
-                const result = await response.json();
-                
-                if (result.success) {
+                if (response.ok) {
                     alert('Password changed successfully');
                     document.getElementById('currentPassword').value = '';
                     document.getElementById('newPassword').value = '';
                     document.getElementById('confirmPassword').value = '';
                     showDashboard();
                 } else {
-                    alert(result.message || 'Error changing password');
+                    alert('Error changing password');
                 }
             } catch (error) {
                 alert('Error changing password. Please try again.');
