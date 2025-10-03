@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Auth Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAuth() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Test admin users endpoint
+                const response = await fetch('https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get_admin_users' })
+                });
+                
+                const data = await response.json();
+                results.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                console.log('Admin users response:', data);
+            } catch (error) {
+                results.innerHTML = `<p>Error: ${error.message}</p>`;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Run test on page load
+        testAuth();
+    </script>
+</body>
+</html>
