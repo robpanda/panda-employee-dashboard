@@ -2,7 +2,7 @@ import requests
 import json
 
 # Test the new Lambda function
-API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws'
+API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws'
 
 print("Testing Lambda function...")
 

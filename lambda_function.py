@@ -90,41 +90,58 @@ def lambda_handler(event, context):
         }
 
 def get_employees(event):
-    query_params = event.get('queryStringParameters') or {}
-    
-    if 'email' in query_params:
-        # Search by email
-        response = employees_table.query(
-            IndexName='email-index',
-            KeyConditionExpression='Email = :email',
-            ExpressionAttributeValues={':email': query_params['email']}
-        )
-        items = response['Items']
-    else:
-        # Get all employees
-        response = employees_table.scan()
-        items = response['Items']
-    
-    # Convert Decimal to float for JSON serialization and ensure consistent field names
-    for item in items:
-        for key, value in item.items():
-            if isinstance(value, Decimal):
-                item[key] = float(value)
+    try:
+        print(f'GET_EMPLOYEES: Starting function')
+        query_params = event.get('queryStringParameters') or {}
+        print(f'GET_EMPLOYEES: Query params: {query_params}')
         
-        # Ensure employee_id exists
-        if 'employee_id' not in item and 'id' in item:
-            item['employee_id'] = item['id']
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-        },
-        'body': json.dumps({'employees': items})
-    }
+        if 'email' in query_params:
+            # Search by email
+            print(f'GET_EMPLOYEES: Searching by email: {query_params["email"]}')
+            response = employees_table.query(
+                IndexName='email-index',
+                KeyConditionExpression='Email = :email',
+                ExpressionAttributeValues={':email': query_params['email']}
+            )
+            items = response['Items']
+        else:
+            # Get all employees
+            print(f'GET_EMPLOYEES: Scanning all employees')
+            response = employees_table.scan()
+            items = response['Items']
+            print(f'GET_EMPLOYEES: Found {len(items)} employees')
+        
+        # Convert Decimal to float for JSON serialization and ensure consistent field names
+        for item in items:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
+            
+            # Ensure employee_id exists
+            if 'employee_id' not in item and 'id' in item:
+                item['employee_id'] = item['id']
+        
+        print(f'GET_EMPLOYEES: Returning {len(items)} employees')
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+            },
+            'body': json.dumps({'employees': items})
+        }
+    except Exception as e:
+        print(f'GET_EMPLOYEES ERROR: {str(e)}')
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': f'Failed to get employees: {str(e)}'})
+        }
 
 def create_employee(event):
     try:
@@ -257,6 +274,14 @@ def create_employee(event):
 
 def update_employee(event):
     try:
+        # Handle both API Gateway and Function URL event formats
+        if 'requestContext' in event and 'http' in event['requestContext']:
+            # Function URL format
+            path = event['requestContext']['http']['path']
+        else:
+            # API Gateway format
+            path = event.get('path', '/')
+        
         path_parts = path.split('/')
         employee_id = path_parts[-1]
         body = json.loads(event.get('body', '{}'))

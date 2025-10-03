@@ -1,0 +1,11 @@
+{
+  "requestContext": {
+    "http": {
+      "method": "GET",
+      "path": "/employees"
+    }
+  },
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
