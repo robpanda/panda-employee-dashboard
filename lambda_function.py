@@ -44,6 +44,11 @@ def lambda_handler(event, context):
         if http_method == 'OPTIONS':
             return {
                 'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+                },
                 'body': ''
             }
         elif path == '/employees':
@@ -87,16 +92,40 @@ def lambda_handler(event, context):
                 'statusCode': 200,
                 'body': json.dumps({'message': f'Test successful - Method: {http_method}, Path: {path}'})
             }
+        elif path == '/debug':
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({
+                    'method': http_method,
+                    'path': path,
+                    'event_keys': list(event.keys()),
+                    'requestContext': event.get('requestContext', {}),
+                    'all_paths_checked': [
+                        '/employees', '/contacts', '/collections', '/config',
+                        '/admin-users', '/create-admin', '/points', '/points-history',
+                        '/referrals', '/employee-login', '/admin-login', '/test'
+                    ]
+                })
+            }
         else:
             return {
                 'statusCode': 404,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+                },
                 'body': json.dumps({'error': 'Not found'})
             }
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            },
             'body': json.dumps({'error': str(e)})
         }
 
