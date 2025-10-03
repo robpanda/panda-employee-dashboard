@@ -126,6 +126,9 @@
                                 <button class="btn btn-info" onclick="showAllContacts()">
                                     <i class="fas fa-address-book"></i> All Contacts
                                 </button>
+                                <button class="btn btn-success" onclick="showEmployeeReport()">
+                                    <i class="fas fa-chart-line"></i> Report
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -416,6 +419,48 @@
         </div>
     </div>
 
+    </div>
+
+    <!-- Employee Report Modal -->
+    <div class="modal fade" id="employeeReportModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-chart-line"></i> Employee Referral Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <label class="form-label">Filter by Month:</label>
+                            <select id="reportMonthFilter" class="form-select" onchange="filterEmployeeReport()" style="width: 200px;">
+                                <option value="">All Months</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-success btn-sm" onclick="exportEmployeeReport()">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>Total Referrals</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeeReportTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -757,8 +802,8 @@
         }
 
         function loadAllContacts() {
-            const activeContacts = referrals.filter(r => !['disqualified', 'hired'].includes(r.status));
-            const archivedContacts = referrals.filter(r => ['disqualified', 'hired'].includes(r.status));
+            const activeContacts = referrals.filter(r => !['archived'].includes(r.status));
+            const archivedContacts = referrals.filter(r => r.status === 'archived');
             
             document.getElementById('contactsCount').textContent = activeContacts.length;
             document.getElementById('archiveCount').textContent = archivedContacts.length;
@@ -833,8 +878,8 @@
 
         function exportContacts(type) {
             const contacts = type === 'contacts' ? 
-                referrals.filter(r => !['disqualified', 'hired'].includes(r.status)) :
-                referrals.filter(r => ['disqualified', 'hired'].includes(r.status));
+                referrals.filter(r => r.status !== 'archived') :
+                referrals.filter(r => r.status === 'archived');
             
             const csv = 'Name,Email,Phone,Department,Status,Phone Screen Complete,Referred By,Date\n' + 
                 contacts.map(c => 
@@ -846,6 +891,171 @@
             const a = document.createElement('a');
             a.href = url;
             a.download = `${type}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showEmployeeReport() {
+            loadEmployeeReport();
+            new bootstrap.Modal(document.getElementById('employeeReportModal')).show();
+        }
+
+        function loadEmployeeReport() {
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                const empName = referral.referred_by_name;
+                
+                if (!employeeStats[empName]) {
+                    employeeStats[empName] = {
+                        name: empName,
+                        total: 0,
+                        byMonth: {}
+                    };
+                }
+                
+                employeeStats[empName].total++;
+                
+                const date = new Date(referral.created_at);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (!employeeStats[empName].byMonth[monthKey]) {
+                    employeeStats[empName].byMonth[monthKey] = 0;
+                }
+                employeeStats[empName].byMonth[monthKey]++;
+            });
+            
+            const reportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            displayEmployeeReport(reportData);
+            populateMonthFilterReport();
+        }
+
+        function displayEmployeeReport(data) {
+            const tbody = document.getElementById('employeeReportTableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No referrals found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.map(emp => `
+                <tr>
+                    <td><strong>${emp.name}</strong></td>
+                    <td><span class="badge bg-primary">${emp.total}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="showMonthlyBreakdown('${emp.name}')">
+                            <i class="fas fa-chart-bar"></i> View Monthly
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateMonthFilterReport() {
+            const monthFilter = document.getElementById('reportMonthFilter');
+            const months = new Set();
+            
+            referrals.forEach(r => {
+                const date = new Date(r.created_at);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                months.add(monthYear);
+            });
+            
+            const sortedMonths = Array.from(months).sort().reverse();
+            monthFilter.innerHTML = '<option value="">All Months</option>' + 
+                sortedMonths.map(month => {
+                    const [year, monthNum] = month.split('-');
+                    const monthName = new Date(year, monthNum - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    return `<option value="${month}">${monthName}</option>`;
+                }).join('');
+        }
+
+        function filterEmployeeReport() {
+            const selectedMonth = document.getElementById('reportMonthFilter').value;
+            
+            if (!selectedMonth) {
+                loadEmployeeReport();
+                return;
+            }
+            
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                const date = new Date(referral.created_at);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (monthKey !== selectedMonth) return;
+                
+                const empName = referral.referred_by_name;
+                
+                if (!employeeStats[empName]) {
+                    employeeStats[empName] = {
+                        name: empName,
+                        total: 0,
+                        byMonth: {}
+                    };
+                }
+                
+                employeeStats[empName].total++;
+            });
+            
+            const reportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            displayEmployeeReport(reportData);
+        }
+
+        function showMonthlyBreakdown(employeeName) {
+            const employee = referrals.filter(r => r.referred_by_name === employeeName);
+            const monthlyData = {};
+            
+            employee.forEach(referral => {
+                const date = new Date(referral.created_at);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                
+                if (!monthlyData[monthName]) {
+                    monthlyData[monthName] = 0;
+                }
+                monthlyData[monthName]++;
+            });
+            
+            const breakdown = Object.entries(monthlyData)
+                .sort(([a], [b]) => new Date(a) - new Date(b))
+                .map(([month, count]) => `${month}: ${count} referrals`)
+                .join('\n');
+            
+            alert(`${employeeName} Monthly Breakdown:\n\n${breakdown}`);
+        }
+
+        function exportEmployeeReport() {
+            const selectedMonth = document.getElementById('reportMonthFilter').value;
+            const monthText = selectedMonth ? ` - ${selectedMonth}` : '';
+            
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                if (selectedMonth) {
+                    const date = new Date(referral.created_at);
+                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    if (monthKey !== selectedMonth) return;
+                }
+                
+                const empName = referral.referred_by_name;
+                if (!employeeStats[empName]) {
+                    employeeStats[empName] = { name: empName, total: 0 };
+                }
+                employeeStats[empName].total++;
+            });
+            
+            const reportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            
+            const csv = 'Employee Name,Total Referrals\n' + 
+                reportData.map(emp => `"${emp.name}",${emp.total}`).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `employee-referral-report${monthText}-${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             window.URL.revokeObjectURL(url);
         }
