@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Panda Points</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .points-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .points-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .points-balance {
+            font-size: 3rem;
+            font-weight: 600;
+            margin: 1rem 0;
+        }
+        .employee-info {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="points-card">
+                    <div class="points-header">
+                        <h1><i class="fas fa-star"></i> My Panda Points</h1>
+                        <div class="points-balance" id="pointsBalance">0</div>
+                        <p class="mb-0">Current Balance</p>
+                    </div>
+                    
+                    <div class="employee-info">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Employee:</strong><br>
+                                <span id="employeeName">Loading...</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Department:</strong><br>
+                                <span id="employeeDept">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <strong>Manager:</strong><br>
+                                <span id="employeeManager">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="mb-3">
+                            <label class="form-label">Enter Your Employee ID:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="employeeId" placeholder="Employee ID">
+                                <button class="btn btn-primary" onclick="loadPoints()">
+                                    <i class="fas fa-search"></i> Load Points
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>How to earn points:</strong> Points are awarded by your manager for excellent performance, achievements, and going above and beyond!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
+        
+        async function loadPoints() {
+            const empId = document.getElementById('employeeId').value.trim();
+            if (!empId) {
+                alert('Please enter your Employee ID');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/points/${empId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('pointsBalance').textContent = data.points || 0;
+                    document.getElementById('employeeName').textContent = data.name || 'Unknown';
+                    document.getElementById('employeeDept').textContent = data.department || 'Unknown';
+                    document.getElementById('employeeManager').textContent = data.supervisor || 'Unknown';
+                } else {
+                    alert('Employee not found. Please check your Employee ID.');
+                }
+            } catch (error) {
+                alert('Error loading points. Please try again.');
+            }
+        }
+        
+        // Auto-load if employee ID is in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const empId = urlParams.get('id');
+        if (empId) {
+            document.getElementById('employeeId').value = empId;
+            loadPoints();
+        }
+    </script>
+</body>
+</html>

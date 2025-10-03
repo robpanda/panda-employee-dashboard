@@ -54,6 +54,8 @@ def lambda_handler(event, context):
             return handle_admin_users(event)
         elif path == '/create-admin':
             return create_super_admin(event)
+        elif path == '/points' or path.startswith('/points/'):
+            return handle_points(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -675,15 +677,77 @@ def handle_admin_users(event):
             'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
         }
 
+def handle_points(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+        path = event['requestContext']['http']['path']
+    else:
+        method = event.get('httpMethod', 'GET')
+        path = event.get('path', '/')
+    
+    if method == 'GET':
+        # Get points for specific employee or all employees
+        if path.startswith('/points/'):
+            emp_id = path.split('/')[-1]
+            try:
+                response = employees_table.scan(
+                    FilterExpression='id = :emp_id OR employee_id = :emp_id OR #eid = :emp_id',
+                    ExpressionAttributeNames={'#eid': 'Employee Id'},
+                    ExpressionAttributeValues={':emp_id': emp_id}
+                )
+                if response['Items']:
+                    emp = response['Items'][0]
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json'},
+                        'body': json.dumps({
+                            'employee_id': emp_id,
+                            'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
+                            'points': emp.get('points', emp.get('Panda Points', 0)),
+                            'department': emp.get('Department', ''),
+                            'supervisor': emp.get('supervisor', '')
+                        })
+                    }
+                else:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json'},
+                        'body': json.dumps({'error': 'Employee not found'})
+                    }
+            except Exception as e:
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': str(e)})
+                }
+        else:
+            # Get all employee points
+            try:
+                response = employees_table.scan()
+                points_data = []
+                for emp in response['Items']:
+                    points_data.append({
+                        'employee_id': emp.get('id', emp.get('employee_id', '')),
+                        'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
+                        'points': emp.get('points', emp.get('Panda Points', 0)),
+                        'department': emp.get('Department', ''),
+                        'supervisor': emp.get('supervisor', '')
+                    })
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'employees': points_data})
+                }
+            except Exception as e:
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': str(e)})
+                }
+
 def create_super_admin(event):
-    # Mock super admin creation
     return {
         'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            
-            
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
-        },
+        'headers': {'Content-Type': 'application/json'},
         'body': json.dumps({'message': 'Super admin already exists'})
     }

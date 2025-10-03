@@ -648,6 +648,12 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Panda Points Balance</label>
+                                    <input type="number" class="form-control" id="editPoints" min="0">
+                                </div>
+                            </div>
                         </form>
                     </div>
                     <div class="modal-footer">
@@ -754,7 +760,7 @@
                         <td>${manager}</td>
                         <td>${office}</td>
                         <td><span class="badge bg-${status === 'active' ? 'success' : 'danger'}">${status}</span></td>
-                        <td><span class="badge bg-warning text-dark">0 pts</span></td>
+                        <td><span class="badge bg-warning text-dark">${emp.points || emp['Panda Points'] || 0} pts</span></td>
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <button class="btn btn-outline-primary" onclick="editEmployee('${empId}')">
@@ -1169,8 +1175,20 @@
             });
             editDept.value = employee['Department'] || employee.department || '';
             
+            // Populate manager dropdown for edit form
+            const editMgr = document.getElementById('editManager');
+            editMgr.innerHTML = '<option value="">Select Manager</option>';
+            const uniqueManagers = [...new Set(employees.map(e => e.supervisor).filter(Boolean))];
+            uniqueManagers.forEach(manager => {
+                editMgr.innerHTML += `<option value="${manager}">${manager}</option>`;
+            });
+            editMgr.value = employee.supervisor || '';
+            
             const terminated = employee['Terminated'] || employee.terminated || 'No';
             document.getElementById('editStatus').value = terminated === 'Yes' ? 'terminated' : 'active';
+            
+            // Set points balance
+            document.getElementById('editPoints').value = employee.points || employee['Panda Points'] || 0;
 
             new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
         }
@@ -1182,7 +1200,10 @@
                 'Last Name': document.getElementById('editLastName').value,
                 'Email': document.getElementById('editEmail').value,
                 'Department': document.getElementById('editDepartment').value,
-                'Terminated': document.getElementById('editStatus').value === 'terminated' ? 'Yes' : 'No'
+                'supervisor': document.getElementById('editManager').value,
+                'Terminated': document.getElementById('editStatus').value === 'terminated' ? 'Yes' : 'No',
+                'points': parseInt(document.getElementById('editPoints').value) || 0,
+                'Panda Points': parseInt(document.getElementById('editPoints').value) || 0
             };
 
             try {
@@ -1218,9 +1239,28 @@
 
             const points = prompt(`Award points to ${employee['First Name']} ${employee['Last Name']}:`);
             if (points && !isNaN(points) && parseInt(points) > 0) {
-                // This would integrate with the points system
-                alert(`Awarded ${points} points to ${employee['First Name']} ${employee['Last Name']}`);
-                // TODO: Implement actual points awarding via API
+                const currentPoints = employee.points || employee['Panda Points'] || 0;
+                const newTotal = currentPoints + parseInt(points);
+                
+                try {
+                    const response = await fetch(`${API_URL}/employees/${empId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            'points': newTotal,
+                            'Panda Points': newTotal
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert(`Awarded ${points} points to ${employee['First Name']} ${employee['Last Name']}! New total: ${newTotal}`);
+                        await loadEmployees();
+                    } else {
+                        throw new Error('Failed to award points');
+                    }
+                } catch (error) {
+                    alert('Error awarding points: ' + error.message);
+                }
             }
         }
 
