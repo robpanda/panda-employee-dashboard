@@ -11,6 +11,7 @@ contacts_table = dynamodb.Table(os.environ.get('CONTACTS_TABLE', 'panda-contacts
 collections_table = dynamodb.Table(os.environ.get('COLLECTIONS_TABLE', 'panda-collections'))
 config_table = dynamodb.Table(os.environ.get('CONFIG_TABLE', 'panda-config'))
 points_history_table = dynamodb.Table(os.environ.get('POINTS_HISTORY_TABLE', 'panda-points-history'))
+referrals_table = dynamodb.Table(os.environ.get('REFERRALS_TABLE', 'panda-referrals'))
 
 def lambda_handler(event, context):
     # Handle both API Gateway and Function URL event formats
@@ -59,6 +60,8 @@ def lambda_handler(event, context):
             return handle_points(event)
         elif path == '/points-history':
             return handle_points_history(event)
+        elif path == '/referrals' or path.startswith('/referrals/'):
+            return handle_referrals(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -806,6 +809,136 @@ def handle_points_history(event):
                 'headers': {'Content-Type': 'application/json'},
                 'body': json.dumps({'error': str(e)})
             }
+
+def handle_referrals(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+        path = event['requestContext']['http']['path']
+    else:
+        method = event.get('httpMethod', 'GET')
+        path = event.get('path', '/')
+    
+    if method == 'GET':
+        if path.startswith('/referrals/employee/'):
+            employee_id = path.split('/')[-1]
+            try:
+                response = referrals_table.scan(
+                    FilterExpression='referred_by_id = :emp_id',
+                    ExpressionAttributeValues={':emp_id': employee_id}
+                )
+                referrals = response['Items']
+                
+                for referral in referrals:
+                    for key, value in referral.items():
+                        if isinstance(value, Decimal):
+                            referral[key] = float(value)
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'referrals': referrals})
+                }
+            except Exception as e:
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': str(e), 'referrals': []})
+                }
+        else:
+            try:
+                response = referrals_table.scan()
+                referrals = response['Items']
+                
+                for referral in referrals:
+                    for key, value in referral.items():
+                        if isinstance(value, Decimal):
+                            referral[key] = float(value)
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'referrals': referrals})
+                }
+            except Exception as e:
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': str(e), 'referrals': []})
+                }
+    
+    elif method == 'POST':
+        try:
+            body = json.loads(event.get('body', '{}'))
+            
+            referral_item = {
+                'id': str(uuid.uuid4()),
+                'name': body.get('name', ''),
+                'email': body.get('email', ''),
+                'phone': body.get('phone', ''),
+                'department': body.get('department', ''),
+                'referred_by_id': body.get('referred_by_id', ''),
+                'referred_by_name': body.get('referred_by_name', ''),
+                'status': body.get('status', 'new'),
+                'phone_screen_complete': body.get('phone_screen_complete', False),
+                'notes': body.get('notes', ''),
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            referrals_table.put_item(Item=referral_item)
+            
+            return {
+                'statusCode': 201,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'message': 'Referral created successfully', 'id': referral_item['id']})
+            }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'error': str(e)})
+            }
+    
+    elif method == 'PUT':
+        referral_id = path.split('/')[-1]
+        try:
+            body = json.loads(event.get('body', '{}'))
+            
+            response = referrals_table.get_item(Key={'id': referral_id})
+            if 'Item' not in response:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Referral not found'})
+                }
+            
+            referral = response['Item']
+            
+            for key, value in body.items():
+                if key not in ['id', 'created_at']:
+                    referral[key] = value
+            
+            referral['updated_at'] = datetime.now().isoformat()
+            
+            referrals_table.put_item(Item=referral)
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'message': 'Referral updated successfully'})
+            }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'error': str(e)})
+            }
+    
+    return {
+        'statusCode': 404,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({'error': 'Referrals endpoint not found'})
+    }
 
 def create_super_admin(event):
     return {

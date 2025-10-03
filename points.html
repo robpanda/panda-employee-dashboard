@@ -27,10 +27,67 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">Employee ID:</label>
-                            <input type="text" class="form-control" id="loginEmployeeId" placeholder="Enter your Employee ID">
+                            <label class="form-label">Email:</label>
+                            <input type="email" class="form-control" id="loginEmail" placeholder="Enter your email address">
                         </div>
-                        <button class="btn btn-primary w-100" onclick="login()">Login</button>
+                        <div class="mb-3">
+                            <label class="form-label">Password:</label>
+                            <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password">
+                        </div>
+                        <button class="btn btn-primary w-100 mb-3" onclick="login()">Login</button>
+                        <div class="text-center">
+                            <a href="#" class="text-muted" onclick="showResetPassword()">Reset Password</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Password Section -->
+        <div id="resetSection" class="row justify-content-center" style="display: none;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h3><i class="fas fa-key"></i> Reset Password</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Email:</label>
+                            <input type="email" class="form-control" id="resetEmail" placeholder="Enter your email address">
+                        </div>
+                        <button class="btn btn-warning w-100 mb-3" onclick="sendResetEmail()">Send Reset Link</button>
+                        <div class="text-center">
+                            <a href="#" class="text-muted" onclick="showLogin()">Back to Login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Section -->
+        <div id="changePasswordSection" class="row justify-content-center" style="display: none;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h3><i class="fas fa-lock"></i> Change Password</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password:</label>
+                            <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password:</label>
+                            <input type="password" class="form-control" id="newPassword" placeholder="Enter new password">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password:</label>
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password">
+                        </div>
+                        <button class="btn btn-success w-100 mb-3" onclick="changePassword()">Change Password</button>
+                        <div class="text-center">
+                            <a href="#" class="text-muted" onclick="showDashboard()">Back to Dashboard</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -48,9 +105,14 @@
                                     <h3 id="managerName">Points Manager Dashboard</h3>
                                     <p class="text-muted mb-0" id="managerInfo">Manage and award Panda Points to your team</p>
                                 </div>
-                                <button class="btn btn-outline-secondary" onclick="logout()">
-                                    <i class="fas fa-sign-out-alt"></i> Logout
-                                </button>
+                                <div>
+                                    <button class="btn btn-outline-info me-2" onclick="showChangePassword()">
+                                        <i class="fas fa-key"></i> Change Password
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -203,35 +265,132 @@
         let pointsHistory = [];
 
         async function login() {
-            const employeeId = document.getElementById('loginEmployeeId').value.trim();
-            if (!employeeId) {
-                alert('Please enter your Employee ID');
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
                 return;
             }
 
             try {
-                const response = await fetch(`${API_URL}/employees`);
-                const data = await response.json();
-                const employees = data.employees || data || [];
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
                 
-                const manager = employees.find(emp => 
-                    (emp.employee_id || emp.id) === employeeId && emp.points_manager === 'Yes'
-                );
-
-                if (!manager) {
-                    alert('Invalid Employee ID or you are not authorized as a Points Manager');
-                    return;
+                const result = await response.json();
+                
+                if (result.success && result.manager) {
+                    currentManager = result.manager;
+                    sessionStorage.setItem('pointsManager', JSON.stringify(result.manager));
+                    
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('dashboardSection').style.display = 'block';
+                    
+                    loadDashboard();
+                } else {
+                    alert(result.message || 'Invalid email or password');
                 }
-
-                currentManager = manager;
-                sessionStorage.setItem('pointsManager', JSON.stringify(manager));
-                
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dashboardSection').style.display = 'block';
-                
-                loadDashboard();
             } catch (error) {
                 alert('Error logging in. Please try again.');
+            }
+        }
+        
+        function showLogin() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('resetSection').style.display = 'none';
+            document.getElementById('changePasswordSection').style.display = 'none';
+        }
+        
+        function showResetPassword() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('resetSection').style.display = 'block';
+            document.getElementById('changePasswordSection').style.display = 'none';
+        }
+        
+        function showChangePassword() {
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('changePasswordSection').style.display = 'block';
+        }
+        
+        function showDashboard() {
+            document.getElementById('changePasswordSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'block';
+        }
+        
+        async function sendResetEmail() {
+            const email = document.getElementById('resetEmail').value.trim();
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Password reset link has been sent to your email');
+                    showLogin();
+                } else {
+                    alert(result.message || 'Error sending reset email');
+                }
+            } catch (error) {
+                alert('Error sending reset email. Please try again.');
+            }
+        }
+        
+        async function changePassword() {
+            const currentPwd = document.getElementById('currentPassword').value.trim();
+            const newPwd = document.getElementById('newPassword').value.trim();
+            const confirmPwd = document.getElementById('confirmPassword').value.trim();
+            
+            if (!currentPwd || !newPwd || !confirmPwd) {
+                alert('Please fill in all password fields');
+                return;
+            }
+            
+            if (newPwd !== confirmPwd) {
+                alert('New passwords do not match');
+                return;
+            }
+            
+            if (newPwd.length < 8) {
+                alert('New password must be at least 8 characters long');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: currentManager.Email || currentManager.email,
+                        currentPassword: currentPwd,
+                        newPassword: newPwd
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Password changed successfully');
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    showDashboard();
+                } else {
+                    alert(result.message || 'Error changing password');
+                }
+            } catch (error) {
+                alert('Error changing password. Please try again.');
             }
         }
 
@@ -240,7 +399,8 @@
             currentManager = null;
             document.getElementById('loginSection').style.display = 'block';
             document.getElementById('dashboardSection').style.display = 'none';
-            document.getElementById('loginEmployeeId').value = '';
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
         }
 
         async function loadDashboard() {

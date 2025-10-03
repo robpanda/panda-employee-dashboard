@@ -3,485 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Referral Management - Panda Admin</title>
+    <title>Employee Referrals - Panda Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #fafbfc;
-            min-height: 100vh;
-            color: #374151;
-            font-weight: 400;
-        }
-        .main-container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            overflow: hidden;
-            max-width: 1400px;
-            margin: 20px auto;
-            border: 1px solid #f3f4f6;
-        }
-        .utility-nav {
-            background: white;
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .nav-links {
-            display: flex;
-            gap: 4px;
-            flex: 1;
-        }
-        .nav-link {
-            color: #6b7280;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            transition: all 0.15s ease;
-            font-weight: 400;
-            font-size: 14px;
-        }
-        .nav-link:hover {
-            background: #f9fafb;
-            color: #374151;
-            text-decoration: none;
-        }
-        .nav-link.active {
-            background: #3b82f6;
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .logout-btn {
-            background: #f3f4f6;
-            color: #6b7280;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 400;
-            transition: all 0.15s ease;
-        }
-        .logout-btn:hover { 
-            background: #ef4444;
-            color: white;
-        }
-        .header {
-            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
-            color: #374151;
-            padding: 32px 40px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .logo img { height: 40px; }
-        .header h1 { 
-            margin: 16px 0 8px 0; 
-            font-size: 28px; 
-            font-weight: 600;
-            color: #111827;
-        }
-        .header p { 
-            color: #6b7280;
-            margin-bottom: 0;
-            font-size: 16px;
-            font-weight: 400;
-        }
-        .content-area {
-            padding: 32px 40px;
-            background: white;
-        }
-        .card {
-            border: 1px solid #f3f4f6;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            border-radius: 12px;
-            transition: all 0.15s ease;
-            background: white;
-        }
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: #e5e7eb;
-        }
-        .card-header {
-            background: #fafbfc;
-            border-bottom: 1px solid #f3f4f6;
-            font-weight: 500;
-            color: #374151;
-        }
-        .nav-pills .nav-link {
-            border-radius: 8px;
-            font-weight: 400;
-            color: #6b7280;
-            padding: 12px 20px;
-        }
-        .nav-pills .nav-link.active {
-            background: #3b82f6;
-            color: white;
-            font-weight: 500;
-        }
-        .nav-pills .nav-link:hover {
-            background: #f9fafb;
-            color: #374151;
-        }
-        .btn {
-            font-weight: 400;
-            border-radius: 8px;
-            transition: all 0.15s ease;
-        }
-        .table {
-            font-size: 14px;
-        }
-        .table th {
-            background: #fafbfc;
-            border-bottom: 1px solid #e5e7eb;
-            font-weight: 500;
-            color: #374151;
-        }
-        .table td {
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .badge {
-            font-weight: 400;
-            font-size: 12px;
-        }
+        body { font-family: 'Inter', sans-serif; background: #fafbfc; }
+        .card { border: 1px solid #f3f4f6; border-radius: 12px; }
+        .kanban-column { background: #f8f9fa; border-radius: 8px; min-height: 500px; }
+        .kanban-card { cursor: pointer; transition: all 0.2s; }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .badge-new { background: #6c757d; }
+        .badge-disqualified { background: #dc3545; }
+        .badge-no-phone { background: #fd7e14; }
+        .badge-contacted { background: #20c997; }
+        .badge-screened { background: #0dcaf0; }
+        .badge-offer { background: #6f42c1; }
+        .badge-hired { background: #198754; }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="utility-nav">
-            <div class="logo">
-                <img src="panda-logo.png" alt="Panda Exteriors">
-            </div>
-            <div class="nav-links">
-                <a href="/employee.html" class="nav-link">👥 Employees</a>
-                <a href="/points.html" class="nav-link">⭐ Points</a>
-                <a href="/leads.html" class="nav-link">📊 Leads</a>
-                <a href="/referrals.html" class="nav-link active">🤝 Referrals</a>
-                <a href="/assets.html" class="nav-link">📦 Assets</a>
-                <a href="/admin.html" class="nav-link">⚙️ Admin</a>
-            </div>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-        </div>
-        
-        <div class="header">
-            <h1>🤝 Referral Management</h1>
-            <p>Manage customer referrals and partner relationships</p>
-        </div>
-        
-        <div class="content-area">
-        
+    <div class="container-fluid mt-4">
+        <!-- Header -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white text-center">
+            <div class="col-12">
+                <div class="card">
                     <div class="card-body">
-                        <h3 id="totalAdvocates">0</h3>
-                        <p>Total Advocates</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white text-center">
-                    <div class="card-body">
-                        <h3 id="activeAdvocates">0</h3>
-                        <p>Active Advocates</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-dark text-center">
-                    <div class="card-body">
-                        <h3 id="totalReferrals">0</h3>
-                        <p>Total Referrals</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white text-center">
-                    <div class="card-body">
-                        <h3 id="conversionRate">0%</h3>
-                        <p>Conversion Rate</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <ul class="nav nav-pills nav-fill mb-4" id="referralTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="advocates-tab" data-bs-toggle="tab" data-bs-target="#advocates" type="button" role="tab">
-                    <i class="fas fa-users me-2"></i>Advocates
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="referrals-tab" data-bs-toggle="tab" data-bs-target="#referrals" type="button" role="tab">
-                    <i class="fas fa-handshake me-2"></i>Referrals
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
-                    <i class="fas fa-chart-bar me-2"></i>Analytics
-                </button>
-            </li>
-        </ul>
-
-        <div class="tab-content" id="referralTabContent">
-            <!-- Advocates Tab -->
-            <div class="tab-pane fade show active" id="advocates" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Advocate Directory</h5>
-                        <button class="btn btn-light btn-sm" onclick="addAdvocate()">
-                            <i class="fas fa-plus"></i> Add Advocate
-                        </button>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Location</th>
-                                        <th>MLM Code</th>
-                                        <th>Status</th>
-                                        <th>Last Login</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="advocatesTable">
-                                    <tr>
-                                        <td colspan="7" class="text-center">Loading advocates...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Referrals Tab -->
-            <div class="tab-pane fade" id="referrals" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0"><i class="fas fa-handshake me-2"></i>Referral Pipeline</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Referral ID</th>
-                                        <th>Referred By</th>
-                                        <th>Customer Name</th>
-                                        <th>Contact</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="referralsTable">
-                                    <tr>
-                                        <td colspan="7" class="text-center">Loading referrals...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Analytics Tab -->
-            <div class="tab-pane fade" id="analytics" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Referral Sources</h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3><i class="fas fa-users"></i> Employee Referrals</h3>
+                                <p class="text-muted mb-0">Track and manage employee referrals through the hiring process</p>
                             </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <p><strong>Maryland:</strong> <span id="mdCount">0</span></p>
-                                        <p><strong>Virginia:</strong> <span id="vaCount">0</span></p>
-                                        <p><strong>Pennsylvania:</strong> <span id="paCount">0</span></p>
-                                    </div>
-                                    <div class="col-6">
-                                        <p><strong>New Jersey:</strong> <span id="njCount">0</span></p>
-                                        <p><strong>Delaware:</strong> <span id="deCount">0</span></p>
-                                        <p><strong>Others:</strong> <span id="otherCount">0</span></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Performance Metrics</h5>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Top Advocate:</strong> <span id="topAdvocate">Loading...</span></p>
-                                <p><strong>Avg Referrals/Month:</strong> <span id="avgReferrals">0</span></p>
-                                <p><strong>Success Rate:</strong> <span id="successRate">0%</span></p>
-                                <p><strong>Revenue Generated:</strong> <span id="revenueGenerated">$0</span></p>
-                            </div>
+                            <button class="btn btn-primary" onclick="refreshReferrals()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Stats Overview -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-primary" id="totalReferrals">0</h4>
+                        <p class="mb-0">Total Referrals</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-success" id="totalHired">0</h4>
+                        <p class="mb-0">Hired</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-info" id="totalScreened">0</h4>
+                        <p class="mb-0">Phone Screens</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-warning" id="topReferrer">-</h4>
+                        <p class="mb-0">Top Referrer</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-secondary" id="conversionRate">0%</h4>
+                        <p class="mb-0">Hire Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="row" id="kanbanBoard">
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-new">New</span> (<span id="count-new">0</span>)</h6>
+                            <div id="column-new" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-disqualified">Disqualified</span> (<span id="count-disqualified">0</span>)</h6>
+                            <div id="column-disqualified" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-no-phone">No Phone</span> (<span id="count-no-phone">0</span>)</h6>
+                            <div id="column-no-phone" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-contacted">Contacted</span> (<span id="count-contacted">0</span>)</h6>
+                            <div id="column-contacted" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-screened">Screened</span> (<span id="count-screened">0</span>)</h6>
+                            <div id="column-screened" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-offer">Sent Offer</span> (<span id="count-offer">0</span>)</h6>
+                            <div id="column-offer" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-hired">Hired</span> (<span id="count-hired">0</span>)</h6>
+                            <div id="column-hired" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Detail Modal -->
+    <div class="modal fade" id="referralModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Referral Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Candidate Information</h6>
+                            <p><strong>Name:</strong> <span id="modal-name"></span></p>
+                            <p><strong>Email:</strong> <span id="modal-email"></span></p>
+                            <p><strong>Phone:</strong> <span id="modal-phone"></span></p>
+                            <p><strong>Department:</strong> <span id="modal-department"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Referral Information</h6>
+                            <p><strong>Referred By:</strong> <span id="modal-referrer"></span></p>
+                            <p><strong>Date:</strong> <span id="modal-date"></span></p>
+                            <p><strong>Status:</strong> <span id="modal-status"></span></p>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="modal-phone-screen">
+                                <label class="form-check-label">Phone Screen Complete</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Status</h6>
+                            <select class="form-select" id="modal-status-select">
+                                <option value="new">New</option>
+                                <option value="disqualified">Disqualified</option>
+                                <option value="no-phone">No Phone</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="screened">Screened</option>
+                                <option value="offer">Sent Offer</option>
+                                <option value="hired">Hired</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Notes</h6>
+                            <textarea class="form-control" id="modal-notes" rows="4" placeholder="Add notes about this referral..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveReferral()">Save Changes</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function logout() {
-            sessionStorage.removeItem('pandaAdmin');
-            sessionStorage.removeItem('adminUser');
-            window.location.href = '/login.html';
-        }
-        const REFERRAL_API = 'https://panda-exteriors-map-bucket.s3.amazonaws.com/leads/referrals/';
-        let advocates = [];
+        const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
         let referrals = [];
+        let currentReferral = null;
+
+        // Custom CSS for 7 columns
+        const style = document.createElement('style');
+        style.textContent = '.col-md-1-7 { flex: 0 0 14.285714%; max-width: 14.285714%; }';
+        document.head.appendChild(style);
 
         document.addEventListener('DOMContentLoaded', function() {
-            loadReferralData();
+            loadReferrals();
         });
 
-        async function loadReferralData() {
+        async function loadReferrals() {
             try {
-                // Load advocates data
-                const advocatesResponse = await fetch(`${REFERRAL_API}advocates.json`);
-                const advocatesData = await advocatesResponse.json();
-                advocates = advocatesData.advocates || [];
-                
-                // Load referrals data
-                const referralsResponse = await fetch(`${REFERRAL_API}leads.json`);
-                const referralsData = await referralsResponse.json();
-                referrals = referralsData.leads || [];
-                
+                const response = await fetch(`${API_URL}/referrals`);
+                const data = await response.json();
+                referrals = data.referrals || [];
+                displayKanban();
                 updateStats();
-                loadAdvocatesTable();
-                loadReferralsTable();
-                updateAnalytics();
-                
             } catch (error) {
-                console.error('Error loading referral data:', error);
-                document.getElementById('advocatesTable').innerHTML = 
-                    '<tr><td colspan="7" class="text-center text-danger">Error loading data</td></tr>';
+                console.error('Error loading referrals:', error);
+                referrals = [];
+                displayKanban();
             }
+        }
+
+        function displayKanban() {
+            const columns = ['new', 'disqualified', 'no-phone', 'contacted', 'screened', 'offer', 'hired'];
+            
+            columns.forEach(status => {
+                const column = document.getElementById(`column-${status}`);
+                const statusReferrals = referrals.filter(r => r.status === status);
+                
+                column.innerHTML = statusReferrals.map(referral => `
+                    <div class="card kanban-card mb-2" onclick="openReferralModal('${referral.id}')">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">${referral.name}</h6>
+                            <small class="text-muted">${referral.department}</small><br>
+                            <small class="text-primary">By: ${referral.referred_by_name}</small>
+                            ${referral.phone_screen_complete ? '<br><small class="text-success"><i class="fas fa-check"></i> Screened</small>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById(`count-${status}`).textContent = statusReferrals.length;
+            });
         }
 
         function updateStats() {
-            document.getElementById('totalAdvocates').textContent = advocates.length;
-            document.getElementById('activeAdvocates').textContent = advocates.filter(a => a.attributes.last_logged_in_at).length;
-            document.getElementById('totalReferrals').textContent = referrals.length;
+            const total = referrals.length;
+            const hired = referrals.filter(r => r.status === 'hired').length;
+            const screened = referrals.filter(r => r.phone_screen_complete).length;
             
-            const conversionRate = advocates.length > 0 ? Math.round((referrals.length / advocates.length) * 100) : 0;
-            document.getElementById('conversionRate').textContent = conversionRate + '%';
+            document.getElementById('totalReferrals').textContent = total;
+            document.getElementById('totalHired').textContent = hired;
+            document.getElementById('totalScreened').textContent = screened;
+            document.getElementById('conversionRate').textContent = total > 0 ? Math.round((hired / total) * 100) + '%' : '0%';
+            
+            // Top referrer
+            const referrerCounts = {};
+            referrals.forEach(r => {
+                referrerCounts[r.referred_by_name] = (referrerCounts[r.referred_by_name] || 0) + 1;
+            });
+            
+            const topReferrer = Object.keys(referrerCounts).reduce((a, b) => 
+                referrerCounts[a] > referrerCounts[b] ? a : b, '-'
+            );
+            
+            document.getElementById('topReferrer').textContent = topReferrer;
         }
 
-        function loadAdvocatesTable() {
-            const tbody = document.getElementById('advocatesTable');
-            tbody.innerHTML = '';
+        function openReferralModal(referralId) {
+            currentReferral = referrals.find(r => r.id === referralId);
+            if (!currentReferral) return;
             
-            advocates.slice(0, 50).forEach(advocate => {
-                const attr = advocate.attributes;
-                const lastLogin = attr.last_logged_in_at ? new Date(attr.last_logged_in_at).toLocaleDateString() : 'Never';
-                const status = attr.last_logged_in_at ? 'Active' : 'Inactive';
-                const statusClass = attr.last_logged_in_at ? 'success' : 'secondary';
+            document.getElementById('modal-name').textContent = currentReferral.name;
+            document.getElementById('modal-email').textContent = currentReferral.email;
+            document.getElementById('modal-phone').textContent = currentReferral.phone;
+            document.getElementById('modal-department').textContent = currentReferral.department;
+            document.getElementById('modal-referrer').textContent = currentReferral.referred_by_name;
+            document.getElementById('modal-date').textContent = new Date(currentReferral.created_at).toLocaleDateString();
+            document.getElementById('modal-status').textContent = currentReferral.status;
+            document.getElementById('modal-status-select').value = currentReferral.status;
+            document.getElementById('modal-phone-screen').checked = currentReferral.phone_screen_complete || false;
+            document.getElementById('modal-notes').value = currentReferral.notes || '';
+            
+            new bootstrap.Modal(document.getElementById('referralModal')).show();
+        }
+
+        async function saveReferral() {
+            if (!currentReferral) return;
+            
+            const updates = {
+                status: document.getElementById('modal-status-select').value,
+                phone_screen_complete: document.getElementById('modal-phone-screen').checked,
+                notes: document.getElementById('modal-notes').value
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/referrals/${currentReferral.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
                 
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${attr.firstname} ${attr.lastname}</td>
-                        <td>${attr.email}</td>
-                        <td>${attr.city}, ${attr.state}</td>
-                        <td><code>${attr.mlm_code}</code></td>
-                        <td><span class="badge bg-${statusClass}">${status}</span></td>
-                        <td>${lastLogin}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewAdvocate(${attr.advocate_id})">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function loadReferralsTable() {
-            const tbody = document.getElementById('referralsTable');
-            tbody.innerHTML = '';
-            
-            referrals.slice(0, 50).forEach(referral => {
-                const attr = referral.attributes;
-                const referredBy = advocates.find(a => a.attributes.advocate_id === attr.advocate_id);
-                const referrerName = referredBy ? `${referredBy.attributes.firstname} ${referredBy.attributes.lastname}` : 'Unknown';
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${attr.id || 'N/A'}</td>
-                        <td>${referrerName}</td>
-                        <td>${attr.firstname} ${attr.lastname}</td>
-                        <td>${attr.email}<br><small>${attr.phone || 'No phone'}</small></td>
-                        <td><span class="badge bg-info">${attr.status || 'New'}</span></td>
-                        <td>${new Date(attr.created_at).toLocaleDateString()}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewReferral('${attr.id}')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function updateAnalytics() {
-            // Count by state
-            const stateCounts = {};
-            advocates.forEach(advocate => {
-                const state = advocate.attributes.state?.toLowerCase() || 'other';
-                stateCounts[state] = (stateCounts[state] || 0) + 1;
-            });
-            
-            document.getElementById('mdCount').textContent = stateCounts.maryland || 0;
-            document.getElementById('vaCount').textContent = stateCounts.virginia || 0;
-            document.getElementById('paCount').textContent = stateCounts.pennsylvania || 0;
-            document.getElementById('njCount').textContent = stateCounts['new jersey'] || 0;
-            document.getElementById('deCount').textContent = stateCounts.delaware || 0;
-            
-            // Find top advocate
-            const topAdvocate = advocates.length > 0 ? `${advocates[0].attributes.firstname} ${advocates[0].attributes.lastname}` : 'N/A';
-            document.getElementById('topAdvocate').textContent = topAdvocate;
-            
-            document.getElementById('avgReferrals').textContent = Math.round(referrals.length / 12);
-            document.getElementById('successRate').textContent = '85%';
-            document.getElementById('revenueGenerated').textContent = '$' + (referrals.length * 15000).toLocaleString();
-        }
-
-        function refreshData() {
-            loadReferralData();
-        }
-
-        function addAdvocate() {
-            alert('Add Advocate - Integration with GetTheReferral API');
-        }
-
-        function viewAdvocate(id) {
-            const advocate = advocates.find(a => a.attributes.advocate_id === id);
-            if (advocate) {
-                const attr = advocate.attributes;
-                alert(`Advocate Details:\nName: ${attr.firstname} ${attr.lastname}\nEmail: ${attr.email}\nMLM Code: ${attr.mlm_code}\nLocation: ${attr.city}, ${attr.state}`);
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('referralModal')).hide();
+                    loadReferrals();
+                } else {
+                    alert('Error updating referral');
+                }
+            } catch (error) {
+                alert('Error updating referral');
             }
         }
 
-        function viewReferral(id) {
-            alert(`Viewing referral ${id} - Integration with CRM system`);
+        function refreshReferrals() {
+            loadReferrals();
         }
     </script>
 </body>
