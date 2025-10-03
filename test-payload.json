@@ -1,11 +1,9 @@
 {
   "requestContext": {
     "http": {
-      "method": "GET",
-      "path": "/employees"
+      "method": "POST",
+      "path": "/employee-login"
     }
   },
-  "headers": {
-    "Content-Type": "application/json"
-  }
+  "body": "{\"email\":\"rb.winters@me.com\",\"password\":\"Panda2025!\"}"
 }

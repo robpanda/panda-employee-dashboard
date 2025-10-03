@@ -1037,7 +1037,7 @@ def handle_employee_login(event):
                 'email': employee.get('Email', ''),
                 'department': employee.get('Department', ''),
                 'position': employee.get('Position', ''),
-                'points': employee.get('points', employee.get('Panda Points', 0)),
+                'points': float(employee.get('points', employee.get('Panda Points', 0)) or 0),
                 'supervisor': employee.get('supervisor', ''),
                 'office': employee.get('office', '')
             }
