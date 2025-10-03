@@ -753,7 +753,8 @@ def handle_points(event):
                         'body': json.dumps({
                             'employee_id': emp_id,
                             'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
-                            'points': emp.get('points', emp.get('Panda Points', 0)),
+                            'points': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
+                            'total_received': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
                             'department': emp.get('Department', ''),
                             'supervisor': emp.get('supervisor', '')
                         })
@@ -783,7 +784,7 @@ def handle_points(event):
                     points_data.append({
                         'employee_id': emp.get('id', emp.get('employee_id', '')),
                         'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
-                        'points': emp.get('points', emp.get('Panda Points', 0)),
+                        'points': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
                         'department': emp.get('Department', ''),
                         'supervisor': emp.get('supervisor', '')
                     })
