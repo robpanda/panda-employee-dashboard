@@ -412,6 +412,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" onclick="archiveReferral()">
+                        <i class="fas fa-archive"></i> Archive
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" onclick="saveReferral()">Save Changes</button>
                 </div>
@@ -592,6 +595,36 @@
                 }
             } catch (error) {
                 alert('Error updating referral');
+            }
+        }
+        
+        async function archiveReferral() {
+            if (!currentReferral) return;
+            
+            if (!confirm('Are you sure you want to archive this referral? It will be removed from the kanban board.')) {
+                return;
+            }
+            
+            const updates = {
+                status: 'archived',
+                notes: document.getElementById('modal-notes').value
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/referrals/${currentReferral.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('referralModal')).hide();
+                    loadReferrals();
+                } else {
+                    alert('Error archiving referral');
+                }
+            } catch (error) {
+                alert('Error archiving referral');
             }
         }
 
