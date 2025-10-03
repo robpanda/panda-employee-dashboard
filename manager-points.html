@@ -35,9 +35,15 @@
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Employee</th>
-                                            <th>Department</th>
-                                            <th>Current Points</th>
+                                            <th style="cursor: pointer;" onclick="sortTeam('name')">
+                                                Employee <i class="fas fa-sort" id="sort-name"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTeam('department')">
+                                                Department <i class="fas fa-sort" id="sort-department"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTeam('points')">
+                                                Current Points <i class="fas fa-sort" id="sort-points"></i>
+                                            </th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -54,6 +60,8 @@
     <script>
         const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
         let teamMembers = [];
+        let sortColumn = 'name';
+        let sortDirection = 'asc';
         
         async function loadTeam() {
             const managerName = document.getElementById('managerName').value.trim();
@@ -68,7 +76,7 @@
                 
                 teamMembers = data.employees.filter(emp => 
                     emp.supervisor && emp.supervisor.toLowerCase().includes(managerName.toLowerCase())
-                );
+                ).sort((a, b) => a.name.localeCompare(b.name));
                 
                 if (teamMembers.length === 0) {
                     alert('No team members found. Please check your name spelling.');
@@ -84,7 +92,20 @@
         
         function displayTeam() {
             const tbody = document.getElementById('teamTable');
-            tbody.innerHTML = teamMembers.map(emp => `
+            
+            // Sort team members
+            const sortedTeam = [...teamMembers].sort((a, b) => {
+                if (sortColumn === 'name') {
+                    return sortDirection === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                } else if (sortColumn === 'department') {
+                    return sortDirection === 'asc' ? a.department.localeCompare(b.department) : b.department.localeCompare(a.department);
+                } else if (sortColumn === 'points') {
+                    return sortDirection === 'asc' ? a.points - b.points : b.points - a.points;
+                }
+                return a.name.localeCompare(b.name);
+            });
+            
+            tbody.innerHTML = sortedTeam.map(emp => `
                 <tr>
                     <td>
                         <strong>${emp.name}</strong><br>
@@ -127,6 +148,27 @@
                     alert('Error awarding points: ' + error.message);
                 }
             }
+        }
+        
+        function sortTeam(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            // Update sort icons
+            document.querySelectorAll('[id^="sort-"]').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            
+            const icon = document.getElementById(`sort-${column}`);
+            if (icon) {
+                icon.className = sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            }
+            
+            displayTeam();
         }
     </script>
 </body>

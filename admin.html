@@ -385,13 +385,27 @@
                                 <table class="table table-hover mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Employee</th>
-                                            <th>ID</th>
-                                            <th>Department</th>
-                                            <th>Manager</th>
-                                            <th>Office</th>
-                                            <th>Status</th>
-                                            <th>Points Balance</th>
+                                            <th style="cursor: pointer;" onclick="sortTable('name')">
+                                                Employee <i class="fas fa-sort" id="sort-name"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTable('id')">
+                                                ID <i class="fas fa-sort" id="sort-id"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTable('department')">
+                                                Department <i class="fas fa-sort" id="sort-department"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTable('manager')">
+                                                Manager <i class="fas fa-sort" id="sort-manager"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTable('office')">
+                                                Office <i class="fas fa-sort" id="sort-office"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTable('status')">
+                                                Status <i class="fas fa-sort" id="sort-status"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortTable('points')">
+                                                Points Balance <i class="fas fa-sort" id="sort-points"></i>
+                                            </th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -698,6 +712,8 @@
         let employees = [];
         let departments = ['Sales', 'Operations', 'Administration', 'Marketing', 'Finance', 'IT'];
         let managers = [];
+        let sortColumn = 'name';
+        let sortDirection = 'asc';
 
         document.addEventListener('DOMContentLoaded', function() {
             loadEmployees();
@@ -735,7 +751,46 @@
                 return;
             }
 
-            tbody.innerHTML = employees.map(emp => {
+            // Sort employees alphabetically by name by default
+            const sortedEmployees = [...employees].sort((a, b) => {
+                const nameA = (a['First Name'] && a['Last Name'] ? 
+                    `${a['First Name']} ${a['Last Name']}` : 
+                    (a.name || `${a.first_name || ''} ${a.last_name || ''}`)).toLowerCase();
+                const nameB = (b['First Name'] && b['Last Name'] ? 
+                    `${b['First Name']} ${b['Last Name']}` : 
+                    (b.name || `${b.first_name || ''} ${b.last_name || ''}`)).toLowerCase();
+                
+                if (sortColumn === 'name') {
+                    return sortDirection === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+                } else if (sortColumn === 'id') {
+                    const idA = (a.employee_id || a.id || '').toString();
+                    const idB = (b.employee_id || b.id || '').toString();
+                    return sortDirection === 'asc' ? idA.localeCompare(idB) : idB.localeCompare(idA);
+                } else if (sortColumn === 'department') {
+                    const deptA = (a['Department'] || a.department || '').toLowerCase();
+                    const deptB = (b['Department'] || b.department || '').toLowerCase();
+                    return sortDirection === 'asc' ? deptA.localeCompare(deptB) : deptB.localeCompare(deptA);
+                } else if (sortColumn === 'manager') {
+                    const mgrA = (a.manager || a.supervisor || '').toLowerCase();
+                    const mgrB = (b.manager || b.supervisor || '').toLowerCase();
+                    return sortDirection === 'asc' ? mgrA.localeCompare(mgrB) : mgrB.localeCompare(mgrA);
+                } else if (sortColumn === 'office') {
+                    const officeA = (a.office || '').toLowerCase();
+                    const officeB = (b.office || '').toLowerCase();
+                    return sortDirection === 'asc' ? officeA.localeCompare(officeB) : officeB.localeCompare(officeA);
+                } else if (sortColumn === 'status') {
+                    const statusA = ((a['Terminated'] || a.terminated || 'No') === 'Yes' ? 'terminated' : 'active');
+                    const statusB = ((b['Terminated'] || b.terminated || 'No') === 'Yes' ? 'terminated' : 'active');
+                    return sortDirection === 'asc' ? statusA.localeCompare(statusB) : statusB.localeCompare(statusA);
+                } else if (sortColumn === 'points') {
+                    const pointsA = parseInt(a.points || a['Panda Points'] || 0);
+                    const pointsB = parseInt(b.points || b['Panda Points'] || 0);
+                    return sortDirection === 'asc' ? pointsA - pointsB : pointsB - pointsA;
+                }
+                return nameA.localeCompare(nameB);
+            });
+
+            tbody.innerHTML = sortedEmployees.map(emp => {
                 const name = emp['First Name'] && emp['Last Name'] ? 
                     `${emp['First Name']} ${emp['Last Name']}` : 
                     (emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`);
@@ -798,7 +853,7 @@
                 }
             });
             
-            // Populate manager dropdown
+            // Populate manager dropdown - alphabetically sorted
             const empManager = document.getElementById('empManager');
             const editManager = document.getElementById('editManager');
             const uniqueManagers = [...new Set(employees.map(e => {
@@ -806,7 +861,7 @@
                     `${e['First Name']} ${e['Last Name']}` : 
                     (e.name || `${e.first_name || ''} ${e.last_name || ''}`);
                 return name;
-            }).filter(Boolean))];
+            }).filter(Boolean))].sort((a, b) => a.localeCompare(b));
             
             [empManager, editManager].forEach(select => {
                 if (select) {
@@ -1019,7 +1074,7 @@
         }
 
         function loadManagers() {
-            const uniqueSupervisors = [...new Set(employees.map(e => e.supervisor).filter(Boolean))];
+            const uniqueSupervisors = [...new Set(employees.map(e => e.supervisor).filter(Boolean))].sort((a, b) => a.localeCompare(b));
             
             const container = document.getElementById('managersList');
             container.innerHTML = uniqueSupervisors.map(supervisor => {
@@ -1175,10 +1230,10 @@
             });
             editDept.value = employee['Department'] || employee.department || '';
             
-            // Populate manager dropdown for edit form
+            // Populate manager dropdown for edit form - alphabetically sorted
             const editMgr = document.getElementById('editManager');
             editMgr.innerHTML = '<option value="">Select Manager</option>';
-            const uniqueManagers = [...new Set(employees.map(e => e.supervisor).filter(Boolean))];
+            const uniqueManagers = [...new Set(employees.map(e => e.supervisor).filter(Boolean))].sort((a, b) => a.localeCompare(b));
             uniqueManagers.forEach(manager => {
                 editMgr.innerHTML += `<option value="${manager}">${manager}</option>`;
             });
@@ -1262,6 +1317,27 @@
                     alert('Error awarding points: ' + error.message);
                 }
             }
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            // Update sort icons
+            document.querySelectorAll('[id^="sort-"]').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            
+            const icon = document.getElementById(`sort-${column}`);
+            if (icon) {
+                icon.className = sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            }
+            
+            displayEmployees();
         }
 
         function viewAdminDetails(email) {
