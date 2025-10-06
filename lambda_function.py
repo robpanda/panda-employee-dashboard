@@ -358,9 +358,7 @@ def update_employee(event):
         
         return {
             'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                },
+            'headers': get_cors_headers(),
             'body': json.dumps({'message': 'Employee updated successfully'})
         }
         
