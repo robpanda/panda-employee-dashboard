@@ -911,8 +911,8 @@ def handle_gift_cards(event):
 def create_shopify_gift_card(value, employee):
     import requests
     
-    # Shopify API credentials (add to environment variables)
-    SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', 'pandaexteriors')
+    # Shopify API credentials from environment variables
+    SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', 'my-cred')
     SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
     
     if not SHOPIFY_ACCESS_TOKEN:
