@@ -5,22 +5,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import uuid
 
-def get_cors_headers(origin=None):
-    # Allow both admin and employee portals
-    allowed_origins = [
-        'https://www.pandaadmin.com',
-        'https://pandaadmin.com', 
-        'https://mypandapoints.com',
-        'https://www.mypandapoints.com'
-    ]
-    
-    # Use the requesting origin if it's in our allowed list, otherwise default to pandaadmin
-    cors_origin = 'https://www.pandaadmin.com'
-    if origin and origin in allowed_origins:
-        cors_origin = origin
-    
+def get_cors_headers():
     return {
-        'Access-Control-Allow-Origin': cors_origin,
+        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
         'Content-Type': 'application/json'
@@ -42,11 +29,6 @@ except:
 def lambda_handler(event, context):
     print(f'LAMBDA DEBUG: Full event: {json.dumps(event, default=str)}')
     
-    # Extract origin header for CORS
-    origin = None
-    if 'headers' in event:
-        origin = event['headers'].get('origin') or event['headers'].get('Origin')
-    
     # Handle both API Gateway and Function URL event formats
     if 'requestContext' in event and 'http' in event['requestContext']:
         # Function URL format
@@ -64,23 +46,20 @@ def lambda_handler(event, context):
         path = '/'
         print(f'LAMBDA DEBUG: Using fallback format')
     
-    print(f'LAMBDA DEBUG: Method={http_method}, Path={path}, Origin={origin}, Event keys: {list(event.keys())}')
-    
-    # Store origin in context for use in response functions
-    context.origin = origin
+    print(f'LAMBDA DEBUG: Method={http_method}, Path={path}, Event keys: {list(event.keys())}')
     
     try:
         if http_method == 'OPTIONS':
             return {
                 'statusCode': 200,
-                'headers': get_cors_headers(origin),
+                'headers': get_cors_headers(),
                 'body': ''
             }
         elif path == '/employees':
             print(f'LAMBDA DEBUG: Matched /employees route')
             if http_method == 'GET':
                 print(f'LAMBDA DEBUG: Calling get_employees')
-                return get_employees(event, origin)
+                return get_employees(event)
             elif http_method == 'POST':
                 print(f'LAMBDA DEBUG: Calling create_employee')
                 return create_employee(event)
@@ -114,13 +93,13 @@ def lambda_handler(event, context):
             return handle_referrals(event)
         elif path == '/employee-login':
             print(f'LAMBDA DEBUG: Calling handle_employee_login')
-            return handle_employee_login(event, origin)
+            return handle_employee_login(event)
         elif path == '/admin-login':
             print(f'LAMBDA DEBUG: Calling handle_admin_login')
             return handle_admin_login(event)
         elif path == '/gift-cards':
             print(f'LAMBDA DEBUG: Calling handle_gift_cards')
-            return handle_gift_cards(event, origin)
+            return handle_gift_cards(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -161,7 +140,7 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
-def get_employees(event, origin=None):
+def get_employees(event):
     try:
         print(f'GET_EMPLOYEES: Starting function')
         query_params = event.get('queryStringParameters') or {}
@@ -196,7 +175,7 @@ def get_employees(event, origin=None):
         print(f'GET_EMPLOYEES: Returning {len(items)} employees')
         return {
             'statusCode': 200,
-            'headers': get_cors_headers(origin),
+            'headers': get_cors_headers(),
             'body': json.dumps({'employees': items})
         }
     except Exception as e:
@@ -815,7 +794,7 @@ def handle_points(event):
                     'body': json.dumps({'error': str(e)})
                 }
 
-def handle_gift_cards(event, origin=None):
+def handle_gift_cards(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
         method = event['requestContext']['http']['method']
     else:
@@ -830,7 +809,7 @@ def handle_gift_cards(event, origin=None):
             if not employee_id or points_to_redeem <= 0:
                 return {
                     'statusCode': 400,
-                    'headers': get_cors_headers(origin),
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': 'Employee ID and points required'})
                 }
             
@@ -843,7 +822,7 @@ def handle_gift_cards(event, origin=None):
             if not response['Items']:
                 return {
                     'statusCode': 404,
-                    'headers': get_cors_headers(origin),
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': 'Employee not found'})
                 }
             
@@ -853,7 +832,7 @@ def handle_gift_cards(event, origin=None):
             if current_points < points_to_redeem:
                 return {
                     'statusCode': 400,
-                    'headers': get_cors_headers(origin),
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': 'Insufficient points balance'})
                 }
             
@@ -899,7 +878,7 @@ def handle_gift_cards(event, origin=None):
                 
                 return {
                     'statusCode': 200,
-                    'headers': get_cors_headers(origin),
+                    'headers': get_cors_headers(),
                     'body': json.dumps({
                         'success': True,
                         'gift_card_code': gift_card_code,
@@ -911,7 +890,7 @@ def handle_gift_cards(event, origin=None):
             else:
                 return {
                     'statusCode': 500,
-                    'headers': get_cors_headers(origin),
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': 'Failed to create gift card'})
                 }
                 
@@ -919,13 +898,13 @@ def handle_gift_cards(event, origin=None):
             print(f'Gift card redemption error: {e}')
             return {
                 'statusCode': 500,
-                'headers': get_cors_headers(origin),
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': 'Redemption failed'})
             }
     
     return {
         'statusCode': 405,
-        'headers': get_cors_headers(origin),
+        'headers': get_cors_headers(),
         'body': json.dumps({'error': 'Method not allowed'})
     }
 
