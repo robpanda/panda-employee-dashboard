@@ -97,6 +97,9 @@ def lambda_handler(event, context):
         elif path == '/admin-login':
             print(f'LAMBDA DEBUG: Calling handle_admin_login')
             return handle_admin_login(event)
+        elif path == '/gift-cards':
+            print(f'LAMBDA DEBUG: Calling handle_gift_cards')
+            return handle_gift_cards(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -802,6 +805,157 @@ def handle_points(event):
                 },
                     'body': json.dumps({'error': str(e)})
                 }
+
+def handle_gift_cards(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'POST')
+    
+    if method == 'POST':
+        try:
+            body = json.loads(event.get('body', '{}'))
+            employee_id = body.get('employee_id')
+            points_to_redeem = int(body.get('points', 0))
+            
+            if not employee_id or points_to_redeem <= 0:
+                return {
+                    'statusCode': 400,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Employee ID and points required'})
+                }
+            
+            # Get employee data
+            response = employees_table.scan(
+                FilterExpression='id = :emp_id OR employee_id = :emp_id',
+                ExpressionAttributeValues={':emp_id': employee_id}
+            )
+            
+            if not response['Items']:
+                return {
+                    'statusCode': 404,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Employee not found'})
+                }
+            
+            employee = response['Items'][0]
+            current_points = float(employee.get('points', employee.get('Panda Points', 0)) or 0)
+            
+            if current_points < points_to_redeem:
+                return {
+                    'statusCode': 400,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Insufficient points balance'})
+                }
+            
+            # Create Shopify gift card
+            gift_card_code = create_shopify_gift_card(points_to_redeem, employee)
+            
+            if gift_card_code:
+                # Deduct points from employee
+                new_balance = current_points - points_to_redeem
+                employees_table.put_item(Item={
+                    **employee,
+                    'points': new_balance,
+                    'Panda Points': new_balance,
+                    'updated_at': datetime.now().isoformat()
+                })
+                
+                # Record redemption
+                redemption_record = {
+                    'id': str(uuid.uuid4()),
+                    'employee_id': employee_id,
+                    'employee_name': f"{employee.get('First Name', '')} {employee.get('Last Name', '')}".strip(),
+                    'points_redeemed': points_to_redeem,
+                    'gift_card_code': gift_card_code,
+                    'gift_card_value': points_to_redeem,
+                    'redeemed_at': datetime.now().isoformat(),
+                    'status': 'active'
+                }
+                
+                # Store in points history or create redemptions table
+                points_history_table.put_item(Item={
+                    'id': str(uuid.uuid4()),
+                    'employee_id': employee_id,
+                    'employee_name': redemption_record['employee_name'],
+                    'points': -points_to_redeem,
+                    'reason': f'Gift card redemption: {gift_card_code}',
+                    'awarded_by': 'system',
+                    'awarded_by_name': 'Automated Redemption',
+                    'date': datetime.now().isoformat(),
+                    'created_at': datetime.now().isoformat(),
+                    'type': 'redemption',
+                    'gift_card_code': gift_card_code
+                })
+                
+                return {
+                    'statusCode': 200,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({
+                        'success': True,
+                        'gift_card_code': gift_card_code,
+                        'value': points_to_redeem,
+                        'new_balance': new_balance,
+                        'message': f'Successfully redeemed {points_to_redeem} points for ${points_to_redeem} gift card'
+                    })
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Failed to create gift card'})
+                }
+                
+        except Exception as e:
+            print(f'Gift card redemption error: {e}')
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Redemption failed'})
+            }
+    
+    return {
+        'statusCode': 405,
+        'headers': get_cors_headers(),
+        'body': json.dumps({'error': 'Method not allowed'})
+    }
+
+def create_shopify_gift_card(value, employee):
+    import requests
+    
+    # Shopify API credentials (add to environment variables)
+    SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', 'pandaexteriors')
+    SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
+    
+    if not SHOPIFY_ACCESS_TOKEN:
+        print('Shopify access token not configured')
+        return None
+    
+    url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/gift_cards.json'
+    headers = {
+        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+        'Content-Type': 'application/json'
+    }
+    
+    gift_card_data = {
+        'gift_card': {
+            'initial_value': str(value),
+            'note': f'Panda Points Redemption - {employee.get("First Name", "")} {employee.get("Last Name", "")} (ID: {employee.get("id", employee.get("employee_id", ""))})',
+            'expires_on': (datetime.now() + timedelta(days=365)).strftime('%Y-%m-%d')
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=gift_card_data, timeout=30)
+        if response.status_code == 201:
+            gift_card = response.json()['gift_card']
+            return gift_card['code']
+        else:
+            print(f'Shopify API error: {response.status_code} - {response.text}')
+            return None
+    except Exception as e:
+        print(f'Shopify API request failed: {e}')
+        return None
 
 def handle_points_history(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
