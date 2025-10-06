@@ -330,7 +330,7 @@ def update_employee(event):
                 print(f'UPDATE: Employee {employee_id} not found')
                 return {
                     'statusCode': 404,
-                    'headers': {},
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': 'Employee not found'})
                 }
             
@@ -341,7 +341,7 @@ def update_employee(event):
             print(f'UPDATE ERROR: Failed to find employee: {e}')
             return {
                 'statusCode': 500,
-                'headers': {},
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': f'Database error: {str(e)}'})
             }
         
@@ -366,7 +366,7 @@ def update_employee(event):
         print(f'UPDATE ERROR: {e}')
         return {
             'statusCode': 500,
-            'headers': {},
+            'headers': get_cors_headers(),
             'body': json.dumps({'error': str(e)})
         }
 
