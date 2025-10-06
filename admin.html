@@ -886,9 +886,10 @@
             });
 
             tbody.innerHTML = sortedEmployees.map(emp => {
-                const name = emp['First Name'] && emp['Last Name'] ? 
-                    `${emp['First Name']} ${emp['Last Name']}` : 
-                    (emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`);
+                const firstName = emp['First Name'] || emp.first_name || '';
+                const lastName = emp['Last Name'] || emp.last_name || emp.name || '';
+                const name = firstName && lastName ? `${firstName} ${lastName}` : 
+                    (firstName || lastName || 'Unknown Employee');
                 const email = emp['Email'] || emp.email || '-';
                 const empId = emp.employee_id || emp.id || '-';
                 const department = emp['Department'] || emp.department || '-';
@@ -913,10 +914,10 @@
                         <td><span class="badge bg-warning text-dark">${emp.points || emp['Panda Points'] || 0} pts</span></td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="editEmployee('${empId}')">
+                                <button class="btn btn-outline-primary" onclick="editEmployee('${empId.replace(/'/g, "\\'").replace(/"/g, '\\"')}')">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-outline-success" onclick="awardPoints('${empId}')">
+                                <button class="btn btn-outline-success" onclick="awardPoints('${empId.replace(/'/g, "\\'").replace(/"/g, '\\"')}')">
                                     <i class="fas fa-star"></i>
                                 </button>
                             </div>
