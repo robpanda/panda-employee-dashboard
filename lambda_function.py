@@ -7,7 +7,7 @@ import uuid
 
 def get_cors_headers():
     return {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': 'https://www.pandaadmin.com',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
         'Content-Type': 'application/json'
@@ -654,18 +654,14 @@ def handle_admin_users(event):
             
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'users': admin_users})
             }
         except Exception as e:
             print(f'Error loading admin users: {e}')
             return {
                 'statusCode': 500,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'success': False, 'message': 'Error loading admin users'})
             }
     
@@ -680,9 +676,7 @@ def handle_admin_users(event):
             if not email or not password or not admin_users_table:
                 return {
                     'statusCode': 400,
-                    'headers': {
-                        'Content-Type': 'application/json',
-                        },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'success': False, 'message': 'Email and password required'})
                 }
             
@@ -691,9 +685,7 @@ def handle_admin_users(event):
                 if 'Item' in existing:
                     return {
                         'statusCode': 400,
-                        'headers': {
-                            'Content-Type': 'application/json',
-                            },
+                        'headers': get_cors_headers(),
                         'body': json.dumps({'success': False, 'message': 'Admin user already exists'})
                     }
             except Exception as e:
@@ -712,18 +704,14 @@ def handle_admin_users(event):
             
             return {
                 'statusCode': 201,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'success': True, 'message': 'Admin user created successfully'})
             }
         except Exception as e:
             print(f'Error creating admin user: {e}')
             return {
                 'statusCode': 500,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'success': False, 'message': 'Error creating admin user'})
             }
 

@@ -1076,6 +1076,11 @@
         async function loadAdminUsers() {
             try {
                 const response = await fetch(`${API_URL}/admin-users`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 const tbody = document.getElementById('adminUsersTable');
@@ -1100,10 +1105,11 @@
                         </tr>
                     `).join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No admin users found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No admin users found</td></tr>';
                 }
             } catch (error) {
-                document.getElementById('adminUsersTable').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading admin users</td></tr>';
+                console.error('Error loading admin users:', error);
+                document.getElementById('adminUsersTable').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading admin users</td></tr>';
             }
         }
         
@@ -1117,7 +1123,7 @@
             const role = document.getElementById('userRole').value;
             
             if (!email || !password) {
-                alert('Please fill in all fields');
+                showToast('Please fill in all fields', 'warning');
                 return;
             }
             
@@ -1128,18 +1134,24 @@
                     body: JSON.stringify({ email, password, role })
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('Admin user created successfully');
+                    showToast('Admin user created successfully', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
                     document.getElementById('addUserForm').reset();
                     loadAdminUsers();
+                    updateStats();
                 } else {
-                    alert('Error: ' + result.message);
+                    showToast('Error: ' + (result.message || 'Unknown error'), 'error');
                 }
             } catch (error) {
-                alert('Error creating admin user');
+                console.error('Error creating admin user:', error);
+                showToast('Error creating admin user: ' + error.message, 'error');
             }
         }
 
