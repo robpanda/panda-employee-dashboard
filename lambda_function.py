@@ -5,6 +5,14 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import uuid
 
+def get_cors_headers():
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+        'Content-Type': 'application/json'
+    }
+
 dynamodb = boto3.resource('dynamodb')
 ses = boto3.client('ses', region_name='us-east-2')
 employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'panda-employees'))
@@ -44,8 +52,7 @@ def lambda_handler(event, context):
         if http_method == 'OPTIONS':
             return {
                 'statusCode': 200,
-                'headers': {
-                    },
+                'headers': get_cors_headers(),
                 'body': ''
             }
         elif path == '/employees':
@@ -165,9 +172,7 @@ def get_employees(event):
         print(f'GET_EMPLOYEES: Returning {len(items)} employees')
         return {
             'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                },
+            'headers': get_cors_headers(),
             'body': json.dumps({'employees': items})
         }
     except Exception as e:
@@ -259,9 +264,7 @@ def create_employee(event):
         
         return {
             'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                },
+            'headers': get_cors_headers(),
             'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
         }
     
@@ -295,9 +298,7 @@ def create_employee(event):
     
     return {
         'statusCode': 201,
-        'headers': {
-                'Content-Type': 'application/json',
-                },
+        'headers': get_cors_headers(),
         'body': json.dumps({'employee_id': employee_id, 'message': 'Employee created successfully'})
     }
 
