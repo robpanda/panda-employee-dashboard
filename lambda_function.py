@@ -908,15 +908,28 @@ def handle_gift_cards(event):
         'body': json.dumps({'error': 'Method not allowed'})
     }
 
+def get_shopify_credentials():
+    """Get Shopify credentials from AWS Secrets Manager"""
+    import json
+    
+    secrets_client = boto3.client('secretsmanager', region_name='us-east-2')
+    
+    try:
+        response = secrets_client.get_secret_value(SecretId='shopify/my-cred')
+        secret = json.loads(response['SecretString'])
+        return secret.get('store'), secret.get('access_token')
+    except Exception as e:
+        print(f'Error retrieving Shopify credentials: {e}')
+        return None, None
+
 def create_shopify_gift_card(value, employee):
     import requests
     
-    # Shopify API credentials from environment variables
-    SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', 'my-cred')
-    SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
+    # Get Shopify credentials from AWS Secrets Manager
+    SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
     
     if not SHOPIFY_ACCESS_TOKEN:
-        print('Shopify access token not configured')
+        print('Shopify access token not available')
         return None
     
     url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/gift_cards.json'
