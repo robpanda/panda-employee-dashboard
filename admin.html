@@ -1594,6 +1594,16 @@
             document.getElementById('editPointsManager').value = employee.points_manager || 'No';
             document.getElementById('editPointsBudget').value = employee.points_budget || 500;
             
+            // Hide Quarterly Points Budget field for non-Points managers
+            const currentUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+            const isPointsManager = currentUser.role === 'points_admin' || currentUser.role === 'super_admin' || 
+                                  (currentUser.permissions && currentUser.permissions.includes('points'));
+            
+            const budgetField = document.getElementById('editPointsBudget').closest('.col-md-3');
+            if (budgetField) {
+                budgetField.style.display = isPointsManager ? 'block' : 'none';
+            }
+            
             // Clear password field (don't show existing password)
             document.getElementById('editPassword').value = '';
 
