@@ -1161,17 +1161,13 @@ def handle_referrals(event):
                 
                 return {
                     'statusCode': 200,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'referrals': referrals})
                 }
             except Exception as e:
                 return {
                     'statusCode': 500,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': str(e), 'referrals': []})
                 }
         else:
@@ -1186,17 +1182,13 @@ def handle_referrals(event):
                 
                 return {
                     'statusCode': 200,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'referrals': referrals})
                 }
             except Exception as e:
                 return {
                     'statusCode': 500,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': str(e), 'referrals': []})
                 }
     
@@ -1229,17 +1221,13 @@ def handle_referrals(event):
             
             return {
                 'statusCode': 201,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'message': 'Referral created successfully', 'id': referral_item['id']})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': str(e)})
             }
     
@@ -1252,9 +1240,7 @@ def handle_referrals(event):
             if 'Item' not in response:
                 return {
                     'statusCode': 404,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': 'Referral not found'})
                 }
             
@@ -1270,25 +1256,19 @@ def handle_referrals(event):
             
             return {
                 'statusCode': 200,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'message': 'Referral updated successfully'})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': str(e)})
             }
     
     return {
         'statusCode': 404,
-        'headers': {
-                'Content-Type': 'application/json',
-                },
+        'headers': get_cors_headers(),
         'body': json.dumps({'error': 'Referrals endpoint not found'})
     }
 
