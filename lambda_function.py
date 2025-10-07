@@ -1536,36 +1536,51 @@ def handle_admin_login(event):
         
         # Check if it's a manager/executive employee
         try:
+            print(f'ADMIN_LOGIN: Scanning for manager employee with email: {email}')
             response = employees_table.scan()
             manager_employee = None
             
+            print(f'ADMIN_LOGIN: Scanned {len(response["Items"])} employees')
+            
             for item in response['Items']:
                 item_email = item.get('Email', '').strip().lower()
+                print(f'ADMIN_LOGIN: Checking email: "{item_email}" vs "{email}"')
                 if item_email == email:
                     manager_employee = item
+                    print(f'ADMIN_LOGIN: Found matching employee: {item.get("First Name")} {item.get("Last Name")}')
                     break
             
-            if manager_employee and manager_employee.get('points_manager') == 'Yes':
-                # Check password
-                stored_password = manager_employee.get('password', 'Panda2025!')
-                if password == stored_password:
-                    return {
-                        'statusCode': 200,
-                        'headers': get_cors_headers(),
-                        'body': json.dumps({
-                            'success': True,
-                            'admin': {
-                                'email': manager_employee.get('Email', ''),
-                                'role': 'points_manager',
-                                'permissions': ['points'],
-                                'name': f"{manager_employee.get('First Name', '')} {manager_employee.get('Last Name', '')}".strip(),
-                                'employee_id': manager_employee.get('id'),
-                                'points_budget': float(manager_employee.get('points_budget', 500) or 500),
-                                'restricted_access': True
-                            },
-                            'message': 'Login successful'
-                        })
-                    }
+            if manager_employee:
+                print(f'ADMIN_LOGIN: Employee found, points_manager: {manager_employee.get("points_manager")}')
+                if manager_employee.get('points_manager') == 'Yes':
+                    # Check password
+                    stored_password = manager_employee.get('password', 'Panda2025!')
+                    print(f'ADMIN_LOGIN: Password check - stored: "{stored_password}", input: "{password}"')
+                    if password == stored_password:
+                        print(f'ADMIN_LOGIN: Password match! Returning success')
+                        return {
+                            'statusCode': 200,
+                            'headers': get_cors_headers(),
+                            'body': json.dumps({
+                                'success': True,
+                                'admin': {
+                                    'email': manager_employee.get('Email', ''),
+                                    'role': 'points_manager',
+                                    'permissions': ['points'],
+                                    'name': f"{manager_employee.get('First Name', '')} {manager_employee.get('Last Name', '')}".strip(),
+                                    'employee_id': manager_employee.get('id'),
+                                    'points_budget': float(manager_employee.get('points_budget', 500) or 500),
+                                    'restricted_access': True
+                                },
+                                'message': 'Login successful'
+                            })
+                        }
+                    else:
+                        print(f'ADMIN_LOGIN: Password mismatch')
+                else:
+                    print(f'ADMIN_LOGIN: Employee is not a points manager')
+            else:
+                print(f'ADMIN_LOGIN: No employee found with email: {email}')
         except Exception as e:
             print(f'Error checking manager employees: {e}')
         
@@ -1587,6 +1602,7 @@ def handle_admin_login(event):
                 })
             }
         
+        print(f'ADMIN_LOGIN: All checks failed, returning 401')
         return {
             'statusCode': 401,
             'headers': {'Content-Type': 'application/json', },
