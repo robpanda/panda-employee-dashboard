@@ -886,9 +886,21 @@
             });
 
             tbody.innerHTML = sortedEmployees.map(emp => {
-                const name = emp['First Name'] && emp['Last Name'] ? 
-                    `${emp['First Name']} ${emp['Last Name']}` : 
-                    (emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`);
+                const firstName = emp['First Name'] || emp.first_name || '';
+                const lastName = emp['Last Name'] || emp.last_name || '';
+                
+                // Build full name properly
+                let displayName = '';
+                if (firstName && lastName) {
+                    displayName = `${firstName} ${lastName}`;
+                } else if (firstName) {
+                    displayName = firstName;
+                } else if (lastName) {
+                    displayName = lastName;
+                } else {
+                    displayName = emp.name || 'Unknown Employee';
+                }
+                
                 const email = emp['Email'] || emp.email || '-';
                 const empId = emp.employee_id || emp.id || '-';
                 const department = emp['Department'] || emp.department || '-';
@@ -896,13 +908,15 @@
                 const office = emp.office || '-';
                 const terminated = emp['Terminated'] || emp.terminated || 'No';
                 const status = terminated === 'Yes' ? 'terminated' : 'active';
+                const lastLogin = emp.last_login ? new Date(emp.last_login).toLocaleDateString() : 'Never';
                 
                 return `
                     <tr>
                         <td>
                             <div>
-                                <strong>${name}</strong>
+                                <strong>${displayName}</strong>
                                 <br><small class="text-muted">${email}</small>
+                                <br><small class="text-muted">Last login: ${lastLogin}</small>
                             </div>
                         </td>
                         <td>${empId}</td>
@@ -913,10 +927,10 @@
                         <td><span class="badge bg-warning text-dark">${emp.points || emp['Panda Points'] || 0} pts</span></td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="editEmployee('${empId}')">
+                                <button class="btn btn-outline-primary" data-emp-id="${empId}" onclick="editEmployee(this.getAttribute('data-emp-id'))">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-outline-success" onclick="awardPoints('${empId}')">
+                                <button class="btn btn-outline-success" data-emp-id="${empId}" onclick="awardPoints(this.getAttribute('data-emp-id'))">
                                     <i class="fas fa-star"></i>
                                 </button>
                             </div>

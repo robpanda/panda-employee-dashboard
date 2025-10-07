@@ -7,7 +7,7 @@ import uuid
 
 def get_cors_headers():
     return {
-        'Access-Control-Allow-Origin': 'https://www.pandaadmin.com',
+        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
         'Content-Type': 'application/json'
@@ -207,25 +207,8 @@ def create_employee(event):
         employees_data = body['employees']
         print(f'Processing {len(employees_data)} employees for bulk import')
         
-        # Clear existing data
-        try:
-            response = employees_table.scan()
-            print(f'Found {len(response["Items"])} existing employees to clear')
-            with employees_table.batch_writer() as batch:
-                for item in response['Items']:
-                    key_value = item.get('id', item.get('employee_id', item.get('Employee Id', '')))
-                    if key_value:
-                        batch.delete_item(Key={'id': key_value})
-            print('Successfully cleared existing data')
-        except Exception as e:
-            print(f'Error clearing data: {e}')
-            return {
-                'statusCode': 500,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    },
-                'body': json.dumps({'error': f'Failed to clear data: {str(e)}'})
-            }
+        # Don't clear existing data - we'll update/merge instead
+        print(f'Processing {len(employees_data)} employees for bulk import/update')
         
         # Insert new employees
         success_count = 0
@@ -237,12 +220,28 @@ def create_employee(event):
                     if not emp_id:
                         emp_id = str(uuid.uuid4())
                     
+                    # Preserve existing employee data if updating
+                    existing_employee = None
+                    try:
+                        response = employees_table.scan(
+                            FilterExpression='id = :emp_id OR employee_id = :emp_id OR #eid = :emp_id',
+                            ExpressionAttributeNames={'#eid': 'Employee Id'},
+                            ExpressionAttributeValues={':emp_id': str(emp_id)}
+                        )
+                        if response['Items']:
+                            existing_employee = response['Items'][0]
+                            print(f'Found existing employee {emp_id}: {existing_employee.get("First Name", "NO_FIRST")} {existing_employee.get("Last Name", "NO_LAST")}')
+                    except Exception as e:
+                        print(f'Error finding existing employee {emp_id}: {e}')
+                    
+                    print(f'Import data for {emp_id}: {emp_data}')
+                    
                     employee = {
                         'id': str(emp_id),
                         'employee_id': str(emp_id),
                         'Employee Id': str(emp_id),
-                        'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
-                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
+                        'First Name': emp_data.get('First Name', emp_data.get('first_name', emp_data.get('name', '').split(' ')[0] if emp_data.get('name') else (existing_employee.get('First Name', '') if existing_employee else ''))),
+                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', ' '.join(emp_data.get('name', '').split(' ')[1:]) if emp_data.get('name') and len(emp_data.get('name', '').split(' ')) > 1 else (existing_employee.get('Last Name', '') if existing_employee else ''))),
                         'Department': emp_data.get('Department', emp_data.get('department', '')),
                         'Position': emp_data.get('Position', emp_data.get('position', '')),
                         'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
@@ -259,6 +258,13 @@ def create_employee(event):
                         'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
                         'updated_at': datetime.now().isoformat()
                     }
+                    
+                    # Preserve existing points and login data
+                    if existing_employee:
+                        employee['points'] = existing_employee.get('points', 0)
+                        employee['Panda Points'] = existing_employee.get('Panda Points', 0)
+                        employee['last_login'] = existing_employee.get('last_login', '')
+                        employee['password'] = existing_employee.get('password', 'Panda2025!')
                     batch.put_item(Item=employee)
                     success_count += 1
                 except Exception as e:
@@ -844,8 +850,8 @@ def handle_gift_cards(event):
                 new_balance = current_points - points_to_redeem
                 employees_table.put_item(Item={
                     **employee,
-                    'points': new_balance,
-                    'Panda Points': new_balance,
+                    'points': Decimal(str(new_balance)),
+                    'Panda Points': Decimal(str(new_balance)),
                     'updated_at': datetime.now().isoformat()
                 })
                 
@@ -866,7 +872,7 @@ def handle_gift_cards(event):
                     'id': str(uuid.uuid4()),
                     'employee_id': employee_id,
                     'employee_name': redemption_record['employee_name'],
-                    'points': -points_to_redeem,
+                    'points': Decimal(str(-points_to_redeem)),
                     'reason': f'Gift card redemption: {gift_card_code}',
                     'awarded_by': 'system',
                     'awarded_by_name': 'Automated Redemption',
@@ -908,15 +914,29 @@ def handle_gift_cards(event):
         'body': json.dumps({'error': 'Method not allowed'})
     }
 
+def get_shopify_credentials():
+    """Get Shopify credentials from AWS Secrets Manager"""
+    import json
+    
+    secrets_client = boto3.client('secretsmanager', region_name='us-east-2')
+    
+    try:
+        response = secrets_client.get_secret_value(SecretId='shopify/my-cred')
+        secret = json.loads(response['SecretString'])
+        return 'pandaexteriors', secret.get('access_token', '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')
+    except Exception as e:
+        print(f'Error retrieving Shopify credentials: {e}')
+        # Fallback with working credentials for testing
+        return 'pandaexteriors', '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'
+
 def create_shopify_gift_card(value, employee):
     import requests
     
-    # Shopify API credentials (add to environment variables)
-    SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', 'pandaexteriors')
-    SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
+    # Get Shopify credentials from AWS Secrets Manager
+    SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
     
     if not SHOPIFY_ACCESS_TOKEN:
-        print('Shopify access token not configured')
+        print('Shopify access token not available')
         return None
     
     url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/gift_cards.json'
@@ -933,8 +953,15 @@ def create_shopify_gift_card(value, employee):
         }
     }
     
+    print(f'DEBUG: Creating gift card at URL: {url}')
+    print(f'DEBUG: Store: {SHOPIFY_STORE}, Token: {SHOPIFY_ACCESS_TOKEN[:10]}...')
+    print(f'DEBUG: Gift card data: {gift_card_data}')
+    
     try:
         response = requests.post(url, headers=headers, json=gift_card_data, timeout=30)
+        print(f'DEBUG: Response status: {response.status_code}')
+        print(f'DEBUG: Response text: {response.text}')
+        
         if response.status_code == 201:
             gift_card = response.json()['gift_card']
             return gift_card['code']
@@ -1231,6 +1258,13 @@ def handle_employee_login(event):
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
+            # Update last login timestamp
+            try:
+                employee['last_login'] = datetime.now().isoformat()
+                employees_table.put_item(Item=employee)
+            except Exception as e:
+                print(f'Failed to update last login: {e}')
+            
             # Successful login - return employee data
             employee_data = {
                 'id': employee.get('id', employee.get('employee_id', '')),
@@ -1243,7 +1277,8 @@ def handle_employee_login(event):
                 'position': employee.get('Position', ''),
                 'points': float(employee.get('points', employee.get('Panda Points', 0)) or 0),
                 'supervisor': employee.get('supervisor', ''),
-                'office': employee.get('office', '')
+                'office': employee.get('office', ''),
+                'last_login': employee.get('last_login')
             }
             
             return {
