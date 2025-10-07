@@ -1534,13 +1534,45 @@ def handle_admin_login(event):
             except Exception as e:
                 print(f'Error checking admin users: {e}')
         
+        # Check if it's a manager/executive employee
+        try:
+            response = employees_table.scan()
+            manager_employee = None
+            
+            for item in response['Items']:
+                item_email = item.get('Email', '').strip().lower()
+                if item_email == email:
+                    manager_employee = item
+                    break
+            
+            if manager_employee and manager_employee.get('points_manager') == 'Yes':
+                # Check password
+                stored_password = manager_employee.get('password', 'Panda2025!')
+                if password == stored_password:
+                    return {
+                        'statusCode': 200,
+                        'headers': get_cors_headers(),
+                        'body': json.dumps({
+                            'success': True,
+                            'admin': {
+                                'email': manager_employee.get('Email', ''),
+                                'role': 'points_manager',
+                                'permissions': ['points'],
+                                'name': f"{manager_employee.get('First Name', '')} {manager_employee.get('Last Name', '')}".strip(),
+                                'employee_id': manager_employee.get('id'),
+                                'points_budget': float(manager_employee.get('points_budget', 500) or 500)
+                            },
+                            'message': 'Login successful'
+                        })
+                    }
+        except Exception as e:
+            print(f'Error checking manager employees: {e}')
+        
         # Fallback to hardcoded admin
         if email == 'admin' and password == 'admin123':
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    },
+                'headers': get_cors_headers(),
                 'body': json.dumps({
                     'success': True,
                     'admin': {
