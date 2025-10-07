@@ -1542,54 +1542,32 @@
             }
         }
         
-        function loadLoginHistory(empId) {
+        async function loadLoginHistory(empId) {
             const tbody = document.getElementById('loginHistoryTable');
-            const employee = employees.find(e => (e.employee_id || e.id) === empId);
             
-            if (!employee) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No login history available</td></tr>';
-                return;
-            }
-            
-            // Generate login history for last 60 days
-            const history = [];
-            const now = new Date();
-            const lastLogin = employee.last_login ? new Date(employee.last_login) : null;
-            
-            if (lastLogin) {
-                history.push({
-                    date: lastLogin.toLocaleDateString(),
-                    time: lastLogin.toLocaleTimeString(),
-                    status: 'Success',
-                    notes: 'Employee portal login'
-                });
-            }
-            
-            // Add sample historical logins
-            for (let i = 1; i <= 10; i++) {
-                const loginDate = new Date(now - (i * 24 * 60 * 60 * 1000 * Math.random() * 7));
-                if (loginDate > new Date(now - 60 * 24 * 60 * 60 * 1000)) {
-                    history.push({
-                        date: loginDate.toLocaleDateString(),
-                        time: loginDate.toLocaleTimeString(),
-                        status: Math.random() > 0.1 ? 'Success' : 'Failed',
-                        notes: Math.random() > 0.5 ? 'Employee portal' : 'Points system'
-                    });
+            try {
+                const response = await fetch(`${API_URL}/login-history/${empId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const history = data.history || [];
+                    
+                    if (history.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No login history available</td></tr>';
+                    } else {
+                        tbody.innerHTML = history.map(login => `
+                            <tr>
+                                <td>${new Date(login.timestamp).toLocaleDateString()}</td>
+                                <td>${new Date(login.timestamp).toLocaleTimeString()}</td>
+                                <td><span class="badge bg-${login.status === 'Success' ? 'success' : 'danger'}">${login.status}</span></td>
+                                <td>${login.source || 'Employee portal'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Unable to load login history</td></tr>';
                 }
-            }
-            
-            if (history.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No logins in the last 60 days</td></tr>';
-            } else {
-                tbody.innerHTML = history.sort((a, b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time))
-                    .map(login => `
-                        <tr>
-                            <td>${login.date}</td>
-                            <td>${login.time}</td>
-                            <td><span class="badge bg-${login.status === 'Success' ? 'success' : 'danger'}">${login.status}</span></td>
-                            <td>${login.notes}</td>
-                        </tr>
-                    `).join('');
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No login history available</td></tr>';
             }
         }
         

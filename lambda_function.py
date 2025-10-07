@@ -100,6 +100,9 @@ def lambda_handler(event, context):
         elif path == '/gift-cards':
             print(f'LAMBDA DEBUG: Calling handle_gift_cards')
             return handle_gift_cards(event)
+        elif path.startswith('/login-history/'):
+            print(f'LAMBDA DEBUG: Calling handle_login_history')
+            return handle_login_history(event)
         elif path == '/test':
             return {
                 'statusCode': 200,
@@ -1352,9 +1355,28 @@ def handle_employee_login(event):
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
-            # Update last login timestamp
+            # Update last login timestamp and track login history
             try:
-                employee['last_login'] = datetime.now().isoformat()
+                current_time = datetime.now().isoformat()
+                employee['last_login'] = current_time
+                
+                # Add to login history
+                if 'login_history' not in employee:
+                    employee['login_history'] = []
+                
+                login_entry = {
+                    'timestamp': current_time,
+                    'status': 'Success',
+                    'source': 'Employee portal',
+                    'ip_address': event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'Unknown')
+                }
+                
+                employee['login_history'].append(login_entry)
+                
+                # Keep only last 100 login entries
+                if len(employee['login_history']) > 100:
+                    employee['login_history'] = employee['login_history'][-100:]
+                
                 employees_table.put_item(Item=employee)
             except Exception as e:
                 print(f'Failed to update last login: {e}')
@@ -1543,6 +1565,60 @@ def handle_admin_login(event):
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', },
             'body': json.dumps({'error': 'Server error'})
+        }
+
+def handle_login_history(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        path = event['requestContext']['http']['path']
+    else:
+        path = event.get('path', '/')
+    
+    emp_id = path.split('/')[-1]
+    
+    try:
+        # Get employee login history from DynamoDB
+        response = employees_table.scan(
+            FilterExpression='id = :emp_id OR employee_id = :emp_id',
+            ExpressionAttributeValues={':emp_id': emp_id}
+        )
+        
+        if not response['Items']:
+            return {
+                'statusCode': 404,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Employee not found'})
+            }
+        
+        employee = response['Items'][0]
+        
+        # Get login history from employee record
+        login_history = employee.get('login_history', [])
+        
+        # Filter to last 60 days
+        sixty_days_ago = datetime.now() - timedelta(days=60)
+        recent_history = []
+        
+        for login in login_history:
+            if isinstance(login, dict) and 'timestamp' in login:
+                login_date = datetime.fromisoformat(login['timestamp'].replace('Z', '+00:00'))
+                if login_date >= sixty_days_ago:
+                    recent_history.append(login)
+        
+        # Sort by timestamp descending
+        recent_history.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'history': recent_history})
+        }
+        
+    except Exception as e:
+        print(f'Login history error: {e}')
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': 'Failed to load login history'})
         }
 
 def create_super_admin(event):
