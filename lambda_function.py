@@ -207,25 +207,8 @@ def create_employee(event):
         employees_data = body['employees']
         print(f'Processing {len(employees_data)} employees for bulk import')
         
-        # Clear existing data
-        try:
-            response = employees_table.scan()
-            print(f'Found {len(response["Items"])} existing employees to clear')
-            with employees_table.batch_writer() as batch:
-                for item in response['Items']:
-                    key_value = item.get('id', item.get('employee_id', item.get('Employee Id', '')))
-                    if key_value:
-                        batch.delete_item(Key={'id': key_value})
-            print('Successfully cleared existing data')
-        except Exception as e:
-            print(f'Error clearing data: {e}')
-            return {
-                'statusCode': 500,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    },
-                'body': json.dumps({'error': f'Failed to clear data: {str(e)}'})
-            }
+        # Don't clear existing data - we'll update/merge instead
+        print(f'Processing {len(employees_data)} employees for bulk import/update')
         
         # Insert new employees
         success_count = 0
@@ -237,12 +220,25 @@ def create_employee(event):
                     if not emp_id:
                         emp_id = str(uuid.uuid4())
                     
+                    # Preserve existing employee data if updating
+                    existing_employee = None
+                    try:
+                        response = employees_table.scan(
+                            FilterExpression='id = :emp_id OR employee_id = :emp_id OR #eid = :emp_id',
+                            ExpressionAttributeNames={'#eid': 'Employee Id'},
+                            ExpressionAttributeValues={':emp_id': str(emp_id)}
+                        )
+                        if response['Items']:
+                            existing_employee = response['Items'][0]
+                    except:
+                        pass
+                    
                     employee = {
                         'id': str(emp_id),
                         'employee_id': str(emp_id),
                         'Employee Id': str(emp_id),
-                        'First Name': emp_data.get('First Name', emp_data.get('first_name', '')),
-                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', '')),
+                        'First Name': emp_data.get('First Name', emp_data.get('first_name', existing_employee.get('First Name', '') if existing_employee else '')),
+                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', existing_employee.get('Last Name', '') if existing_employee else '')),
                         'Department': emp_data.get('Department', emp_data.get('department', '')),
                         'Position': emp_data.get('Position', emp_data.get('position', '')),
                         'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
@@ -259,6 +255,13 @@ def create_employee(event):
                         'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
                         'updated_at': datetime.now().isoformat()
                     }
+                    
+                    # Preserve existing points and login data
+                    if existing_employee:
+                        employee['points'] = existing_employee.get('points', 0)
+                        employee['Panda Points'] = existing_employee.get('Panda Points', 0)
+                        employee['last_login'] = existing_employee.get('last_login', '')
+                        employee['password'] = existing_employee.get('password', 'Panda2025!')
                     batch.put_item(Item=employee)
                     success_count += 1
                 except Exception as e:
