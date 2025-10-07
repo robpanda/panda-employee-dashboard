@@ -1252,6 +1252,13 @@ def handle_employee_login(event):
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
+            # Update last login timestamp
+            try:
+                employee['last_login'] = datetime.now().isoformat()
+                employees_table.put_item(Item=employee)
+            except Exception as e:
+                print(f'Failed to update last login: {e}')
+            
             # Successful login - return employee data
             employee_data = {
                 'id': employee.get('id', employee.get('employee_id', '')),
@@ -1264,7 +1271,8 @@ def handle_employee_login(event):
                 'position': employee.get('Position', ''),
                 'points': float(employee.get('points', employee.get('Panda Points', 0)) or 0),
                 'supervisor': employee.get('supervisor', ''),
-                'office': employee.get('office', '')
+                'office': employee.get('office', ''),
+                'last_login': employee.get('last_login')
             }
             
             return {
