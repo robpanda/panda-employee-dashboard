@@ -1595,45 +1595,67 @@
             
             // Populate department dropdown for edit form
             const editDept = document.getElementById('editDepartment');
-            editDept.innerHTML = '<option value="">Select Department</option>';
-            const uniqueDepts = [...new Set(employees.map(e => e['Department'] || e.department).filter(Boolean))];
-            [...uniqueDepts, ...departments].forEach(dept => {
-                if (dept) editDept.innerHTML += `<option value="${dept}">${dept}</option>`;
-            });
-            editDept.value = employee['Department'] || employee.department || '';
+            if (editDept) {
+                editDept.innerHTML = '<option value="">Select Department</option>';
+                const uniqueDepts = [...new Set(employees.map(e => e['Department'] || e.department).filter(Boolean))];
+                [...uniqueDepts, ...departments].forEach(dept => {
+                    if (dept) editDept.innerHTML += `<option value="${dept}">${dept}</option>`;
+                });
+                editDept.value = employee['Department'] || employee.department || '';
+            }
             
             // Populate manager dropdown for edit form - alphabetically sorted
             const editMgr = document.getElementById('editManager');
-            editMgr.innerHTML = '<option value="">Select Manager</option>';
-            const uniqueManagers = [...new Set(employees.map(e => e.supervisor).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-            uniqueManagers.forEach(manager => {
-                editMgr.innerHTML += `<option value="${manager}">${manager}</option>`;
-            });
-            editMgr.value = employee.supervisor || '';
+            if (editMgr) {
+                editMgr.innerHTML = '<option value="">Select Manager</option>';
+                const uniqueManagers = [...new Set(employees.map(e => e.supervisor).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+                uniqueManagers.forEach(manager => {
+                    editMgr.innerHTML += `<option value="${manager}">${manager}</option>`;
+                });
+                editMgr.value = employee.supervisor || '';
+            }
             
             const terminated = employee['Terminated'] || employee.terminated || 'No';
-            document.getElementById('editStatus').value = terminated === 'Yes' ? 'terminated' : 'active';
+            const editStatus = document.getElementById('editStatus');
+            if (editStatus) {
+                editStatus.value = terminated === 'Yes' ? 'terminated' : 'active';
+            }
             
             // Set points balance and manager status
-            document.getElementById('editPoints').value = employee.points || employee['Panda Points'] || 0;
-            document.getElementById('editIsSupervisor').value = employee.is_supervisor || 'No';
-            document.getElementById('editPointsManager').value = employee.points_manager || 'No';
-            document.getElementById('editPointsBudget').value = employee.points_budget || 500;
+            const editPoints = document.getElementById('editPoints');
+            if (editPoints) {
+                editPoints.value = employee.points || employee['Panda Points'] || 0;
+            }
             
-            // Hide Quarterly Points Budget field for non-Points managers
-            const currentUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
-            const isPointsManager = currentUser.role === 'points_admin' || currentUser.role === 'super_admin' || 
-                                  (currentUser.permissions && currentUser.permissions.includes('points'));
+            const editIsSupervisor = document.getElementById('editIsSupervisor');
+            if (editIsSupervisor) {
+                editIsSupervisor.value = employee.is_supervisor || 'No';
+            }
             
-            const budgetField = document.getElementById('editPointsBudget').closest('.col-md-3');
-            if (budgetField) {
-                budgetField.style.display = isPointsManager ? 'block' : 'none';
+            const editPointsManager = document.getElementById('editPointsManager');
+            if (editPointsManager) {
+                editPointsManager.value = employee.points_manager || 'No';
+            }
+            
+            const editPointsBudget = document.getElementById('editPointsBudget');
+            if (editPointsBudget) {
+                editPointsBudget.value = employee.points_budget || 500;
             }
             
             // Clear password field (don't show existing password)
-            document.getElementById('editPassword').value = '';
+            const editPassword = document.getElementById('editPassword');
+            if (editPassword) {
+                editPassword.value = '';
+            }
 
-            new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
+            // Show the edit modal
+            const editModal = document.getElementById('editEmployeeModal');
+            if (editModal && window.bootstrap) {
+                new bootstrap.Modal(editModal).show();
+            } else {
+                console.error('Edit modal or Bootstrap not found');
+                showToast('Unable to open edit form', 'error');
+            }
         }
 
         async function updateEmployee() {
