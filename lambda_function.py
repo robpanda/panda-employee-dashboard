@@ -1560,7 +1560,8 @@ def handle_admin_login(event):
                                 'permissions': ['points'],
                                 'name': f"{manager_employee.get('First Name', '')} {manager_employee.get('Last Name', '')}".strip(),
                                 'employee_id': manager_employee.get('id'),
-                                'points_budget': float(manager_employee.get('points_budget', 500) or 500)
+                                'points_budget': float(manager_employee.get('points_budget', 500) or 500),
+                                'restricted_access': True
                             },
                             'message': 'Login successful'
                         })
@@ -1579,7 +1580,8 @@ def handle_admin_login(event):
                         'email': 'admin',
                         'role': 'super_admin',
                         'permissions': ['employees', 'points', 'referrals', 'leads'],
-                        'name': 'System Administrator'
+                        'name': 'System Administrator',
+                        'restricted_access': False
                     },
                     'message': 'Login successful'
                 })
