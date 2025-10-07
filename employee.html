@@ -996,15 +996,13 @@
                     console.error('Error creating row for employee', index, ':', error, employee);
                 }
                     
-                    // Calculate new hire days
-                    const hireDate = new Date(employee.hire_date || employee['Hire Date']);
-                    const daysSinceHire = Math.floor((new Date() - hireDate) / (1000 * 60 * 60 * 24));
-                    
-                    if (daysSinceHire <= 30) newHires1_30++;
-                    else if (daysSinceHire <= 60) newHires31_60++;
-                    else if (daysSinceHire <= 90) newHires61_90++;
-                    }
-                }
+                // Calculate new hire days
+                const hireDate = new Date(employee.hire_date || employee['Hire Date']);
+                const daysSinceHire = Math.floor((new Date() - hireDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysSinceHire <= 30) newHires1_30++;
+                else if (daysSinceHire <= 60) newHires31_60++;
+                else if (daysSinceHire <= 90) newHires61_90++;
             });
             
             // Update stats
@@ -1018,19 +1016,19 @@
         function createEmployeeRow(employee) {
             const row = document.createElement('tr');
             
+            const firstName = employee['First Name'] || employee.first_name || '';
+            const lastName = employee['Last Name'] || employee.last_name || '';
             const employeeName = employee.name || 
-                               (employee['First Name'] && employee['Last Name'] ? 
-                                `${employee['First Name']} ${employee['Last Name']}` : '') ||
-                               (employee.first_name && employee.last_name ? 
-                                `${employee.first_name} ${employee.last_name}` : 'Unknown');
+                               (firstName && lastName ? `${firstName} ${lastName}` : '') ||
+                               firstName || lastName || 'Unknown';
             
-            const employeeEmail = employee.email || employee['Current Home Email'] || employee.Email || '';
-            const employeeId = employee.employee_id || employee['Employee Id'] || employee.id || '';
-            const role = employee.role || employee['Job Title (PIT)'] || employee['Position Description'] || employee.Position || '';
-            const department = employee.department || employee['Department Description'] || employee.Department || '';
+            const employeeEmail = employee.Email || employee.email || employee['Current Home Email'] || '';
+            const employeeId = employee['Employee Id'] || employee.employee_id || employee.id || '';
+            const role = employee.Position || employee.role || employee['Job Title (PIT)'] || employee['Position Description'] || '';
+            const department = employee.Department || employee.department || employee['Department Description'] || '';
             const supervisor = employee.supervisor || employee.Supervisor || 'N/A';
             const office = employee.office || employee['Current Work Location Name'] || '';
-            const hireDate = employee.hire_date || employee['Hire Date'] || employee['Employment Date'];
+            const hireDate = employee['Employment Date'] || employee['Hire Date'] || employee.hire_date;
             
             const isTerminated = employee.Terminated === 'Yes' || 
                                employee.status === 'terminated' || 
@@ -1064,7 +1062,7 @@
                     <td>${formatDate(hireDate)}</td>
                     <td>
                         <span class="points-badge">
-                            <i class="fas fa-star me-1"></i>${employee.points_balance || 0}
+                            <i class="fas fa-star me-1"></i>${employee.points || employee['Panda Points'] || employee.points_balance || 0}
                         </span>
                     </td>
                     <td>

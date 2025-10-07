@@ -236,12 +236,38 @@ def create_employee(event):
                     
                     print(f'Import data for {emp_id}: {emp_data}')
                     
+                    # Extract first name from various possible field names
+                    first_name = ''
+                    if 'First Name' in emp_data and emp_data['First Name']:
+                        first_name = emp_data['First Name']
+                    elif 'first_name' in emp_data and emp_data['first_name']:
+                        first_name = emp_data['first_name']
+                    elif 'name' in emp_data and emp_data['name']:
+                        first_name = emp_data['name'].split(' ')[0]
+                    elif existing_employee:
+                        first_name = existing_employee.get('First Name', existing_employee.get('first_name', ''))
+                    
+                    # Extract last name from various possible field names
+                    last_name = ''
+                    if 'Last Name' in emp_data and emp_data['Last Name']:
+                        last_name = emp_data['Last Name']
+                    elif 'last_name' in emp_data and emp_data['last_name']:
+                        last_name = emp_data['last_name']
+                    elif 'name' in emp_data and emp_data['name'] and len(emp_data['name'].split(' ')) > 1:
+                        last_name = ' '.join(emp_data['name'].split(' ')[1:])
+                    elif existing_employee:
+                        last_name = existing_employee.get('Last Name', existing_employee.get('last_name', ''))
+                    
+                    print(f'Extracted names for {emp_id}: First="{first_name}", Last="{last_name}"')
+                    
                     employee = {
                         'id': str(emp_id),
                         'employee_id': str(emp_id),
                         'Employee Id': str(emp_id),
-                        'First Name': emp_data.get('First Name', emp_data.get('first_name', emp_data.get('name', '').split(' ')[0] if emp_data.get('name') else (existing_employee.get('First Name', '') if existing_employee else ''))),
-                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', ' '.join(emp_data.get('name', '').split(' ')[1:]) if emp_data.get('name') and len(emp_data.get('name', '').split(' ')) > 1 else (existing_employee.get('Last Name', '') if existing_employee else ''))),
+                        'First Name': first_name,
+                        'first_name': first_name,  # Add both formats for compatibility
+                        'Last Name': last_name,
+                        'last_name': last_name,    # Add both formats for compatibility
                         'Department': emp_data.get('Department', emp_data.get('department', '')),
                         'Position': emp_data.get('Position', emp_data.get('position', '')),
                         'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
@@ -265,6 +291,13 @@ def create_employee(event):
                         employee['Panda Points'] = existing_employee.get('Panda Points', 0)
                         employee['last_login'] = existing_employee.get('last_login', '')
                         employee['password'] = existing_employee.get('password', 'Panda2025!')
+                        # If no first/last name in import data, keep existing names
+                        if not first_name and existing_employee.get('First Name'):
+                            employee['First Name'] = existing_employee['First Name']
+                            employee['first_name'] = existing_employee['First Name']
+                        if not last_name and existing_employee.get('Last Name'):
+                            employee['Last Name'] = existing_employee['Last Name']
+                            employee['last_name'] = existing_employee['Last Name']
                     batch.put_item(Item=employee)
                     success_count += 1
                 except Exception as e:
