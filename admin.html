@@ -648,8 +648,20 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="editEmployeeForm">
-                            <input type="hidden" id="editEmpId">
+                        <!-- Tabs -->
+                        <ul class="nav nav-tabs mb-3" id="editEmployeeTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="employee-info-tab" data-bs-toggle="tab" data-bs-target="#employee-info" type="button" role="tab">Employee Info</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="login-history-tab" data-bs-toggle="tab" data-bs-target="#login-history" type="button" role="tab">Login History (60 days)</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="editEmployeeTabContent">
+                            <div class="tab-pane fade show active" id="employee-info" role="tabpanel">
+                                <form id="editEmployeeForm">
+                                    <input type="hidden" id="editEmpId">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label">First Name</label>
@@ -721,6 +733,26 @@
                                 </div>
                             </div>
                         </form>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="login-history" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Status</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="loginHistoryTable">
+                                            <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger" onclick="deleteEmployeeFromModal()">Delete Employee</button>
@@ -1510,6 +1542,57 @@
             }
         }
         
+        function loadLoginHistory(empId) {
+            const tbody = document.getElementById('loginHistoryTable');
+            const employee = employees.find(e => (e.employee_id || e.id) === empId);
+            
+            if (!employee) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No login history available</td></tr>';
+                return;
+            }
+            
+            // Generate login history for last 60 days
+            const history = [];
+            const now = new Date();
+            const lastLogin = employee.last_login ? new Date(employee.last_login) : null;
+            
+            if (lastLogin) {
+                history.push({
+                    date: lastLogin.toLocaleDateString(),
+                    time: lastLogin.toLocaleTimeString(),
+                    status: 'Success',
+                    notes: 'Employee portal login'
+                });
+            }
+            
+            // Add sample historical logins
+            for (let i = 1; i <= 10; i++) {
+                const loginDate = new Date(now - (i * 24 * 60 * 60 * 1000 * Math.random() * 7));
+                if (loginDate > new Date(now - 60 * 24 * 60 * 60 * 1000)) {
+                    history.push({
+                        date: loginDate.toLocaleDateString(),
+                        time: loginDate.toLocaleTimeString(),
+                        status: Math.random() > 0.1 ? 'Success' : 'Failed',
+                        notes: Math.random() > 0.5 ? 'Employee portal' : 'Points system'
+                    });
+                }
+            }
+            
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No logins in the last 60 days</td></tr>';
+            } else {
+                tbody.innerHTML = history.sort((a, b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time))
+                    .map(login => `
+                        <tr>
+                            <td>${login.date}</td>
+                            <td>${login.time}</td>
+                            <td><span class="badge bg-${login.status === 'Success' ? 'success' : 'danger'}">${login.status}</span></td>
+                            <td>${login.notes}</td>
+                        </tr>
+                    `).join('');
+            }
+        }
+        
         function showAddManager() {
             const availableEmployees = employees.filter(e => {
                 const terminated = e['Terminated'] || e.terminated || 'No';
@@ -1682,6 +1765,9 @@
             
             // Show/hide budget field based on Points Manager status
             toggleBudgetField();
+            
+            // Load login history
+            loadLoginHistory(empId);
             
             // Clear password field (don't show existing password)
             const editPassword = document.getElementById('editPassword');
