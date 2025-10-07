@@ -13,7 +13,7 @@ def deploy_lambda():
     try:
         with open('lambda_function.zip', 'rb') as zip_file:
             response = lambda_client.update_function_code(
-                FunctionName='panda-employee-api',  # Replace with actual function name
+                FunctionName='panda-employee-dashboard',  # Correct function name
                 ZipFile=zip_file.read()
             )
         
