@@ -169,11 +169,11 @@
                 <img src="panda-logo.png" alt="Panda Exteriors">
             </div>
             <div class="nav-links">
-                <a href="/admin.html" class="nav-link">👥 Employees</a>
+                <a href="/employee.html" class="nav-link">👥 Employees</a>
                 <a href="/points.html" class="nav-link">⭐ Points</a>
-                <a href="/leads" class="nav-link">📊 Leads</a>
-                <a href="/referrals" class="nav-link">🤝 Referrals</a>
-                <a href="/assets" class="nav-link">📦 Assets</a>
+                <a href="/leads.html" class="nav-link">📊 Leads</a>
+                <a href="/referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="/assets.html" class="nav-link">📦 Assets</a>
                 <a href="/admin.html" class="nav-link active">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -721,6 +721,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" onclick="deleteEmployeeFromModal()">Delete Employee</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary" onclick="updateEmployee()">Update Employee</button>
                     </div>
@@ -932,6 +933,9 @@
                                 </button>
                                 <button class="btn btn-outline-success" data-emp-id="${empId}" onclick="awardPoints(this.getAttribute('data-emp-id'))">
                                     <i class="fas fa-star"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" data-emp-id="${empId}" onclick="deleteEmployee(this.getAttribute('data-emp-id'))">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
@@ -1549,30 +1553,43 @@
                 
                 // Find the employee and update their supervisor status
                 const employee = employees.find(e => {
-                    const name = `${e['First Name'] || ''} ${e['Last Name'] || ''}`.trim();
+                    const firstName = e['First Name'] || e.first_name || '';
+                    const lastName = e['Last Name'] || e.last_name || '';
+                    const name = `${firstName} ${lastName}`.trim();
                     return name === selectedManager;
                 });
                 
+                console.log('Found employee for promotion:', employee);
+                
                 if (employee) {
                     try {
-                        const empId = employee.id || employee.employee_id;
+                        const empId = employee['Employee Id'] || employee.employee_id || employee.id;
+                        console.log('Promoting employee to manager:', empId, selectedManager, department);
+                        
                         const response = await fetch(`${API_URL}/employees/${empId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ 
                                 'is_supervisor': 'Yes',
-                                'Department': department
+                                'Department': department,
+                                'points_manager': 'Yes',
+                                'points_budget': 500
                             })
                         });
+                        
+                        console.log('Manager promotion response:', response.status);
+                        const responseText = await response.text();
+                        console.log('Manager promotion response text:', responseText);
                         
                         if (response.ok) {
                             showToast(`${selectedManager} has been promoted to manager of ${department}`, 'success');
                             await loadEmployees();
                             loadManagers();
                         } else {
-                            throw new Error('Failed to update employee');
+                            throw new Error(`Failed to update employee: ${responseText}`);
                         }
                     } catch (error) {
+                        console.error('Manager promotion error:', error);
                         showToast('Error promoting employee to manager: ' + error.message, 'error');
                     }
                 }
@@ -1658,6 +1675,37 @@
             }
         }
 
+        async function deleteEmployeeFromModal() {
+            const empId = document.getElementById('editEmpId').value;
+            const firstName = document.getElementById('editFirstName').value;
+            const lastName = document.getElementById('editLastName').value;
+            const name = `${firstName} ${lastName}`.trim() || 'Unknown Employee';
+            
+            if (!confirm(`Are you sure you want to permanently delete ${name}?\n\nThis action cannot be undone and will remove all employee data including points history.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/employees/${empId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    showToast(`${name} has been deleted successfully`, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal')).hide();
+                    await loadEmployees();
+                    updateStats();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to delete employee: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showToast('Error deleting employee: ' + error.message, 'error');
+            }
+        }
+        
         async function updateEmployee() {
             const empId = document.getElementById('editEmpId').value;
             const updates = {
@@ -1752,6 +1800,40 @@
             });
         }
 
+        async function deleteEmployee(empId) {
+            const employee = employees.find(e => (e.employee_id || e.id || e['Employee Id']) === empId);
+            if (!employee) {
+                showToast('Employee not found', 'error');
+                return;
+            }
+            
+            const firstName = employee['First Name'] || employee.first_name || '';
+            const lastName = employee['Last Name'] || employee.last_name || '';
+            const name = `${firstName} ${lastName}`.trim() || 'Unknown Employee';
+            
+            if (!confirm(`Are you sure you want to permanently delete ${name}?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/employees/${empId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    showToast(`${name} has been deleted successfully`, 'success');
+                    await loadEmployees();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to delete employee: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showToast('Error deleting employee: ' + error.message, 'error');
+            }
+        }
+        
         function sortTable(column) {
             if (sortColumn === column) {
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';

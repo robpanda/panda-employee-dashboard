@@ -275,6 +275,39 @@
             }
 
             try {
+                // Try admin login first
+                const adminResponse = await fetch(`${API_URL}/admin-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (adminResponse.ok) {
+                    const adminResult = await adminResponse.json();
+                    if (adminResult.success) {
+                        // Super admin access
+                        currentManager = {
+                            id: 'admin',
+                            employee_id: 'admin',
+                            'First Name': 'Super',
+                            'Last Name': 'Admin',
+                            name: 'Super Admin',
+                            email: email,
+                            'Department': 'Administration',
+                            points_budget: 10000,
+                            is_super_admin: true
+                        };
+                        sessionStorage.setItem('pointsManager', JSON.stringify(currentManager));
+                        
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('dashboardSection').style.display = 'block';
+                        
+                        loadDashboard();
+                        return;
+                    }
+                }
+                
+                // Try employee login
                 const response = await fetch(`${API_URL}/employee-login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -294,7 +327,7 @@
                     }
                     
                     currentManager = employee;
-                    sessionStorage.setItem('pointsManager', JSON.stringify(employee));
+                    sessionStorage.setItem('pointsManager', JSON.stringify(currentManager));
                     
                     document.getElementById('loginSection').style.display = 'none';
                     document.getElementById('dashboardSection').style.display = 'block';
@@ -419,17 +452,32 @@
                 const data = await response.json();
                 const employees = data.employees || data || [];
                 
-                teamMembers = employees.filter(emp => 
-                    emp.supervisor === (currentManager['First Name'] && currentManager['Last Name'] ? 
-                        `${currentManager['First Name']} ${currentManager['Last Name']}` : 
-                        currentManager.name)
-                ).sort((a, b) => {
-                    const nameA = a['First Name'] && a['Last Name'] ? 
-                        `${a['First Name']} ${a['Last Name']}` : a.name || '';
-                    const nameB = b['First Name'] && b['Last Name'] ? 
-                        `${b['First Name']} ${b['Last Name']}` : b.name || '';
-                    return nameA.localeCompare(nameB);
-                });
+                if (currentManager.is_super_admin) {
+                    // Super admin can manage all employees
+                    teamMembers = employees.filter(emp => {
+                        const terminated = emp['Terminated'] || emp.terminated || 'No';
+                        return terminated === 'No';
+                    }).sort((a, b) => {
+                        const nameA = a['First Name'] && a['Last Name'] ? 
+                            `${a['First Name']} ${a['Last Name']}` : a.name || '';
+                        const nameB = b['First Name'] && b['Last Name'] ? 
+                            `${b['First Name']} ${b['Last Name']}` : b.name || '';
+                        return nameA.localeCompare(nameB);
+                    });
+                } else {
+                    // Regular manager - only their direct reports
+                    teamMembers = employees.filter(emp => 
+                        emp.supervisor === (currentManager['First Name'] && currentManager['Last Name'] ? 
+                            `${currentManager['First Name']} ${currentManager['Last Name']}` : 
+                            currentManager.name)
+                    ).sort((a, b) => {
+                        const nameA = a['First Name'] && a['Last Name'] ? 
+                            `${a['First Name']} ${a['Last Name']}` : a.name || '';
+                        const nameB = b['First Name'] && b['Last Name'] ? 
+                            `${b['First Name']} ${b['Last Name']}` : b.name || '';
+                        return nameA.localeCompare(nameB);
+                    });
+                }
             } catch (error) {
                 console.error('Error loading team members:', error);
             }
