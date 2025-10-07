@@ -7,14 +7,21 @@ table = dynamodb.Table('panda-employees')
 
 def update_amedeo_points():
     try:
-        # Update Amedeo's points
+        # Update Amedeo's points using id as key
         response = table.update_item(
-            Key={'email': 'citroamedeo9@gmail.com'},
-            UpdateExpression='SET points_lifetime = :lifetime, points_redeemed = :redeemed, points_balance = :balance',
+            Key={'id': '10678'},
+            UpdateExpression='SET points_lifetime = :lifetime, points_redeemed = :redeemed, points_balance = :balance, #pp = :pp, total_points_received = :received, total_points_redeemed = :redeemed_total, redeemed_points = :redeemed_old',
+            ExpressionAttributeNames={
+                '#pp': 'Panda Points'
+            },
             ExpressionAttributeValues={
                 ':lifetime': Decimal('100'),
                 ':redeemed': Decimal('100'), 
-                ':balance': Decimal('0')
+                ':balance': Decimal('0'),
+                ':pp': Decimal('0'),
+                ':received': Decimal('100'),
+                ':redeemed_total': Decimal('100'),
+                ':redeemed_old': Decimal('100')
             },
             ReturnValues='UPDATED_NEW'
         )
