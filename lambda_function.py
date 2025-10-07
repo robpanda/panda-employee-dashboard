@@ -230,15 +230,18 @@ def create_employee(event):
                         )
                         if response['Items']:
                             existing_employee = response['Items'][0]
-                    except:
-                        pass
+                            print(f'Found existing employee {emp_id}: {existing_employee.get("First Name", "NO_FIRST")} {existing_employee.get("Last Name", "NO_LAST")}')
+                    except Exception as e:
+                        print(f'Error finding existing employee {emp_id}: {e}')
+                    
+                    print(f'Import data for {emp_id}: {emp_data}')
                     
                     employee = {
                         'id': str(emp_id),
                         'employee_id': str(emp_id),
                         'Employee Id': str(emp_id),
-                        'First Name': emp_data.get('First Name', emp_data.get('first_name', existing_employee.get('First Name', '') if existing_employee else '')),
-                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', existing_employee.get('Last Name', '') if existing_employee else '')),
+                        'First Name': emp_data.get('First Name', emp_data.get('first_name', emp_data.get('name', '').split(' ')[0] if emp_data.get('name') else (existing_employee.get('First Name', '') if existing_employee else ''))),
+                        'Last Name': emp_data.get('Last Name', emp_data.get('last_name', ' '.join(emp_data.get('name', '').split(' ')[1:]) if emp_data.get('name') and len(emp_data.get('name', '').split(' ')) > 1 else (existing_employee.get('Last Name', '') if existing_employee else ''))),
                         'Department': emp_data.get('Department', emp_data.get('department', '')),
                         'Position': emp_data.get('Position', emp_data.get('position', '')),
                         'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),

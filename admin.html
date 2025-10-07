@@ -927,10 +927,10 @@
                         <td><span class="badge bg-warning text-dark">${emp.points || emp['Panda Points'] || 0} pts</span></td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="editEmployee(${JSON.stringify(empId)})">
+                                <button class="btn btn-outline-primary" data-emp-id="${empId}" onclick="editEmployee(this.getAttribute('data-emp-id'))">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-outline-success" onclick="awardPoints(${JSON.stringify(empId)})">
+                                <button class="btn btn-outline-success" data-emp-id="${empId}" onclick="awardPoints(this.getAttribute('data-emp-id'))">
                                     <i class="fas fa-star"></i>
                                 </button>
                             </div>
