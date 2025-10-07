@@ -1371,10 +1371,15 @@ def handle_employee_login(event):
                 'position': employee.get('Position', ''),
                 'points': float(employee.get('points', employee.get('Panda Points', 0)) or 0),
                 'supervisor': employee.get('supervisor', ''),
+                'manager': employee.get('supervisor', ''),
                 'office': employee.get('office', ''),
+                'hire_date': employee.get('Employment Date', ''),
+                'employment_date': employee.get('Employment Date', ''),
                 'last_login': employee.get('last_login'),
                 'points_manager': employee.get('points_manager', 'No'),
-                'points_budget': employee.get('points_budget', 0)
+                'points_budget': employee.get('points_budget', 0),
+                'total_points_received': float(employee.get('total_points_received', 0) or 0),
+                'total_points_redeemed': float(employee.get('total_points_redeemed', 0) or 0)
             }
             
             return {
