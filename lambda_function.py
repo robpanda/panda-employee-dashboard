@@ -258,6 +258,14 @@ def create_employee(event):
                     elif existing_employee:
                         last_name = existing_employee.get('Last Name', existing_employee.get('last_name', ''))
                     
+                    # Extract position/title and auto-detect Points Manager
+                    position = emp_data.get('Position', emp_data.get('position', existing_employee.get('Position', '') if existing_employee else ''))
+                    is_points_manager = 'No'
+                    if position:
+                        position_lower = position.lower()
+                        if any(title in position_lower for title in ['director', 'president', 'vice president', 'c-suite', 'ceo', 'cfo', 'coo', 'cto']):
+                            is_points_manager = 'Yes'
+                    
                     print(f'Extracted names for {emp_id}: First="{first_name}", Last="{last_name}"')
                     
                     employee = {
@@ -282,6 +290,8 @@ def create_employee(event):
                         'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
                         'Terminated': emp_data.get('Terminated', emp_data.get('terminated', 'No')),
                         'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
+                        'points_manager': is_points_manager,
+                        'points_budget': 500 if is_points_manager == 'Yes' else 0,
                         'updated_at': datetime.now().isoformat()
                     }
                     
@@ -291,6 +301,10 @@ def create_employee(event):
                         employee['Panda Points'] = existing_employee.get('Panda Points', 0)
                         employee['last_login'] = existing_employee.get('last_login', '')
                         employee['password'] = existing_employee.get('password', 'Panda2025!')
+                        # Preserve existing Points Manager status if already set
+                        if existing_employee.get('points_manager') == 'Yes':
+                            employee['points_manager'] = 'Yes'
+                            employee['points_budget'] = existing_employee.get('points_budget', 500)
                         # If no first/last name in import data, keep existing names
                         if not first_name and existing_employee.get('First Name'):
                             employee['First Name'] = existing_employee['First Name']
@@ -413,17 +427,64 @@ def update_employee(event):
         }
 
 def delete_employee(event):
-    employee_id = event['pathParameters']['employee_id']
-    
-    employees_table.delete_item(Key={'employee_id': employee_id})
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-                'Content-Type': 'application/json',
-                },
-        'body': json.dumps({'message': 'Employee deleted successfully'})
-    }
+    try:
+        # Handle both API Gateway and Function URL event formats
+        if 'requestContext' in event and 'http' in event['requestContext']:
+            # Function URL format
+            path = event['requestContext']['http']['path']
+        else:
+            # API Gateway format
+            path = event.get('path', '/')
+        
+        path_parts = path.split('/')
+        employee_id = path_parts[-1]
+        
+        print(f'DELETE: Attempting to delete employee {employee_id}')
+        
+        # Find employee by scanning for matching ID (since we use different ID formats)
+        try:
+            response = employees_table.scan(
+                FilterExpression='id = :emp_id OR employee_id = :emp_id OR #eid = :emp_id',
+                ExpressionAttributeNames={'#eid': 'Employee Id'},
+                ExpressionAttributeValues={':emp_id': employee_id}
+            )
+            
+            if not response['Items']:
+                print(f'DELETE: Employee {employee_id} not found')
+                return {
+                    'statusCode': 404,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Employee not found'})
+                }
+            
+            employee = response['Items'][0]
+            print(f'DELETE: Found employee {employee.get("First Name")} {employee.get("Last Name")}')
+            
+            # Delete using the actual key from the found item
+            employees_table.delete_item(Key={'id': employee['id']})
+            print(f'DELETE: Successfully deleted employee {employee_id}')
+            
+        except Exception as e:
+            print(f'DELETE ERROR: Failed to delete employee: {e}')
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': f'Database error: {str(e)}'})
+            }
+        
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'message': 'Employee deleted successfully'})
+        }
+        
+    except Exception as e:
+        print(f'DELETE ERROR: {e}')
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
+        }
 
 def handle_contacts(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
@@ -1311,7 +1372,9 @@ def handle_employee_login(event):
                 'points': float(employee.get('points', employee.get('Panda Points', 0)) or 0),
                 'supervisor': employee.get('supervisor', ''),
                 'office': employee.get('office', ''),
-                'last_login': employee.get('last_login')
+                'last_login': employee.get('last_login'),
+                'points_manager': employee.get('points_manager', 'No'),
+                'points_budget': employee.get('points_budget', 0)
             }
             
             return {

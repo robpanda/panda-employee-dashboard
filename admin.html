@@ -708,14 +708,16 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Points Manager</label>
-                                    <select class="form-select" id="editPointsManager">
+                                    <select class="form-select" id="editPointsManager" onchange="toggleBudgetField()">
                                         <option value="No">No</option>
                                         <option value="Yes">Yes</option>
                                     </select>
+                                    <small class="text-muted">Directors, VPs, Presidents, C-Suite</small>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-3" id="budgetFieldContainer" style="display: none;">
                                     <label class="form-label">Quarterly Points Budget</label>
                                     <input type="number" class="form-control" id="editPointsBudget" value="500" min="0">
+                                    <small class="text-muted">Points budget per quarter</small>
                                 </div>
                             </div>
                         </form>
@@ -1500,6 +1502,14 @@
             });
         }
         
+        function toggleBudgetField() {
+            const pointsManager = document.getElementById('editPointsManager');
+            const budgetContainer = document.getElementById('budgetFieldContainer');
+            if (pointsManager && budgetContainer) {
+                budgetContainer.style.display = (pointsManager.value === 'Yes') ? 'block' : 'none';
+            }
+        }
+        
         function showAddManager() {
             const availableEmployees = employees.filter(e => {
                 const terminated = e['Terminated'] || e.terminated || 'No';
@@ -1649,15 +1659,29 @@
                 editIsSupervisor.value = employee.is_supervisor || 'No';
             }
             
+            // Auto-detect Points Manager based on position/title
+            const position = (employee['Position'] || employee.position || '').toLowerCase();
+            const isPointsManagerByTitle = position.includes('director') || 
+                                           position.includes('president') || 
+                                           position.includes('vice president') || 
+                                           position.includes('c-suite') ||
+                                           position.includes('ceo') ||
+                                           position.includes('cfo') ||
+                                           position.includes('coo') ||
+                                           position.includes('cto');
+            
             const editPointsManager = document.getElementById('editPointsManager');
             if (editPointsManager) {
-                editPointsManager.value = employee.points_manager || 'No';
+                editPointsManager.value = employee.points_manager || (isPointsManagerByTitle ? 'Yes' : 'No');
             }
             
             const editPointsBudget = document.getElementById('editPointsBudget');
             if (editPointsBudget) {
                 editPointsBudget.value = employee.points_budget || 500;
             }
+            
+            // Show/hide budget field based on Points Manager status
+            toggleBudgetField();
             
             // Clear password field (don't show existing password)
             const editPassword = document.getElementById('editPassword');
