@@ -1553,30 +1553,25 @@ def handle_admin_login(event):
             if manager_employee:
                 print(f'ADMIN_LOGIN: Employee found, points_manager: {manager_employee.get("points_manager")}')
                 if manager_employee.get('points_manager') == 'Yes':
-                    # Check password
-                    stored_password = manager_employee.get('password', 'Panda2025!')
-                    print(f'ADMIN_LOGIN: Password check - stored: "{stored_password}", input: "{password}"')
-                    if password == stored_password:
-                        print(f'ADMIN_LOGIN: Password match! Returning success')
-                        return {
-                            'statusCode': 200,
-                            'headers': get_cors_headers(),
-                            'body': json.dumps({
-                                'success': True,
-                                'admin': {
-                                    'email': manager_employee.get('Email', ''),
-                                    'role': 'points_manager',
-                                    'permissions': ['points'],
-                                    'name': f"{manager_employee.get('First Name', '')} {manager_employee.get('Last Name', '')}".strip(),
-                                    'employee_id': manager_employee.get('id'),
-                                    'points_budget': float(manager_employee.get('points_budget', 500) or 500),
-                                    'restricted_access': True
-                                },
-                                'message': 'Login successful'
-                            })
-                        }
-                    else:
-                        print(f'ADMIN_LOGIN: Password mismatch')
+                    # No password check needed for points managers - just verify they have the checkbox
+                    print(f'ADMIN_LOGIN: Points manager found! Granting access')
+                    return {
+                        'statusCode': 200,
+                        'headers': get_cors_headers(),
+                        'body': json.dumps({
+                            'success': True,
+                            'admin': {
+                                'email': manager_employee.get('Email', ''),
+                                'role': 'points_manager',
+                                'permissions': ['points'],
+                                'name': f"{manager_employee.get('First Name', '')} {manager_employee.get('Last Name', '')}".strip(),
+                                'employee_id': manager_employee.get('id'),
+                                'points_budget': float(manager_employee.get('points_budget', 500) or 500),
+                                'restricted_access': True
+                            },
+                            'message': 'Login successful'
+                        })
+                    }
                 else:
                     print(f'ADMIN_LOGIN: Employee is not a points manager')
             else:
@@ -1584,7 +1579,7 @@ def handle_admin_login(event):
         except Exception as e:
             print(f'Error checking manager employees: {e}')
         
-        # Fallback to hardcoded admin
+        # Fallback to hardcoded admin (still requires password)
         if email == 'admin' and password == 'admin123':
             return {
                 'statusCode': 200,
