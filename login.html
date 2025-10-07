@@ -99,9 +99,63 @@
         .loading { 
             display: none; 
         }
+        
+        /* Promo Banner Styles */
+        .promo-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        .promo-banner .close-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        
+        .promo-banner .close-btn:hover {
+            opacity: 1;
+        }
+        
+        .promo-highlight {
+            font-weight: 600;
+            color: #fbbf24;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+        
+        body.promo-active {
+            padding-top: 60px;
+        }
     </style>
 </head>
 <body>
+    <div id="promoBanner" class="promo-banner">
+        🎉 <span class="promo-highlight">NEW REFERRAL PROGRAM!</span> Earn <span class="promo-highlight">$25 Panda Points</span> for each referral that completes a call screening + <span class="promo-highlight">$50 Points</span> if they're in KOP, MD or VA! 🎉
+        <button class="close-btn" onclick="closeBanner()">&times;</button>
+    </div>
+    
     <div class="login-container">
         <div class="logo"><img src="panda-logo.png" alt="Panda Exteriors" style="max-width: 200px; height: auto;"></div>
         <h1>Panda Exteriors Admin</h1>
@@ -190,7 +244,20 @@
             if (sessionStorage.getItem('pandaAdmin') === 'authenticated') {
                 window.location.href = 'index.html';
             }
+            
+            // Show promo banner if not dismissed
+            if (!localStorage.getItem('promoBannerDismissed')) {
+                document.body.classList.add('promo-active');
+            } else {
+                document.getElementById('promoBanner').style.display = 'none';
+            }
         });
+        
+        function closeBanner() {
+            document.getElementById('promoBanner').style.display = 'none';
+            document.body.classList.remove('promo-active');
+            localStorage.setItem('promoBannerDismissed', 'true');
+        }
     </script>
 </body>
 </html>
