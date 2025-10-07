@@ -13,6 +13,7 @@ def test_referrals_cors():
         
         print(f"GET Status Code: {response.status_code}")
         print(f"CORS Headers: {response.headers.get('Access-Control-Allow-Origin', 'NOT FOUND')}")
+        print(f"All Headers: {dict(response.headers)}")
         print(f"Response: {response.text[:200]}...")
         
     except Exception as e:
@@ -36,6 +37,7 @@ def test_referrals_cors():
         
         print(f"\nPOST Status Code: {response.status_code}")
         print(f"CORS Headers: {response.headers.get('Access-Control-Allow-Origin', 'NOT FOUND')}")
+        print(f"All Headers: {dict(response.headers)}")
         print(f"Response: {response.text}")
         
     except Exception as e:

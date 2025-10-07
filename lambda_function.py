@@ -111,9 +111,7 @@ def lambda_handler(event, context):
         elif path == '/debug':
             return {
                 'statusCode': 200,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({
                     'method': http_method,
                     'path': path,
@@ -123,7 +121,9 @@ def lambda_handler(event, context):
                         '/employees', '/contacts', '/collections', '/config',
                         '/admin-users', '/create-admin', '/points', '/points-history',
                         '/referrals', '/employee-login', '/admin-login', '/test'
-                    ]
+                    ],
+                    'cors_test': 'CORS headers should be present',
+                    'timestamp': datetime.now().isoformat()
                 })
             }
         else:
