@@ -198,12 +198,12 @@
                 <img src="panda-logo.png" alt="Panda Exteriors">
             </div>
             <div class="nav-links">
-                <a href="employee.html" class="nav-link">👥 Employees</a>
-                <a href="points.html" class="nav-link">⭐ Points</a>
-                <a href="leads.html" class="nav-link active">📊 Leads</a>
-                <a href="referrals.html" class="nav-link">🤝 Referrals</a>
-                <a href="assets.html" class="nav-link">📦 Assets</a>
-                <a href="admin.html" class="nav-link">⚙️ Admin</a>
+                <a href="./employee.html" class="nav-link">👥 Employees</a>
+                <a href="./points.html" class="nav-link">⭐ Points</a>
+                <a href="./leads.html" class="nav-link active">📊 Leads</a>
+                <a href="./referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="./assets.html" class="nav-link">📦 Assets</a>
+                <a href="./admin.html" class="nav-link">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
@@ -981,7 +981,7 @@
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
             sessionStorage.removeItem('adminUser');
-            window.location.href = 'login.html';
+            window.location.href = './login.html';
         }
         // Initialize data and collections
         document.addEventListener('DOMContentLoaded', function() {
@@ -1977,7 +1977,7 @@
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', function() {
             if (!sessionStorage.getItem('pandaAdmin')) {
-                window.location.href = '/login.html';
+                window.location.href = './login.html';
                 return;
             }
         });
@@ -1985,11 +1985,7 @@
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
             sessionStorage.removeItem('adminUser');
-            window.location.href = '/login.html';
-        }
-        
-        function navigate(page) {
-            window.location.href = page;
+            window.location.href = './login.html';
         }
     </script>
 </body>

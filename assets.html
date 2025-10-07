@@ -167,12 +167,12 @@
                 <img src="panda-logo.png" alt="Panda Exteriors">
             </div>
             <div class="nav-links">
-                <a href="/employee.html" class="nav-link">👥 Employees</a>
-                <a href="/points.html" class="nav-link">⭐ Points</a>
-                <a href="/leads.html" class="nav-link">📊 Leads</a>
-                <a href="/referrals.html" class="nav-link">🤝 Referrals</a>
-                <a href="/assets.html" class="nav-link active">📦 Assets</a>
-                <a href="/admin.html" class="nav-link">⚙️ Admin</a>
+                <a href="./employee.html" class="nav-link">👥 Employees</a>
+                <a href="./points.html" class="nav-link">⭐ Points</a>
+                <a href="./leads.html" class="nav-link">📊 Leads</a>
+                <a href="./referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="./assets.html" class="nav-link active">📦 Assets</a>
+                <a href="./admin.html" class="nav-link">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
@@ -434,7 +434,7 @@
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
             sessionStorage.removeItem('adminUser');
-            window.location.href = '/login.html';
+            window.location.href = './login.html';
         }
         function addRequest() {
             alert('Add New Asset Request - Integration with asset management system');

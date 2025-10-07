@@ -97,13 +97,12 @@
                 <img src="panda-logo.png" alt="Panda Exteriors">
             </div>
             <div class="nav-links">
-                <a href="/admin.html" class="nav-link">👥 Employees</a>
-                <a href="/points.html" class="nav-link">⭐ Points</a>
-                <a href="/leads" class="nav-link">📊 Leads</a>
-                <a href="/referrals" class="nav-link active">🤝 Referrals</a>
-                <a href="#" class="nav-link" onclick="showReports(); return false;">📈 Reports</a>
-                <a href="/assets" class="nav-link">📦 Assets</a>
-                <a href="/admin.html" class="nav-link">⚙️ Admin</a>
+                <a href="./employee.html" class="nav-link">👥 Employees</a>
+                <a href="./points.html" class="nav-link">⭐ Points</a>
+                <a href="./leads.html" class="nav-link">📊 Leads</a>
+                <a href="./referrals.html" class="nav-link active">🤝 Referrals</a>
+                <a href="./assets.html" class="nav-link">📦 Assets</a>
+                <a href="./admin.html" class="nav-link">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
@@ -476,7 +475,7 @@
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
             sessionStorage.removeItem('adminUser');
-            window.location.href = '/login.html';
+            window.location.href = './login.html';
         }
         
         const API_URL = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws';
