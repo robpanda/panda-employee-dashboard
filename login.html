@@ -197,6 +197,12 @@
             if (email.toLowerCase() === 'admin' && password === 'admin123') {
                 sessionStorage.setItem('pandaAdmin', 'authenticated');
                 sessionStorage.setItem('adminUser', email);
+                sessionStorage.setItem('adminData', JSON.stringify({
+                    email: 'admin',
+                    role: 'super_admin',
+                    permissions: ['employees', 'points', 'referrals', 'leads'],
+                    name: 'System Administrator'
+                }));
                 window.location.href = '/';
                 return;
             }
@@ -213,6 +219,7 @@
                 if (result.success) {
                     sessionStorage.setItem('pandaAdmin', 'authenticated');
                     sessionStorage.setItem('adminUser', email);
+                    sessionStorage.setItem('adminData', JSON.stringify(result.admin));
                     window.location.href = '/';
                 } else {
                     errorDiv.textContent = result.message || 'Invalid email or password';

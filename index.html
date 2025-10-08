@@ -171,6 +171,43 @@
             sessionStorage.removeItem('adminUser');
             window.location.href = '/login.html';
         }
+        
+        // Check user permissions and hide unauthorized cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const adminData = sessionStorage.getItem('adminData');
+            if (adminData) {
+                try {
+                    const admin = JSON.parse(adminData);
+                    const permissions = admin.permissions || [];
+                    
+                    // Hide cards based on permissions
+                    if (!permissions.includes('employees')) {
+                        document.querySelector('.employees').style.display = 'none';
+                    }
+                    if (!permissions.includes('points')) {
+                        document.querySelector('.points').style.display = 'none';
+                    }
+                    if (!permissions.includes('referrals')) {
+                        document.querySelector('.referrals').style.display = 'none';
+                    }
+                    if (!permissions.includes('leads')) {
+                        document.querySelector('.leads').style.display = 'none';
+                    }
+                    
+                    // Admin console - only show for full admin or super admin
+                    if (admin.role !== 'admin' && admin.role !== 'super_admin') {
+                        document.querySelector('.admin').style.display = 'none';
+                    }
+                    
+                    // Assets - hide for all except super admin
+                    if (admin.role !== 'super_admin') {
+                        document.querySelector('.assets').style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error('Error parsing admin data:', e);
+                }
+            }
+        });
     </script>
 </body>
 </html>
