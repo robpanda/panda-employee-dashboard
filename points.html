@@ -882,8 +882,6 @@
                 });
 
                 if (updateResponse.ok) {
-                    const budgetNote = countsAgainstBudget ? ' (counted against budget)' : ' (no budget impact)';
-                    alert(`Successfully awarded ${points} points${budgetNote}!`);
                     bootstrap.Modal.getInstance(document.getElementById('awardPointsModal')).hide();
                     await loadTeamMembers();
                     await loadPointsHistory();
