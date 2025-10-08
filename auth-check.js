@@ -42,10 +42,9 @@ class AdminAuth {
             }
 
             // Load from admin users table
-            const response = await fetch('https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_admin_users' })
+            const response = await fetch('https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws/admin-users', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
             });
             
             if (!response.ok) {
