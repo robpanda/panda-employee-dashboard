@@ -675,8 +675,8 @@
                             <div class="row mt-3">
                                 <div class="col-md-4">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="editEmail" readonly>
-                                    <small class="text-muted">Email cannot be changed</small>
+                                    <input type="email" class="form-control" id="editEmail">
+                                    <small class="text-muted" id="emailEditNote">Email editing restricted to super admins</small>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Employee ID</label>
@@ -878,6 +878,14 @@
             window.location.href = './login.html';
         }
         
+        function checkAdminPermissions() {
+            const adminUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+            const isSuperAdmin = adminUser.role === 'super_admin' || adminUser.email === 'admin';
+            
+            // Store permission level for later use
+            window.currentAdminLevel = isSuperAdmin ? 'super_admin' : 'admin';
+        }
+        
         const API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws';
         let employees = [];
         let departments = ['Sales', 'Operations', 'Administration', 'Marketing', 'Finance', 'IT'];
@@ -886,6 +894,7 @@
         let sortDirection = 'asc';
 
         document.addEventListener('DOMContentLoaded', function() {
+            checkAdminPermissions();
             loadEmployees();
             loadAdminUsers();
             loadDepartments();
@@ -1807,6 +1816,19 @@
             const editPassword = document.getElementById('editPassword');
             if (editPassword) {
                 editPassword.value = '';
+            }
+            
+            // Set email field permissions based on admin level
+            const editEmailField = document.getElementById('editEmail');
+            const emailNote = document.getElementById('emailEditNote');
+            if (window.currentAdminLevel === 'super_admin') {
+                editEmailField.removeAttribute('readonly');
+                emailNote.textContent = 'Email can be edited by super admins';
+                emailNote.className = 'text-muted';
+            } else {
+                editEmailField.setAttribute('readonly', true);
+                emailNote.textContent = 'Email editing restricted to super admins';
+                emailNote.className = 'text-warning';
             }
 
             // Show the edit modal
