@@ -1325,7 +1325,7 @@
             tbody.innerHTML = uniqueSupervisors.map(supervisor => {
                 const teamMembers = employees.filter(e => e.supervisor === supervisor);
                 const teamSize = teamMembers.length;
-                const quarterlyBudget = teamSize * 500; // $500 per employee per quarter
+                const quarterlyBudget = 500; // Fixed $500 per team per quarter
                 const totalAwarded = teamMembers.reduce((sum, emp) => sum + (emp.points || emp['Panda Points'] || 0), 0);
                 const remaining = quarterlyBudget - totalAwarded;
                 const departments = [...new Set(teamMembers.map(e => e['Department'] || e.department).filter(Boolean))];
@@ -1451,7 +1451,7 @@
                             <span class="badge bg-warning text-dark">${points} pts</span>
                         </div>
                         <div class="col-md-3">
-                            <input type="number" class="form-control form-control-sm" id="budget_${empId}" value="500" min="0" placeholder="Budget">
+                            <span class="text-muted">Team Budget</span>
                         </div>
                         <div class="col-md-2">
                             <button class="btn btn-sm btn-outline-primary" onclick="adjustIndividualPoints('${empId}', '${name}')">
@@ -1486,27 +1486,15 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Quarterly Budget per Employee</label>
-                    <input type="number" class="form-control" id="budgetPerEmployee" value="500" min="0">
-                    <small class="text-muted">Default budget amount per employee per quarter</small>
+                    <label class="form-label">Quarterly Budget per Team</label>
+                    <input type="number" class="form-control" id="budgetPerTeam" value="500" min="0">
+                    <small class="text-muted">Fixed budget amount per team per quarter</small>
                 </div>
             `, () => {
-                const budgetPerEmployee = parseInt(document.getElementById('budgetPerEmployee').value) || 500;
-                const updates = [];
+                const budgetPerTeam = parseInt(document.getElementById('budgetPerTeam').value) || 500;
                 
-                teamMembers.forEach(emp => {
-                    const empId = emp.id || emp.employee_id;
-                    const individualBudget = parseInt(document.getElementById(`budget_${empId}`).value) || budgetPerEmployee;
-                    if (individualBudget !== 500) {
-                        updates.push({ empId, budget: individualBudget });
-                    }
-                });
-                
-                if (updates.length > 0) {
-                    showToast(`Updated individual budgets for ${updates.length} employees`, 'success');
-                } else {
-                    showToast('Budget settings updated successfully', 'success');
-                }
+                // Update team budget (no individual budgets needed)
+                showToast(`Team budget updated to $${budgetPerTeam.toLocaleString()}`, 'success');
                 loadManagers();
             });
         }
