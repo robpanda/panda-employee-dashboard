@@ -1090,17 +1090,13 @@ def handle_points_history(event):
             
             return {
                 'statusCode': 200,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'history': items})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': str(e), 'history': []})
             }
     
@@ -1124,17 +1120,13 @@ def handle_points_history(event):
             
             return {
                 'statusCode': 201,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'message': 'Points history recorded successfully'})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': str(e)})
             }
 
