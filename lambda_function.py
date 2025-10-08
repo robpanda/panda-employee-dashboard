@@ -77,6 +77,8 @@ def lambda_handler(event, context):
             return handle_config(event)
         elif path == '/admin-users':
             return handle_admin_users(event)
+        elif path.startswith('/admin-users/') and http_method in ['GET', 'PUT', 'DELETE']:
+            return handle_admin_user_by_email(event)
         elif path == '/' and 'action' in json.loads(event.get('body', '{}')):
             # Handle action-based requests to root path
             body = json.loads(event.get('body', '{}'))
@@ -1645,6 +1647,124 @@ def handle_login_history(event):
             'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Failed to load login history'})
         }
+
+def handle_admin_user_by_email(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+        path = event['requestContext']['http']['path']
+    else:
+        method = event.get('httpMethod', 'GET')
+        path = event.get('path', '/')
+    
+    email = path.split('/')[-1]
+    
+    if method == 'GET':
+        try:
+            if admin_users_table:
+                response = admin_users_table.get_item(Key={'email': email})
+                if 'Item' in response:
+                    user = response['Item']
+                    # Convert Decimal to float for JSON serialization
+                    for key, value in user.items():
+                        if isinstance(value, Decimal):
+                            user[key] = float(value)
+                    return {
+                        'statusCode': 200,
+                        'headers': get_cors_headers(),
+                        'body': json.dumps(user)
+                    }
+                else:
+                    return {
+                        'statusCode': 404,
+                        'headers': get_cors_headers(),
+                        'body': json.dumps({'error': 'Admin user not found'})
+                    }
+            else:
+                return {
+                    'statusCode': 404,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Admin users table not available'})
+                }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': str(e)})
+            }
+    
+    elif method == 'PUT':
+        try:
+            body = json.loads(event.get('body', '{}'))
+            
+            if admin_users_table:
+                # Get existing user
+                response = admin_users_table.get_item(Key={'email': email})
+                if 'Item' not in response:
+                    return {
+                        'statusCode': 404,
+                        'headers': get_cors_headers(),
+                        'body': json.dumps({'error': 'Admin user not found'})
+                    }
+                
+                user = response['Item']
+                
+                # Update fields
+                if 'role' in body:
+                    user['role'] = body['role']
+                if 'active' in body:
+                    user['active'] = body['active']
+                if 'permissions' in body:
+                    user['permissions'] = body['permissions']
+                
+                user['updated_at'] = datetime.now().isoformat()
+                
+                admin_users_table.put_item(Item=user)
+                
+                return {
+                    'statusCode': 200,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'message': 'Admin user updated successfully'})
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Admin users table not available'})
+                }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': str(e)})
+            }
+    
+    elif method == 'DELETE':
+        try:
+            if admin_users_table:
+                admin_users_table.delete_item(Key={'email': email})
+                return {
+                    'statusCode': 200,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'message': 'Admin user deleted successfully'})
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'Admin users table not available'})
+                }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': str(e)})
+            }
+    
+    return {
+        'statusCode': 405,
+        'headers': get_cors_headers(),
+        'body': json.dumps({'error': 'Method not allowed'})
+    }
 
 def create_super_admin(event):
     return {
