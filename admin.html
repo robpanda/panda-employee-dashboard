@@ -879,8 +879,20 @@
         }
         
         function checkAdminPermissions() {
-            const adminUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
-            const isSuperAdmin = adminUser.role === 'super_admin' || adminUser.email === 'admin';
+            const adminUserData = sessionStorage.getItem('adminUser');
+            let adminUser = {};
+            
+            try {
+                // Try to parse as JSON first
+                adminUser = JSON.parse(adminUserData || '{}');
+            } catch (e) {
+                // If it's not JSON, it might be just an email string
+                if (adminUserData && typeof adminUserData === 'string') {
+                    adminUser = { email: adminUserData };
+                }
+            }
+            
+            const isSuperAdmin = adminUser.role === 'super_admin' || adminUser.email === 'admin' || adminUser.email === 'rb.winters@me.com';
             
             // Store permission level for later use
             window.currentAdminLevel = isSuperAdmin ? 'super_admin' : 'admin';
