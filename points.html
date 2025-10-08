@@ -543,12 +543,11 @@
         }
 
         function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            sessionStorage.removeItem('adminData');
             sessionStorage.removeItem('pointsManager');
-            currentManager = null;
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('dashboardSection').style.display = 'none';
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
+            window.location.href = './login.html';
         }
 
         async function loadDashboard() {
