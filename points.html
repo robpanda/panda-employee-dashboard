@@ -218,8 +218,8 @@
                                                     <th>Employee</th>
                                                     <th>Department</th>
                                                     <th>Current Points</th>
-                                                    <th>Budget Used</th>
-                                                    <th>Remaining</th>
+                                                    <th>Points Awarded</th>
+                                                    <th>Team Budget Remaining</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
@@ -644,16 +644,15 @@
                 // Super admin has unlimited budget
                 quarterlyBudget = 50000;
             } else {
-                // Regular manager: budget per employee * team size
-                const budgetPerEmployee = currentManager.points_budget || 500;
-                quarterlyBudget = budgetPerEmployee * teamMembers.length;
+                // Regular manager: fixed 500 points per team per quarter
+                quarterlyBudget = 500;
             }
             
             const currentQuarter = getCurrentQuarter();
             const managerId = currentManager.employee_id || currentManager.id;
             
             const awardedThisQuarter = pointsHistory
-                .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter)
+                .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
                 .reduce((sum, h) => sum + h.points, 0);
             
             const remaining = quarterlyBudget - awardedThisQuarter;
@@ -682,11 +681,16 @@
                 const currentPoints = emp.points || emp['Panda Points'] || 0;
                 
                 const budgetUsed = pointsHistory
-                    .filter(h => h.employee_id === empId && h.awarded_by === managerId && getQuarter(h.date) === currentQuarter)
+                    .filter(h => h.employee_id === empId && h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
                     .reduce((sum, h) => sum + h.points, 0);
                 
-                const individualBudget = currentManager.is_super_admin ? 10000 : (currentManager.points_budget || 500);
-                const budgetRemaining = individualBudget - budgetUsed;
+                // Team budget calculation - show remaining team budget, not individual
+                const teamBudgetUsed = pointsHistory
+                    .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
+                    .reduce((sum, h) => sum + h.points, 0);
+                
+                const teamBudget = currentManager.is_super_admin ? 50000 : 500;
+                const budgetRemaining = teamBudget - teamBudgetUsed;
                 
                 return `
                     <tr>
@@ -694,7 +698,7 @@
                         <td>${department}</td>
                         <td><span class="badge bg-warning text-dark">${currentPoints} pts</span></td>
                         <td><span class="points-awarded">${budgetUsed} pts</span></td>
-                        <td><span class="points-remaining">${budgetRemaining} pts</span></td>
+                        <td><span class="points-remaining">${budgetRemaining} pts (team)</span></td>
                         <td>
                             <button class="btn btn-sm btn-success" onclick="showAwardModal('${empId}', '${name}', ${budgetRemaining}, true)" ${!currentManager.is_super_admin && budgetRemaining <= 0 ? 'disabled' : ''}>
                                 <i class="fas fa-plus"></i> Award
@@ -798,8 +802,17 @@
             document.getElementById('awardEmployeeName').value = empName;
             
             if (countsAgainstBudget) {
-                document.getElementById('awardPoints').max = remaining;
-                document.getElementById('remainingBudget').textContent = remaining + ' (counts against budget)';
+                // Calculate actual team budget remaining
+                const currentQuarter = getCurrentQuarter();
+                const managerId = currentManager.employee_id || currentManager.id;
+                const teamBudgetUsed = pointsHistory
+                    .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
+                    .reduce((sum, h) => sum + h.points, 0);
+                const teamBudget = currentManager.is_super_admin ? 50000 : 500;
+                const teamBudgetRemaining = teamBudget - teamBudgetUsed;
+                
+                document.getElementById('awardPoints').max = teamBudgetRemaining;
+                document.getElementById('remainingBudget').textContent = teamBudgetRemaining + ' team points remaining';
             } else {
                 document.getElementById('awardPoints').max = 1000; // Higher limit for non-budget awards
                 document.getElementById('remainingBudget').textContent = 'No budget limit (non-team member)';
