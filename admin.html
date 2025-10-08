@@ -764,6 +764,69 @@
         </div>
     </div>
 
+    <!-- Edit Admin User Modal -->
+    <div class="modal fade" id="editAdminModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Admin User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAdminForm">
+                        <input type="hidden" id="editAdminEmail">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editAdminEmailDisplay" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="editAdminRole">
+                                <option value="admin">Full Admin</option>
+                                <option value="referrals_admin">Referrals Admin</option>
+                                <option value="points_admin">Points Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Permissions</label>
+                            <div class="mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editPermEmployees" value="employees">
+                                    <label class="form-check-label" for="editPermEmployees">Employee Management</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editPermPoints" value="points">
+                                    <label class="form-check-label" for="editPermPoints">Points Management</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editPermReferrals" value="referrals">
+                                    <label class="form-check-label" for="editPermReferrals">Referrals Management</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editPermLeads" value="leads">
+                                    <label class="form-check-label" for="editPermLeads">Leads Management</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="editAdminStatus">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="deleteAdminUser()">Delete User</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateAdminUser()">Update User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modern Modal -->
     <div class="modal fade" id="modernModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -1150,9 +1213,14 @@
                             <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</td>
                             <td>N/A</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-info" onclick="viewAdminDetails('${user.email}')">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-info" onclick="viewAdminDetails('${user.email}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button class="btn btn-outline-primary" onclick="editAdminUser('${user.email}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `).join('');
@@ -1941,6 +2009,88 @@
             }
             
             displayEmployees();
+        }
+
+        async function editAdminUser(email) {
+            try {
+                const response = await fetch(`${API_URL}/admin-users/${email}`);
+                if (response.ok) {
+                    const user = await response.json();
+                    
+                    document.getElementById('editAdminEmail').value = email;
+                    document.getElementById('editAdminEmailDisplay').value = email;
+                    document.getElementById('editAdminRole').value = user.role || 'admin';
+                    document.getElementById('editAdminStatus').value = user.active ? 'true' : 'false';
+                    
+                    // Set permissions checkboxes
+                    const permissions = user.permissions || [];
+                    document.getElementById('editPermEmployees').checked = permissions.includes('employees');
+                    document.getElementById('editPermPoints').checked = permissions.includes('points');
+                    document.getElementById('editPermReferrals').checked = permissions.includes('referrals');
+                    document.getElementById('editPermLeads').checked = permissions.includes('leads');
+                    
+                    new bootstrap.Modal(document.getElementById('editAdminModal')).show();
+                } else {
+                    showToast('Error loading admin user details', 'error');
+                }
+            } catch (error) {
+                showToast('Error loading admin user: ' + error.message, 'error');
+            }
+        }
+        
+        async function updateAdminUser() {
+            const email = document.getElementById('editAdminEmail').value;
+            const role = document.getElementById('editAdminRole').value;
+            const active = document.getElementById('editAdminStatus').value === 'true';
+            
+            const permissions = [];
+            if (document.getElementById('editPermEmployees').checked) permissions.push('employees');
+            if (document.getElementById('editPermPoints').checked) permissions.push('points');
+            if (document.getElementById('editPermReferrals').checked) permissions.push('referrals');
+            if (document.getElementById('editPermLeads').checked) permissions.push('leads');
+            
+            try {
+                const response = await fetch(`${API_URL}/admin-users/${email}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role, active, permissions })
+                });
+                
+                if (response.ok) {
+                    showToast('Admin user updated successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editAdminModal')).hide();
+                    loadAdminUsers();
+                } else {
+                    showToast('Error updating admin user', 'error');
+                }
+            } catch (error) {
+                showToast('Error updating admin user: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteAdminUser() {
+            const email = document.getElementById('editAdminEmail').value;
+            
+            if (!confirm(`Are you sure you want to delete admin user ${email}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/admin-users/${email}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast('Admin user deleted successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editAdminModal')).hide();
+                    loadAdminUsers();
+                    updateStats();
+                } else {
+                    showToast('Error deleting admin user', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting admin user: ' + error.message, 'error');
+            }
         }
 
         function viewAdminDetails(email) {
