@@ -19,83 +19,8 @@
 </head>
 <body>
     <div class="container mt-4">
-        <!-- Login Section -->
-        <div id="loginSection" class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h3><i class="fas fa-star"></i> Points Manager Login</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Email:</label>
-                            <input type="email" class="form-control" id="loginEmail" placeholder="Enter your email address">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password:</label>
-                            <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password">
-                        </div>
-                        <button class="btn btn-primary w-100 mb-3" onclick="login()">Login</button>
-                        <div class="text-center">
-                            <a href="#" class="text-muted" onclick="showResetPassword()">Reset Password</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Reset Password Section -->
-        <div id="resetSection" class="row justify-content-center" style="display: none;">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h3><i class="fas fa-key"></i> Reset Password</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Email:</label>
-                            <input type="email" class="form-control" id="resetEmail" placeholder="Enter your email address">
-                        </div>
-                        <button class="btn btn-warning w-100 mb-3" onclick="sendResetEmail()">Send Reset Link</button>
-                        <div class="text-center">
-                            <a href="#" class="text-muted" onclick="showLogin()">Back to Login</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Change Password Section -->
-        <div id="changePasswordSection" class="row justify-content-center" style="display: none;">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h3><i class="fas fa-lock"></i> Change Password</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Current Password:</label>
-                            <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">New Password:</label>
-                            <input type="password" class="form-control" id="newPassword" placeholder="Enter new password">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Confirm New Password:</label>
-                            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password">
-                        </div>
-                        <button class="btn btn-success w-100 mb-3" onclick="changePassword()">Change Password</button>
-                        <div class="text-center">
-                            <a href="#" class="text-muted" onclick="showDashboard()">Back to Dashboard</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Main Dashboard -->
-        <div id="dashboardSection" style="display: none;">
+        <div id="dashboardSection">
             <!-- Header -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -689,14 +614,26 @@
             URL.revokeObjectURL(url);
         }
 
-        // Check for existing session
+        // Initialize with admin session
         document.addEventListener('DOMContentLoaded', function() {
-            const savedManager = sessionStorage.getItem('pointsManager');
-            if (savedManager) {
-                currentManager = JSON.parse(savedManager);
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dashboardSection').style.display = 'block';
+            const adminData = sessionStorage.getItem('adminData');
+            if (adminData) {
+                const admin = JSON.parse(adminData);
+                currentManager = {
+                    id: 'admin',
+                    employee_id: 'admin',
+                    'First Name': 'Super',
+                    'Last Name': 'Admin',
+                    name: 'Super Admin',
+                    email: admin.email,
+                    'Department': 'Administration',
+                    points_budget: 10000,
+                    is_super_admin: true
+                };
                 loadDashboard();
+            } else {
+                alert('Please login through the admin dashboard first.');
+                window.location.href = 'login.html';
             }
         });
     </script>
