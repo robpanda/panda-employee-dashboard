@@ -494,7 +494,7 @@
                 const employees = data.employees || data || [];
                 
                 if (currentManager.is_super_admin) {
-                    // Super admin can manage all employees
+                    // Super admin can manage all active employees
                     teamMembers = employees.filter(emp => {
                         const terminated = emp['Terminated'] || emp.terminated || 'No';
                         return terminated === 'No';
@@ -506,12 +506,16 @@
                         return nameA.localeCompare(nameB);
                     });
                 } else {
-                    // Regular manager - only their direct reports
-                    teamMembers = employees.filter(emp => 
-                        emp.supervisor === (currentManager['First Name'] && currentManager['Last Name'] ? 
-                            `${currentManager['First Name']} ${currentManager['Last Name']}` : 
-                            currentManager.name)
-                    ).sort((a, b) => {
+                    // Regular manager - find their direct reports
+                    const managerName = currentManager.name || 
+                        `${currentManager['First Name'] || ''} ${currentManager['Last Name'] || ''}`.trim();
+                    
+                    teamMembers = employees.filter(emp => {
+                        const terminated = emp['Terminated'] || emp.terminated || 'No';
+                        const supervisor = emp.supervisor || emp.manager || '';
+                        
+                        return terminated === 'No' && supervisor === managerName;
+                    }).sort((a, b) => {
                         const nameA = a['First Name'] && a['Last Name'] ? 
                             `${a['First Name']} ${a['Last Name']}` : a.name || '';
                         const nameB = b['First Name'] && b['Last Name'] ? 
@@ -519,8 +523,11 @@
                         return nameA.localeCompare(nameB);
                     });
                 }
+                
+                console.log(`Loaded ${teamMembers.length} team members for ${currentManager.name}`);
             } catch (error) {
                 console.error('Error loading team members:', error);
+                teamMembers = [];
             }
         }
 
@@ -539,24 +546,41 @@
         }
 
         function updateBudgetOverview() {
-            const quarterlyBudget = (currentManager.points_budget || 500) * teamMembers.length;
+            let quarterlyBudget;
+            
+            if (currentManager.is_super_admin) {
+                // Super admin has unlimited budget
+                quarterlyBudget = 50000;
+            } else {
+                // Regular manager: budget per employee * team size
+                const budgetPerEmployee = currentManager.points_budget || 500;
+                quarterlyBudget = budgetPerEmployee * teamMembers.length;
+            }
+            
             const currentQuarter = getCurrentQuarter();
+            const managerId = currentManager.employee_id || currentManager.id;
             
             const awardedThisQuarter = pointsHistory
-                .filter(h => h.awarded_by === currentManager.employee_id && getQuarter(h.date) === currentQuarter)
+                .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter)
                 .reduce((sum, h) => sum + h.points, 0);
             
             const remaining = quarterlyBudget - awardedThisQuarter;
 
-            document.getElementById('totalBudget').textContent = quarterlyBudget;
-            document.getElementById('totalAwarded').textContent = awardedThisQuarter;
-            document.getElementById('totalRemaining').textContent = remaining;
+            document.getElementById('totalBudget').textContent = quarterlyBudget.toLocaleString();
+            document.getElementById('totalAwarded').textContent = awardedThisQuarter.toLocaleString();
+            document.getElementById('totalRemaining').textContent = remaining.toLocaleString();
             document.getElementById('teamSize').textContent = teamMembers.length;
         }
 
         function displayTeam() {
             const tbody = document.getElementById('teamTable');
             const currentQuarter = getCurrentQuarter();
+            const managerId = currentManager.employee_id || currentManager.id;
+            
+            if (teamMembers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No team members found</td></tr>';
+                return;
+            }
             
             tbody.innerHTML = teamMembers.map(emp => {
                 const name = emp['First Name'] && emp['Last Name'] ? 
@@ -566,10 +590,11 @@
                 const currentPoints = emp.points || emp['Panda Points'] || 0;
                 
                 const budgetUsed = pointsHistory
-                    .filter(h => h.employee_id === empId && h.awarded_by === currentManager.employee_id && getQuarter(h.date) === currentQuarter)
+                    .filter(h => h.employee_id === empId && h.awarded_by === managerId && getQuarter(h.date) === currentQuarter)
                     .reduce((sum, h) => sum + h.points, 0);
                 
-                const budgetRemaining = (currentManager.points_budget || 500) - budgetUsed;
+                const individualBudget = currentManager.is_super_admin ? 10000 : (currentManager.points_budget || 500);
+                const budgetRemaining = individualBudget - budgetUsed;
                 
                 return `
                     <tr>
@@ -579,7 +604,7 @@
                         <td><span class="points-awarded">${budgetUsed} pts</span></td>
                         <td><span class="points-remaining">${budgetRemaining} pts</span></td>
                         <td>
-                            <button class="btn btn-sm btn-success" onclick="showAwardModal('${empId}', '${name}', ${budgetRemaining})" ${budgetRemaining <= 0 ? 'disabled' : ''}>
+                            <button class="btn btn-sm btn-success" onclick="showAwardModal('${empId}', '${name}', ${budgetRemaining})" ${!currentManager.is_super_admin && budgetRemaining <= 0 ? 'disabled' : ''}>
                                 <i class="fas fa-plus"></i> Award
                             </button>
                         </td>
@@ -730,21 +755,78 @@
         }
 
         // Initialize with admin session
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const adminData = sessionStorage.getItem('adminData');
             if (adminData) {
                 const admin = JSON.parse(adminData);
-                currentManager = {
-                    id: 'admin',
-                    employee_id: 'admin',
-                    'First Name': 'Super',
-                    'Last Name': 'Admin',
-                    name: 'Super Admin',
-                    email: admin.email,
-                    'Department': 'Administration',
-                    points_budget: 10000,
-                    is_super_admin: true
-                };
+                
+                // Check if super admin or find actual employee record
+                if (admin.email === 'admin' || admin.role === 'super_admin') {
+                    currentManager = {
+                        id: 'admin',
+                        employee_id: 'admin',
+                        'First Name': 'Super',
+                        'Last Name': 'Admin',
+                        name: 'Super Admin',
+                        email: admin.email,
+                        'Department': 'Administration',
+                        points_budget: 10000,
+                        is_super_admin: true
+                    };
+                } else {
+                    // Find the actual employee record for this admin user
+                    try {
+                        const response = await fetch(`${API_URL}/employees`);
+                        const data = await response.json();
+                        const employees = data.employees || data || [];
+                        
+                        const employee = employees.find(emp => 
+                            (emp.email || emp['Email'] || '').toLowerCase() === admin.email.toLowerCase()
+                        );
+                        
+                        if (employee) {
+                            currentManager = {
+                                ...employee,
+                                id: employee.id || employee.employee_id,
+                                employee_id: employee.id || employee.employee_id,
+                                'First Name': employee['First Name'] || employee.first_name,
+                                'Last Name': employee['Last Name'] || employee.last_name,
+                                name: `${employee['First Name'] || employee.first_name || ''} ${employee['Last Name'] || employee.last_name || ''}`.trim(),
+                                email: admin.email,
+                                'Department': employee['Department'] || employee.department,
+                                points_budget: employee.points_budget || 500,
+                                is_super_admin: false
+                            };
+                        } else {
+                            // Fallback if employee not found
+                            currentManager = {
+                                id: 'admin',
+                                employee_id: 'admin',
+                                'First Name': admin.name || 'Admin',
+                                'Last Name': 'User',
+                                name: admin.name || 'Admin User',
+                                email: admin.email,
+                                'Department': 'Administration',
+                                points_budget: 500,
+                                is_super_admin: false
+                            };
+                        }
+                    } catch (error) {
+                        console.error('Error loading employee data:', error);
+                        currentManager = {
+                            id: 'admin',
+                            employee_id: 'admin',
+                            'First Name': 'Admin',
+                            'Last Name': 'User',
+                            name: 'Admin User',
+                            email: admin.email,
+                            'Department': 'Administration',
+                            points_budget: 500,
+                            is_super_admin: false
+                        };
+                    }
+                }
+                
                 loadDashboard();
             } else {
                 alert('Please login through the admin dashboard first.');
