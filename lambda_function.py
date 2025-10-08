@@ -1113,10 +1113,27 @@ def handle_points_history(event):
                 'awarded_by': body.get('awarded_by', ''),
                 'awarded_by_name': body.get('awarded_by_name', ''),
                 'date': body.get('date', datetime.now().isoformat()),
-                'created_at': datetime.now().isoformat()
+                'created_at': datetime.now().isoformat(),
+                'counts_against_budget': body.get('counts_against_budget', True)
             }
             
             points_history_table.put_item(Item=history_item)
+            
+            # Send email notification to employee if points > 0 (award, not deduction)
+            if int(body.get('points', 0)) > 0:
+                try:
+                    # Get employee data for email
+                    emp_id = body.get('employee_id', '')
+                    response = employees_table.scan(
+                        FilterExpression='id = :emp_id OR employee_id = :emp_id',
+                        ExpressionAttributeValues={':emp_id': emp_id}
+                    )
+                    
+                    if response['Items']:
+                        employee = response['Items'][0]
+                        send_points_notification(employee, history_item)
+                except Exception as e:
+                    print(f'Failed to send points notification email: {e}')
             
             return {
                 'statusCode': 201,
@@ -1403,6 +1420,71 @@ def handle_employee_login(event):
             'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Server error'})
         }
+
+def send_points_notification(employee_data, points_data):
+    try:
+        first_name = employee_data.get('First Name', employee_data.get('first_name', 'Team Member'))
+        employee_email = employee_data.get('Email', employee_data.get('email', ''))
+        
+        if not employee_email:
+            print('No email address found for employee')
+            return
+        
+        subject = "🎉 You've been awarded Panda Points!"
+        
+        body_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #2c5aa0;">🎉 You've been awarded Panda Points!</h2>
+                
+                <p>Hey {first_name},</p>
+                
+                <p>You've been awarded <strong>{points_data['points']} Panda Points</strong>!</p>
+                
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p><strong>Points:</strong> {points_data['points']}</p>
+                    <p><strong>From:</strong> {points_data['awarded_by_name']}</p>
+                    {f'<p><strong>Reason:</strong> {points_data["reason"]}</p>' if points_data.get('reason') else ''}
+                </div>
+                
+                <p>Keep up the great work! 🐼✨</p>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="font-size: 12px; color: #666;">This is an automated message from the Panda Points system.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        body_text = f"""
+        🎉 You've been awarded Panda Points!
+        
+        Hey {first_name},
+        
+        You've been awarded Panda Points!
+        
+        Points: {points_data['points']}
+        From: {points_data['awarded_by_name']}
+        {f'Reason: {points_data["reason"]}' if points_data.get('reason') else ''}
+        
+        Keep up the great work! 🐼✨
+        """
+        
+        ses.send_email(
+            Source='noreply@pandaexteriors.com',
+            Destination={'ToAddresses': [employee_email]},
+            Message={
+                'Subject': {'Data': subject},
+                'Body': {
+                    'Html': {'Data': body_html},
+                    'Text': {'Data': body_text}
+                }
+            }
+        )
+        print(f'Points notification email sent to: {employee_email}')
+    except Exception as e:
+        print(f'Failed to send points notification email: {e}')
 
 def send_referral_notification(referral_data):
     try:
