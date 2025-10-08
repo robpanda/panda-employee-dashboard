@@ -193,19 +193,8 @@
             loading.style.display = 'inline';
             errorDiv.style.display = 'none';
             
-            // Temporary super admin bypass for testing
-            const superAdminCredentials = [
-                { email: 'admin@pandaexteriors.com', password: 'admin123' },
-                { email: 'super@pandaexteriors.com', password: 'password' },
-                { email: 'rob@pandaexteriors.com', password: 'admin' },
-                { email: 'rb.winters@me.com', password: 'admin123' }
-            ];
-            
-            const isValidAdmin = superAdminCredentials.some(cred => 
-                cred.email.toLowerCase() === email.toLowerCase() && cred.password === password
-            );
-            
-            if (isValidAdmin) {
+            // Check for super admin first
+            if (email.toLowerCase() === 'admin' && password === 'admin123') {
                 sessionStorage.setItem('pandaAdmin', 'authenticated');
                 sessionStorage.setItem('adminUser', email);
                 window.location.href = '/';
