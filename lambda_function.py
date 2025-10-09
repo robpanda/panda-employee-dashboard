@@ -1033,11 +1033,11 @@ def get_shopify_credentials():
     try:
         response = secrets_client.get_secret_value(SecretId='shopify/my-cred')
         secret = json.loads(response['SecretString'])
-        return 'pandaexteriors', secret.get('access_token', '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')
+        return 'pandaadmin', secret.get('access_token', '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')
     except Exception as e:
         print(f'Error retrieving Shopify credentials: {e}')
-        # Fallback with working credentials for testing
-        return 'pandaexteriors', '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'
+        # Use new credentials
+        return 'pandaadmin', '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'
 
 def handle_shopify_orders(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
@@ -1954,17 +1954,65 @@ def handle_merchandise(event):
     
     if method == 'GET':
         try:
-            print('MERCHANDISE: Loading employee merchandise data')
+            print('MERCHANDISE: Loading employee merchandise data with Shopify orders')
+            
+            # Get employees
             response = employees_table.scan()
             employees = response['Items']
             
-            # Filter employees who have merchandise data
+            # Get Shopify orders
+            shopify_orders = get_shopify_orders()
+            print(f'MERCHANDISE: Retrieved {len(shopify_orders)} Shopify orders')
+            
+            # Create email to employee mapping
+            email_to_employee = {}
+            for emp in employees:
+                email = emp.get('Email', emp.get('email', '')).lower().strip()
+                work_email = emp.get('Work Email', emp.get('work_email', '')).lower().strip()
+                if email:
+                    email_to_employee[email] = emp
+                if work_email:
+                    email_to_employee[work_email] = emp
+            
             merchandise_data = []
+            
+            # Process Shopify orders first
+            for order in shopify_orders:
+                customer_email = order.get('customer_email', '').lower().strip()
+                if customer_email and customer_email in email_to_employee:
+                    employee = email_to_employee[customer_email]
+                    first_name = employee.get('First Name', employee.get('first_name', ''))
+                    last_name = employee.get('Last Name', employee.get('last_name', ''))
+                    employee_name = f"{first_name} {last_name}".strip() or 'Unknown'
+                    
+                    # Get line items as string
+                    items = ', '.join([f"{item.get('quantity', 1)}x {item.get('title', 'Item')}" 
+                                     for item in order.get('line_items', [])])
+                    
+                    merchandise_data.append({
+                        'id': employee.get('id', ''),
+                        'employee_id': employee.get('id', employee.get('employee_id', '')),
+                        'employee_name': employee_name,
+                        'email': customer_email,
+                        'department': employee.get('Department', employee.get('department', '')),
+                        'merch_requested': items,
+                        'merch_sent': 'Yes' if order.get('fulfillment_status') == 'fulfilled' else 'No',
+                        'merch_sent_date': order.get('created_at', '').split('T')[0] if order.get('created_at') else '',
+                        'merchandise_value': float(order.get('total_price', 0)),
+                        'status': 'shipped' if order.get('fulfillment_status') == 'fulfilled' else 'pending',
+                        'order_number': order.get('order_number', ''),
+                        'shopify_order': True
+                    })
+            
+            # Add employees with merchandise data but no Shopify orders
+            processed_emails = {item['email'] for item in merchandise_data}
             for employee in employees:
+                emp_email = employee.get('Email', employee.get('email', '')).lower().strip()
+                if emp_email in processed_emails:
+                    continue
+                    
                 merch_requested = employee.get('Merch Requested', employee.get('merch_requested', ''))
-                merch_sent = employee.get('Merch Sent', employee.get('merch_sent', 'No'))
                 merch_value = employee.get('merchandise_value', employee.get('Merchandise Value', 0))
-                merch_sent_date = employee.get('Merch Sent Date', employee.get('merch_sent_date', ''))
                 
                 if merch_requested or float(merch_value or 0) > 0:
                     first_name = employee.get('First Name', employee.get('first_name', ''))
@@ -1975,16 +2023,17 @@ def handle_merchandise(event):
                         'id': employee.get('id', ''),
                         'employee_id': employee.get('id', employee.get('employee_id', '')),
                         'employee_name': employee_name,
-                        'email': employee.get('Email', employee.get('email', '')),
+                        'email': emp_email,
                         'department': employee.get('Department', employee.get('department', '')),
                         'merch_requested': merch_requested,
-                        'merch_sent': merch_sent,
-                        'merch_sent_date': merch_sent_date,
+                        'merch_sent': employee.get('Merch Sent', employee.get('merch_sent', 'No')),
+                        'merch_sent_date': employee.get('Merch Sent Date', employee.get('merch_sent_date', '')),
                         'merchandise_value': float(merch_value or 0),
-                        'status': 'shipped' if merch_sent == 'Yes' else 'pending'
+                        'status': 'shipped' if employee.get('Merch Sent', employee.get('merch_sent', 'No')) == 'Yes' else 'pending',
+                        'shopify_order': False
                     })
             
-            print(f'MERCHANDISE: Found {len(merchandise_data)} employees with merchandise data')
+            print(f'MERCHANDISE: Found {len(merchandise_data)} total merchandise records')
             
             return {
                 'statusCode': 200,

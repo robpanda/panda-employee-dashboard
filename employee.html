@@ -1837,12 +1837,13 @@
                                 <strong>${employeeName}</strong>
                                 <br><small class="text-muted">${merch.email}</small>
                                 <br><small class="badge bg-light text-dark">${merch.employee_id}</small>
+                                ${merch.shopify_order ? '<br><small class="badge bg-info text-white"><i class="fab fa-shopify me-1"></i>Shopify</small>' : ''}
                             </div>
                         </div>
                     </td>
                     <td>
                         <strong>${merch.department}</strong>
-                        <br><small class="text-muted">Employee Merchandise</small>
+                        <br><small class="text-muted">${merch.shopify_order ? `Order #${merch.order_number || 'N/A'}` : 'Employee Merchandise'}</small>
                     </td>
                     <td>
                         <small>${merch.merch_requested || 'N/A'}</small>
@@ -1927,9 +1928,14 @@
                             <span class="employee-detail-value"><strong>$${merch.merchandise_value.toFixed(2)}</strong></span>
                         </div>
                         <div class="employee-detail-item">
-                            <span class="employee-detail-label">Items Requested:</span>
+                            <span class="employee-detail-label">${merch.shopify_order ? 'Items Purchased:' : 'Items Requested:'}</span>
                             <span class="employee-detail-value">${merch.merch_requested || 'No items specified'}</span>
                         </div>
+                        ${merch.shopify_order ? `
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Order Number:</span>
+                            <span class="employee-detail-value">#${merch.order_number || 'N/A'}</span>
+                        </div>` : ''}
                         <div class="employee-detail-item">
                             <span class="employee-detail-label">Sent Date:</span>
                             <span class="employee-detail-value">${formatDate(merch.merch_sent_date) || 'Not sent'}</span>
