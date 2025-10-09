@@ -671,12 +671,12 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Employee</th>
-                                <th>Order Details</th>
+                                <th class="sortable" onclick="sortMerchandise('employee_name')">Employee <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortMerchandise('department')">Order Details <i class="fas fa-sort"></i></th>
                                 <th>Items</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Date</th>
+                                <th class="sortable" onclick="sortMerchandise('merchandise_value')">Total <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortMerchandise('status')">Status <i class="fas fa-sort"></i></th>
+                                <th class="sortable" onclick="sortMerchandise('merch_sent_date')">Date <i class="fas fa-sort"></i></th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -1895,7 +1895,73 @@
             const merch = merchandiseOrders.find(m => m.employee_id == employeeId);
             if (!merch) return;
             
-            alert(`Merchandise Details:\n\nEmployee: ${merch.employee_name}\nID: ${merch.employee_id}\nEmail: ${merch.email}\nDepartment: ${merch.department}\nValue: $${merch.merchandise_value.toFixed(2)}\nStatus: ${merch.status}\n\nItems Requested:\n${merch.merch_requested || 'No items specified'}\n\nSent Date: ${merch.merch_sent_date || 'Not sent'}`);
+            // Create modal content
+            const modalBody = document.getElementById('employeeModalBody');
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="employee-avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 36px;">
+                            ${getEmployeeInitials(merch.employee_name)}
+                        </div>
+                        <h4>${merch.employee_name}</h4>
+                        <p class="text-muted">${merch.department}</p>
+                        <div class="badge bg-${merch.status === 'shipped' ? 'success' : 'warning'} fs-6 px-3 py-2">
+                            ${merch.status.charAt(0).toUpperCase() + merch.status.slice(1)}
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Employee ID:</span>
+                            <span class="employee-detail-value">${merch.employee_id}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Email:</span>
+                            <span class="employee-detail-value">${merch.email}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Department:</span>
+                            <span class="employee-detail-value">${merch.department}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Merchandise Value:</span>
+                            <span class="employee-detail-value"><strong>$${merch.merchandise_value.toFixed(2)}</strong></span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Items Requested:</span>
+                            <span class="employee-detail-value">${merch.merch_requested || 'No items specified'}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Sent Date:</span>
+                            <span class="employee-detail-value">${formatDate(merch.merch_sent_date) || 'Not sent'}</span>
+                        </div>
+                        <div class="employee-detail-item">
+                            <span class="employee-detail-label">Status:</span>
+                            <span class="employee-detail-value">
+                                <span class="badge bg-${merch.status === 'shipped' ? 'success' : 'warning'}">
+                                    ${merch.status.charAt(0).toUpperCase() + merch.status.slice(1)}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 justify-content-end">
+                            ${merch.status === 'pending' ? 
+                                `<button class="btn btn-success" onclick="markAsShipped('${merch.employee_id}')">
+                                    <i class="fas fa-shipping-fast me-1"></i>Mark as Shipped
+                                </button>` : 
+                                `<button class="btn btn-warning" onclick="markAsPending('${merch.employee_id}')">
+                                    <i class="fas fa-clock me-1"></i>Mark as Pending
+                                </button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('employeeModal'));
+            modal.show();
         }
         
         function exportMerchandise() {
@@ -1916,6 +1982,93 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+        
+        function sortMerchandise(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredMerchandise.sort((a, b) => {
+                let aVal, bVal;
+                
+                if (column === 'merchandise_value') {
+                    aVal = parseFloat(a.merchandise_value || 0);
+                    bVal = parseFloat(b.merchandise_value || 0);
+                    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                } else {
+                    aVal = a[column] || '';
+                    bVal = b[column] || '';
+                    return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                }
+            });
+            
+            displayMerchandise();
+        }
+        
+        async function markAsShipped(employeeId) {
+            try {
+                const response = await fetch(`${API_URL}/employees/${employeeId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        'Merch Sent': 'Yes',
+                        'Merch Sent Date': new Date().toISOString().split('T')[0]
+                    })
+                });
+                
+                if (response.ok) {
+                    // Update local data
+                    const merch = merchandiseOrders.find(m => m.employee_id === employeeId);
+                    if (merch) {
+                        merch.merch_sent = 'Yes';
+                        merch.status = 'shipped';
+                        merch.merch_sent_date = new Date().toISOString().split('T')[0];
+                    }
+                    
+                    displayMerchandise();
+                    bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide();
+                    showSuccessMessage('Merchandise marked as shipped!');
+                } else {
+                    throw new Error('Failed to update merchandise status');
+                }
+            } catch (error) {
+                alert(`Failed to update status: ${error.message}`);
+            }
+        }
+        
+        async function markAsPending(employeeId) {
+            try {
+                const response = await fetch(`${API_URL}/employees/${employeeId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        'Merch Sent': 'No',
+                        'Merch Sent Date': ''
+                    })
+                });
+                
+                if (response.ok) {
+                    // Update local data
+                    const merch = merchandiseOrders.find(m => m.employee_id === employeeId);
+                    if (merch) {
+                        merch.merch_sent = 'No';
+                        merch.status = 'pending';
+                        merch.merch_sent_date = '';
+                    }
+                    
+                    displayMerchandise();
+                    bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide();
+                    showSuccessMessage('Merchandise marked as pending!');
+                } else {
+                    throw new Error('Failed to update merchandise status');
+                }
+            } catch (error) {
+                alert(`Failed to update status: ${error.message}`);
+            }
         }
         
         function createAnalyticsCharts() {
