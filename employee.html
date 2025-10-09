@@ -1314,8 +1314,9 @@
             };
             
             try {
-                const response = await fetch(`${API_URL}/update-employee`, {
-                    method: 'POST',
+                const employeeId = currentEditEmployee.id || currentEditEmployee.employee_id || currentEditEmployee['Employee Id'];
+                const response = await fetch(`${API_URL}/employees/${employeeId}`, {
+                    method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(updatedEmployee)
                 });
