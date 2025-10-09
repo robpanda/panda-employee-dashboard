@@ -853,6 +853,11 @@
                                 <label class="form-label">Phone</label>
                                 <input type="tel" class="form-control" id="editPhone">
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Termination Date</label>
+                                <input type="date" class="form-control" id="editTerminationDate">
+                                <small class="text-muted">Leave blank if employee is active</small>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -1061,7 +1066,8 @@
                 const isTerminated = employee.Terminated === 'Yes' || 
                                    employee.status === 'terminated' || 
                                    employee.status === 'inactive' ||
-                                   employee['Employee Status Code'] === 'T';
+                                   employee['Employee Status Code'] === 'T' ||
+                                   employee['Termination Date'] || employee.termination_date;
                 
                 if (!isTerminated) {
                     activeCount++;
@@ -1135,7 +1141,8 @@
             const office = employee.office || '';
             const hireDate = employee['Employment Date'] || employee.hire_date || employee.employment_date;
             
-            const isTerminated = employee['Terminated'] === 'Yes' || employee.terminated === 'Yes';
+            const isTerminated = employee['Terminated'] === 'Yes' || employee.terminated === 'Yes' || 
+                               employee['Termination Date'] || employee.termination_date;
             
             row.onclick = () => editEmployee(employeeEmail);
             
@@ -1264,6 +1271,7 @@
             document.getElementById('editSupervisor').value = employee.supervisor || employee.manager || '';
             document.getElementById('editHireDate').value = employee['Employment Date'] || employee.hire_date || employee.employment_date || '';
             document.getElementById('editPhone').value = employee['Phone'] || employee.phone || '';
+            document.getElementById('editTerminationDate').value = employee['Termination Date'] || employee.termination_date || '';
             
             const modal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
             modal.show();
@@ -1292,7 +1300,9 @@
                 hire_date: document.getElementById('editHireDate').value,
                 'Employment Date': document.getElementById('editHireDate').value,
                 phone: document.getElementById('editPhone').value,
-                'Phone': document.getElementById('editPhone').value
+                'Phone': document.getElementById('editPhone').value,
+                termination_date: document.getElementById('editTerminationDate').value,
+                'Termination Date': document.getElementById('editTerminationDate').value
             };
             
             try {

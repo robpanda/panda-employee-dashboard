@@ -417,6 +417,15 @@ def update_employee(event):
                 'body': json.dumps({'error': f'Database error: {str(e)}'})
             }
         
+        # Check if termination date is being set and employee has < 90 days employment
+        termination_date = body.get('termination_date') or body.get('Termination Date')
+        if termination_date and not employee.get('Termination Date') and not employee.get('termination_date'):
+            # This is a new termination - check if we need to send refund email
+            try:
+                send_termination_refund_email_if_needed(employee, termination_date)
+            except Exception as e:
+                print(f'Failed to send termination refund email: {e}')
+        
         # Update fields
         for key, value in body.items():
             if key not in ['id']:
@@ -1656,6 +1665,159 @@ def send_referral_notification(referral_data):
     except Exception as e:
         print(f'Failed to send email notification: {e}')
         raise e
+
+def send_termination_refund_email_if_needed(employee, termination_date):
+    try:
+        # Calculate days employed
+        hire_date_str = employee.get('Employment Date') or employee.get('hire_date') or employee.get('employment_date')
+        if not hire_date_str:
+            print('No hire date found, cannot calculate employment duration')
+            return
+        
+        hire_date = datetime.strptime(hire_date_str, '%Y-%m-%d')
+        term_date = datetime.strptime(termination_date, '%Y-%m-%d')
+        days_employed = (term_date - hire_date).days
+        
+        print(f'Employee employed for {days_employed} days')
+        
+        # Only send email if employed for 90 days or less
+        if days_employed > 90:
+            print('Employee employed for more than 90 days, no refund email needed')
+            return
+        
+        # Get employee name and email
+        first_name = employee.get('First Name', employee.get('first_name', ''))
+        last_name = employee.get('Last Name', employee.get('last_name', ''))
+        employee_name = f"{first_name} {last_name}".strip() or 'Unknown Employee'
+        employee_email = employee.get('Email', employee.get('email', ''))
+        
+        # Get Shopify purchase information
+        shopify_orders = get_shopify_orders()
+        employee_orders = []
+        total_value = 0
+        
+        # Check both personal and work email
+        emails_to_check = [employee_email.lower().strip()]
+        work_email = employee.get('Work Email', employee.get('work_email', ''))
+        if work_email:
+            emails_to_check.append(work_email.lower().strip())
+        
+        for order in shopify_orders:
+            order_email = order.get('customer_email', '').lower().strip()
+            if order_email in emails_to_check:
+                employee_orders.append(order)
+                total_value += float(order.get('total_price', 0))
+        
+        # Get merchandise info from employee record if no Shopify orders
+        merch_requested = employee.get('Merch Requested', employee.get('merch_requested', ''))
+        merch_value = float(employee.get('merchandise_value', employee.get('Merchandise Value', 0)) or 0)
+        
+        if not employee_orders and not merch_requested and merch_value == 0:
+            print('No merchandise purchases found, no refund email needed')
+            return
+        
+        # Prepare purchase details
+        if employee_orders:
+            purchase_items = []
+            for order in employee_orders:
+                items = ', '.join([f"{item.get('quantity', 1)}x {item.get('title', 'Item')}" 
+                                 for item in order.get('line_items', [])])
+                purchase_items.append(f"Order #{order.get('order_number', 'N/A')}: {items}")
+            purchase_details = '; '.join(purchase_items)
+            amount_to_collect = total_value
+        else:
+            purchase_details = merch_requested or 'Merchandise items'
+            amount_to_collect = merch_value
+        
+        if amount_to_collect == 0:
+            print('No merchandise value to collect, no refund email needed')
+            return
+        
+        # Format employment duration
+        if days_employed < 30:
+            duration_text = f"{days_employed} days"
+        else:
+            years = days_employed // 365
+            remaining_days = days_employed % 365
+            if years > 0:
+                duration_text = f"{years} year{'s' if years > 1 else ''} and {remaining_days} days"
+            else:
+                duration_text = f"{days_employed} days"
+        
+        subject = f"Merch Refund Collection Required for Terminated Employee: {employee_name}"
+        
+        body_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #d32f2f;">Merchandise Refund Collection Required</h2>
+                
+                <p>Dear Team,</p>
+                
+                <p>Employee <strong>{employee_name}</strong> has been terminated with <strong>{duration_text}</strong> employed, which is less than 90 days.</p>
+                
+                <p>Please initiate the process to collect a refund for their store credit usage, covering the following:</p>
+                
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #d32f2f;">
+                    <p><strong>Amount to Be Collected:</strong> ${amount_to_collect:.2f} USD</p>
+                    <p><strong>Purchased Items:</strong> {purchase_details}</p>
+                </div>
+                
+                <h3 style="color: #333; margin-top: 30px;">Employee Details:</h3>
+                <ul>
+                    <li><strong>Name:</strong> {employee_name}</li>
+                    <li><strong>Email:</strong> {employee_email}</li>
+                    <li><strong>Days Employed:</strong> {days_employed}</li>
+                    <li><strong>Termination Status:</strong> Yes</li>
+                </ul>
+                
+                <p style="margin-top: 30px;">Thank you,<br>HR Team</p>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="font-size: 12px; color: #666;">This is an automated message from the Panda Employee Management system.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        body_text = f"""
+        Merchandise Refund Collection Required
+        
+        Dear Team,
+        
+        Employee {employee_name} has been terminated with {duration_text} employed, which is less than 90 days.
+        
+        Please initiate the process to collect a refund for their store credit usage, covering the following:
+        
+        Amount to Be Collected: ${amount_to_collect:.2f} USD
+        Purchased Items: {purchase_details}
+        
+        Details:
+        - Name: {employee_name}
+        - Email: {employee_email}
+        - Days Employed: {days_employed}
+        - Termination Status: Yes
+        
+        Thank you,
+        HR Team
+        """
+        
+        ses.send_email(
+            Source='noreply@pandaexteriors.com',
+            Destination={'ToAddresses': ['robwinters@pandaexteriors.com']},
+            Message={
+                'Subject': {'Data': subject},
+                'Body': {
+                    'Html': {'Data': body_html},
+                    'Text': {'Data': body_text}
+                }
+            }
+        )
+        print(f'Termination refund email sent for: {employee_name} (${amount_to_collect:.2f})')
+    except Exception as e:
+        print(f'Failed to send termination refund email: {e}')
+        import traceback
+        print(f'Termination email traceback: {traceback.format_exc()}')
 
 def handle_admin_login(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
