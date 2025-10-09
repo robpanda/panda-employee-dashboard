@@ -976,6 +976,33 @@
             let newHires1_30 = 0, newHires31_60 = 0, newHires61_90 = 0;
             
             console.log('Processing', filteredEmployees.length, 'employees for display');
+            
+            // Calculate stats from ALL employees, not just filtered ones
+            employees.forEach((employee, index) => {
+                const isTerminated = employee.Terminated === 'Yes' || 
+                                   employee.status === 'terminated' || 
+                                   employee.status === 'inactive' ||
+                                   employee['Employee Status Code'] === 'T';
+                
+                if (!isTerminated) {
+                    activeCount++;
+                    
+                    // Calculate new hire days for active employees only
+                    const hireDateStr = employee.hire_date || employee['Hire Date'] || employee['Employment Date'];
+                    if (hireDateStr) {
+                        const hireDate = new Date(hireDateStr);
+                        const daysSinceHire = Math.floor((new Date() - hireDate) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysSinceHire >= 1 && daysSinceHire <= 30) newHires1_30++;
+                        else if (daysSinceHire >= 31 && daysSinceHire <= 60) newHires31_60++;
+                        else if (daysSinceHire >= 61 && daysSinceHire <= 90) newHires61_90++;
+                    }
+                } else {
+                    terminatedCount++;
+                }
+            });
+            
+            // Display filtered employees in table
             filteredEmployees.forEach((employee, index) => {
                 if (index < 3) console.log('Employee', index, ':', employee);
                 try {
@@ -987,30 +1014,30 @@
                     
                     if (isTerminated) {
                         terminatedTableBody.appendChild(row);
-                        terminatedCount++;
                     } else {
                         tableBody.appendChild(row);
-                        activeCount++;
                     }
                 } catch (error) {
                     console.error('Error creating row for employee', index, ':', error, employee);
                 }
-                    
-                // Calculate new hire days
-                const hireDate = new Date(employee.hire_date || employee['Hire Date']);
-                const daysSinceHire = Math.floor((new Date() - hireDate) / (1000 * 60 * 60 * 24));
-                
-                if (daysSinceHire <= 30) newHires1_30++;
-                else if (daysSinceHire <= 60) newHires31_60++;
-                else if (daysSinceHire <= 90) newHires61_90++;
             });
             
-            // Update stats
-            console.log('Final counts - Active:', activeCount, 'Terminated:', terminatedCount);
+            // Update stats with color coding
+            console.log('Final counts - Active:', activeCount, 'New Hires 1-30:', newHires1_30, '31-60:', newHires31_60, '61-90:', newHires61_90);
             document.getElementById('activeCount').textContent = activeCount;
-            document.getElementById('newHires1-30').textContent = newHires1_30;
-            document.getElementById('newHires31-60').textContent = newHires31_60;
-            document.getElementById('newHires61-90').textContent = newHires61_90;
+            
+            const newHires1_30El = document.getElementById('newHires1-30');
+            const newHires31_60El = document.getElementById('newHires31-60');
+            const newHires61_90El = document.getElementById('newHires61-90');
+            
+            newHires1_30El.textContent = newHires1_30;
+            newHires31_60El.textContent = newHires31_60;
+            newHires61_90El.textContent = newHires61_90;
+            
+            // Apply color coding
+            newHires1_30El.className = newHires1_30 > 0 ? 'stat-number red' : 'stat-number';
+            newHires31_60El.className = newHires31_60 > 0 ? 'stat-number yellow' : 'stat-number';
+            newHires61_90El.className = newHires61_90 > 0 ? 'stat-number green' : 'stat-number';
         }
 
         function createEmployeeRow(employee) {
