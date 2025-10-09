@@ -2201,6 +2201,7 @@ def handle_merchandise(event):
                     items = ', '.join([f"{item.get('quantity', 1)}x {item.get('title', 'Item')}" 
                                      for item in order.get('line_items', [])])
                     
+                    fulfillment_status = order.get('fulfillment_status') or ''
                     merchandise_data.append({
                         'id': employee.get('id', ''),
                         'employee_id': employee.get('id', employee.get('employee_id', '')),
@@ -2208,10 +2209,10 @@ def handle_merchandise(event):
                         'email': customer_email,
                         'department': employee.get('Department', employee.get('department', '')),
                         'merch_requested': items,
-                        'merch_sent': 'Yes' if order.get('fulfillment_status') == 'fulfilled' else 'No',
+                        'merch_sent': 'Yes' if fulfillment_status == 'fulfilled' else 'No',
                         'merch_sent_date': order.get('created_at', '').split('T')[0] if order.get('created_at') else '',
                         'merchandise_value': float(order.get('total_price', 0)),
-                        'status': 'shipped' if order.get('fulfillment_status') == 'fulfilled' else 'pending',
+                        'status': 'shipped' if fulfillment_status == 'fulfilled' else 'pending',
                         'order_number': order.get('order_number', ''),
                         'shopify_order': True
                     })
