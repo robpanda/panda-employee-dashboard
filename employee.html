@@ -818,8 +818,12 @@
                                 <input type="text" class="form-control" id="editLastName" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
+                                <label class="form-label">Personal Email</label>
                                 <input type="email" class="form-control" id="editEmail" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Work Email</label>
+                                <input type="email" class="form-control" id="editWorkEmail">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Employee ID</label>
@@ -1252,6 +1256,7 @@
             document.getElementById('editFirstName').value = employee['First Name'] || employee.first_name || '';
             document.getElementById('editLastName').value = employee['Last Name'] || employee.last_name || '';
             document.getElementById('editEmail').value = employee['Email'] || employee.email || '';
+            document.getElementById('editWorkEmail').value = employee['Work Email'] || employee.work_email || '';
             document.getElementById('editEmployeeId').value = employee['Employee Id'] || employee.employee_id || employee.id || '';
             document.getElementById('editRole').value = employee['Position'] || employee.position || '';
             document.getElementById('editDepartment').value = employee['Department'] || employee.department || '';
@@ -1273,20 +1278,21 @@
                 'Last Name': document.getElementById('editLastName').value,
                 name: `${document.getElementById('editFirstName').value} ${document.getElementById('editLastName').value}`,
                 email: document.getElementById('editEmail').value,
-                'Current Home Email': document.getElementById('editEmail').value,
+                'Email': document.getElementById('editEmail').value,
+                'Work Email': document.getElementById('editWorkEmail').value,
+                work_email: document.getElementById('editWorkEmail').value,
                 employee_id: document.getElementById('editEmployeeId').value,
                 'Employee Id': document.getElementById('editEmployeeId').value,
                 role: document.getElementById('editRole').value,
-                'Job Title (PIT)': document.getElementById('editRole').value,
+                'Position': document.getElementById('editRole').value,
                 department: document.getElementById('editDepartment').value,
-                'Department Description': document.getElementById('editDepartment').value,
+                'Department': document.getElementById('editDepartment').value,
                 office: document.getElementById('editOffice').value,
-                'Current Work Location Name': document.getElementById('editOffice').value,
                 supervisor: document.getElementById('editSupervisor').value,
-                Supervisor: document.getElementById('editSupervisor').value,
                 hire_date: document.getElementById('editHireDate').value,
-                'Hire Date': document.getElementById('editHireDate').value,
-                phone: document.getElementById('editPhone').value
+                'Employment Date': document.getElementById('editHireDate').value,
+                phone: document.getElementById('editPhone').value,
+                'Phone': document.getElementById('editPhone').value
             };
             
             try {
