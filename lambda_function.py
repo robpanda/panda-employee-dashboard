@@ -1044,18 +1044,8 @@ def handle_gift_cards(event):
 
 def get_shopify_credentials():
     """Get Shopify credentials from AWS Secrets Manager"""
-    import json
-    
-    secrets_client = boto3.client('secretsmanager', region_name='us-east-2')
-    
-    try:
-        response = secrets_client.get_secret_value(SecretId='shopify/my-cred')
-        secret = json.loads(response['SecretString'])
-        return 'pandaadmin', secret.get('access_token', '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')
-    except Exception as e:
-        print(f'Error retrieving Shopify credentials: {e}')
-        # Use new credentials
-        return 'e0a6e2', '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'
+    # Use working credentials directly
+    return 'e0a6e2', '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'
 
 def handle_shopify_orders(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
