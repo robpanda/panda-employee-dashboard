@@ -1092,7 +1092,7 @@ def handle_shopify_orders(event):
 def get_shopify_orders():
     try:
         import requests
-        print('SHOPIFY: Importing requests module')
+        print('SHOPIFY: Using GraphQL API')
         
         # Get Shopify credentials from AWS Secrets Manager
         SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
@@ -1102,60 +1102,97 @@ def get_shopify_orders():
             print('SHOPIFY: Access token not available')
             return []
         
-        # Try multiple store name variations including alphanumeric default
-        store_variations = [SHOPIFY_STORE, 'pandaadmin', 'panda-admin', 'pandaadmincom', 'panda-admin-com', 'pandaadmin123', 'pandaadminstore', 'pandaadmin2024', 'pandaadmin2025']
+        # Use GraphQL API for better data retrieval
+        url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/graphql.json'
+        headers = {
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json'
+        }
         
-        for store_name in store_variations:
-            url = f'https://{store_name}.myshopify.com/admin/api/2023-10/orders.json?limit=10'
-            headers = {
-                'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-                'Content-Type': 'application/json'
-            }
-            
-            print(f'SHOPIFY: Trying store name: {store_name}')
-            print(f'SHOPIFY: Making request to {url}')
-            
-            try:
-                response = requests.get(url, headers=headers, timeout=30)
-                print(f'SHOPIFY: Response status for {store_name}: {response.status_code}')
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    orders = data.get('orders', [])
-                    print(f'SHOPIFY: Found {len(orders)} orders from {store_name}')
-                    
-                    # Filter and format orders for employee merchandise
-                    formatted_orders = []
-                    for order in orders:
-                        customer = order.get('customer') or {}
-                        formatted_order = {
-                            'id': order.get('id'),
-                            'order_number': order.get('order_number'),
-                            'customer_name': f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip(),
-                            'customer_email': customer.get('email', ''),
-                            'total_price': order.get('total_price', '0'),
-                            'fulfillment_status': order.get('fulfillment_status'),
-                            'financial_status': order.get('financial_status'),
-                            'created_at': order.get('created_at'),
-                            'shipping_address': order.get('shipping_address'),
-                            'line_items': [{
-                                'title': item.get('title'),
-                                'quantity': item.get('quantity'),
-                                'price': item.get('price')
-                            } for item in order.get('line_items', [])]
+        # GraphQL query to get orders with line items
+        query = """
+        {
+            orders(first: 50) {
+                edges {
+                    node {
+                        id
+                        name
+                        email
+                        totalPriceSet {
+                            shopMoney {
+                                amount
+                            }
                         }
-                        formatted_orders.append(formatted_order)
-                    
-                    print(f'SHOPIFY: Successfully formatted {len(formatted_orders)} orders from {store_name}')
-                    return formatted_orders
-                else:
-                    print(f'SHOPIFY: Store {store_name} returned {response.status_code}: {response.text[:200]}')
-            except Exception as e:
-                print(f'SHOPIFY: Error with store {store_name}: {e}')
-                continue
+                        fulfillmentStatus
+                        displayFinancialStatus
+                        createdAt
+                        lineItems(first: 10) {
+                            edges {
+                                node {
+                                    title
+                                    quantity
+                                    originalUnitPriceSet {
+                                        shopMoney {
+                                            amount
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        """
         
-        print('SHOPIFY: No valid store found, returning empty list')
-        return []
+        print(f'SHOPIFY: Making GraphQL request to {url}')
+        
+        response = requests.post(url, headers=headers, json={'query': query}, timeout=30)
+        print(f'SHOPIFY: Response status: {response.status_code}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'errors' in data:
+                print(f'SHOPIFY: GraphQL errors: {data["errors"]}')
+                return []
+            
+            orders = data.get('data', {}).get('orders', {}).get('edges', [])
+            print(f'SHOPIFY: Found {len(orders)} orders')
+            
+            # Format orders for employee merchandise
+            formatted_orders = []
+            for edge in orders:
+                order = edge['node']
+                
+                # Extract line items
+                line_items = []
+                for item_edge in order.get('lineItems', {}).get('edges', []):
+                    item = item_edge['node']
+                    line_items.append({
+                        'title': item.get('title', ''),
+                        'quantity': item.get('quantity', 1),
+                        'price': item.get('originalUnitPriceSet', {}).get('shopMoney', {}).get('amount', '0')
+                    })
+                
+                formatted_order = {
+                    'id': order.get('id', '').replace('gid://shopify/Order/', ''),
+                    'order_number': order.get('name', '').replace('#', ''),
+                    'customer_name': '',  # Not available in this query
+                    'customer_email': order.get('email', ''),
+                    'total_price': order.get('totalPriceSet', {}).get('shopMoney', {}).get('amount', '0'),
+                    'fulfillment_status': order.get('fulfillmentStatus', '').lower(),
+                    'financial_status': order.get('displayFinancialStatus', '').lower(),
+                    'created_at': order.get('createdAt', ''),
+                    'line_items': line_items
+                }
+                formatted_orders.append(formatted_order)
+            
+            print(f'SHOPIFY: Successfully formatted {len(formatted_orders)} orders')
+            return formatted_orders
+        else:
+            print(f'SHOPIFY: GraphQL request failed: {response.status_code} - {response.text[:200]}')
+            return []
         
     except ImportError as e:
         print(f'SHOPIFY IMPORT ERROR: {e}')
