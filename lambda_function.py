@@ -419,8 +419,11 @@ def update_employee(event):
         
         # Check if termination date is being set and employee has < 90 days employment
         termination_date = body.get('termination_date') or body.get('Termination Date')
-        if termination_date and not employee.get('Termination Date') and not employee.get('termination_date'):
+        existing_termination = employee.get('Termination Date') or employee.get('termination_date')
+        
+        if termination_date and not existing_termination:
             # This is a new termination - check if we need to send refund email
+            print(f'New termination detected for employee {employee.get("First Name")} {employee.get("Last Name")}')
             try:
                 send_termination_refund_email_if_needed(employee, termination_date)
             except Exception as e:
@@ -430,6 +433,12 @@ def update_employee(event):
         for key, value in body.items():
             if key not in ['id']:
                 employee[key] = value
+        
+        # Auto-set Terminated field when termination date is provided
+        if termination_date:
+            employee['Terminated'] = 'Yes'
+            employee['terminated'] = 'Yes'
+            print(f'Set terminated status for employee {employee.get("id")}')
         
         employee['updated_at'] = datetime.now().isoformat()
         
