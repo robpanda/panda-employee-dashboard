@@ -1084,8 +1084,8 @@ def get_shopify_orders():
             print('SHOPIFY: Access token not available')
             return []
         
-        # Try multiple store name variations
-        store_variations = [SHOPIFY_STORE, 'pandaadmin', 'panda-admin', 'pandaadmincom', 'panda-admin-com']
+        # Try multiple store name variations including alphanumeric default
+        store_variations = [SHOPIFY_STORE, 'pandaadmin', 'panda-admin', 'pandaadmincom', 'panda-admin-com', 'pandaadmin123', 'pandaadminstore', 'pandaadmin2024', 'pandaadmin2025']
         
         for store_name in store_variations:
             url = f'https://{store_name}.myshopify.com/admin/api/2023-10/orders.json?limit=10'
