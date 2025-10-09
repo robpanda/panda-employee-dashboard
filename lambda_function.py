@@ -1172,8 +1172,8 @@ def get_shopify_orders():
                     'customer_name': '',  # Not available in this query
                     'customer_email': order.get('email', ''),
                     'total_price': order.get('totalPriceSet', {}).get('shopMoney', {}).get('amount', '0'),
-                    'fulfillment_status': order.get('displayFulfillmentStatus', '').lower(),
-                    'financial_status': order.get('displayFinancialStatus', '').lower(),
+                    'fulfillment_status': (order.get('displayFulfillmentStatus') or '').lower(),
+                    'financial_status': (order.get('displayFinancialStatus') or '').lower(),
                     'created_at': order.get('createdAt', ''),
                     'line_items': line_items
                 }
