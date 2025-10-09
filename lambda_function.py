@@ -1037,7 +1037,7 @@ def get_shopify_credentials():
     except Exception as e:
         print(f'Error retrieving Shopify credentials: {e}')
         # Use new credentials
-        return 'pandaadmin', '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'
+        return 'panda-admin-com', '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'
 
 def handle_shopify_orders(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
@@ -1084,49 +1084,61 @@ def get_shopify_orders():
             print('SHOPIFY: Access token not available')
             return []
         
-        url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/orders.json'
-        headers = {
-            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-            'Content-Type': 'application/json'
-        }
+        # Try multiple store name variations
+        store_variations = [SHOPIFY_STORE, 'pandaadmin', 'panda-admin', 'pandaadmincom', 'panda-admin-com']
         
-        print(f'SHOPIFY: Making request to {url}')
-        
-        response = requests.get(url, headers=headers, timeout=30)
-        print(f'SHOPIFY: Response status: {response.status_code}')
-        
-        if response.status_code == 200:
-            data = response.json()
-            orders = data.get('orders', [])
-            print(f'SHOPIFY: Found {len(orders)} orders')
+        for store_name in store_variations:
+            url = f'https://{store_name}.myshopify.com/admin/api/2023-10/orders.json?limit=10'
+            headers = {
+                'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+                'Content-Type': 'application/json'
+            }
             
-            # Filter and format orders for employee merchandise
-            formatted_orders = []
-            for order in orders:
-                customer = order.get('customer') or {}
-                formatted_order = {
-                    'id': order.get('id'),
-                    'order_number': order.get('order_number'),
-                    'customer_name': f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip(),
-                    'customer_email': customer.get('email', ''),
-                    'total_price': order.get('total_price', '0'),
-                    'fulfillment_status': order.get('fulfillment_status'),
-                    'financial_status': order.get('financial_status'),
-                    'created_at': order.get('created_at'),
-                    'shipping_address': order.get('shipping_address'),
-                    'line_items': [{
-                        'title': item.get('title'),
-                        'quantity': item.get('quantity'),
-                        'price': item.get('price')
-                    } for item in order.get('line_items', [])]
-                }
-                formatted_orders.append(formatted_order)
+            print(f'SHOPIFY: Trying store name: {store_name}')
+            print(f'SHOPIFY: Making request to {url}')
             
-            print(f'SHOPIFY: Formatted {len(formatted_orders)} orders')
-            return formatted_orders
-        else:
-            print(f'SHOPIFY API ERROR: {response.status_code} - {response.text}')
-            return []
+            try:
+                response = requests.get(url, headers=headers, timeout=30)
+                print(f'SHOPIFY: Response status for {store_name}: {response.status_code}')
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    orders = data.get('orders', [])
+                    print(f'SHOPIFY: Found {len(orders)} orders from {store_name}')
+                    
+                    # Filter and format orders for employee merchandise
+                    formatted_orders = []
+                    for order in orders:
+                        customer = order.get('customer') or {}
+                        formatted_order = {
+                            'id': order.get('id'),
+                            'order_number': order.get('order_number'),
+                            'customer_name': f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip(),
+                            'customer_email': customer.get('email', ''),
+                            'total_price': order.get('total_price', '0'),
+                            'fulfillment_status': order.get('fulfillment_status'),
+                            'financial_status': order.get('financial_status'),
+                            'created_at': order.get('created_at'),
+                            'shipping_address': order.get('shipping_address'),
+                            'line_items': [{
+                                'title': item.get('title'),
+                                'quantity': item.get('quantity'),
+                                'price': item.get('price')
+                            } for item in order.get('line_items', [])]
+                        }
+                        formatted_orders.append(formatted_order)
+                    
+                    print(f'SHOPIFY: Successfully formatted {len(formatted_orders)} orders from {store_name}')
+                    return formatted_orders
+                else:
+                    print(f'SHOPIFY: Store {store_name} returned {response.status_code}: {response.text[:200]}')
+            except Exception as e:
+                print(f'SHOPIFY: Error with store {store_name}: {e}')
+                continue
+        
+        print('SHOPIFY: No valid store found, returning empty list')
+        return []
+        
     except ImportError as e:
         print(f'SHOPIFY IMPORT ERROR: {e}')
         return []
