@@ -105,6 +105,9 @@ def lambda_handler(event, context):
         elif path == '/shopify-orders':
             print(f'LAMBDA DEBUG: Calling handle_shopify_orders')
             return handle_shopify_orders(event)
+        elif path == '/merchandise':
+            print(f'LAMBDA DEBUG: Calling handle_merchandise')
+            return handle_merchandise(event)
         elif path.startswith('/login-history/'):
             print(f'LAMBDA DEBUG: Calling handle_login_history')
             return handle_login_history(event)
@@ -1044,18 +1047,22 @@ def handle_shopify_orders(event):
     
     if method == 'GET':
         try:
+            print('SHOPIFY_ORDERS: Starting to fetch orders')
             orders = get_shopify_orders()
+            print(f'SHOPIFY_ORDERS: Retrieved {len(orders)} orders')
             return {
                 'statusCode': 200,
                 'headers': get_cors_headers(),
                 'body': json.dumps({'orders': orders})
             }
         except Exception as e:
-            print(f'Shopify orders error: {e}')
+            print(f'SHOPIFY_ORDERS ERROR: {e}')
+            import traceback
+            print(f'SHOPIFY_ORDERS TRACEBACK: {traceback.format_exc()}')
             return {
                 'statusCode': 500,
                 'headers': get_cors_headers(),
-                'body': json.dumps({'error': str(e)})
+                'body': json.dumps({'error': f'Shopify orders error: {str(e)}'})
             }
     
     return {
@@ -1065,36 +1072,43 @@ def handle_shopify_orders(event):
     }
 
 def get_shopify_orders():
-    import requests
-    
-    # Get Shopify credentials from AWS Secrets Manager
-    SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
-    
-    if not SHOPIFY_ACCESS_TOKEN:
-        print('Shopify access token not available')
-        return []
-    
-    url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/orders.json'
-    headers = {
-        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-        'Content-Type': 'application/json'
-    }
-    
     try:
+        import requests
+        print('SHOPIFY: Importing requests module')
+        
+        # Get Shopify credentials from AWS Secrets Manager
+        SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
+        print(f'SHOPIFY: Got credentials - Store: {SHOPIFY_STORE}, Token: {SHOPIFY_ACCESS_TOKEN[:10] if SHOPIFY_ACCESS_TOKEN else "None"}...')
+        
+        if not SHOPIFY_ACCESS_TOKEN:
+            print('SHOPIFY: Access token not available')
+            return []
+        
+        url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/orders.json'
+        headers = {
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json'
+        }
+        
+        print(f'SHOPIFY: Making request to {url}')
+        
         response = requests.get(url, headers=headers, timeout=30)
+        print(f'SHOPIFY: Response status: {response.status_code}')
         
         if response.status_code == 200:
             data = response.json()
             orders = data.get('orders', [])
+            print(f'SHOPIFY: Found {len(orders)} orders')
             
             # Filter and format orders for employee merchandise
             formatted_orders = []
             for order in orders:
+                customer = order.get('customer') or {}
                 formatted_order = {
                     'id': order.get('id'),
                     'order_number': order.get('order_number'),
-                    'customer_name': f"{order.get('customer', {}).get('first_name', '')} {order.get('customer', {}).get('last_name', '')}".strip(),
-                    'customer_email': order.get('customer', {}).get('email', ''),
+                    'customer_name': f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip(),
+                    'customer_email': customer.get('email', ''),
                     'total_price': order.get('total_price', '0'),
                     'fulfillment_status': order.get('fulfillment_status'),
                     'financial_status': order.get('financial_status'),
@@ -1108,12 +1122,18 @@ def get_shopify_orders():
                 }
                 formatted_orders.append(formatted_order)
             
+            print(f'SHOPIFY: Formatted {len(formatted_orders)} orders')
             return formatted_orders
         else:
-            print(f'Shopify API error: {response.status_code} - {response.text}')
+            print(f'SHOPIFY API ERROR: {response.status_code} - {response.text}')
             return []
+    except ImportError as e:
+        print(f'SHOPIFY IMPORT ERROR: {e}')
+        return []
     except Exception as e:
-        print(f'Shopify API request failed: {e}')
+        print(f'SHOPIFY API REQUEST FAILED: {e}')
+        import traceback
+        print(f'SHOPIFY TRACEBACK: {traceback.format_exc()}')
         return []
 
 def create_shopify_gift_card(value, employee):
@@ -1918,6 +1938,67 @@ def handle_admin_user_by_email(event):
                 'statusCode': 500,
                 'headers': get_cors_headers(),
                 'body': json.dumps({'error': str(e)})
+            }
+    
+    return {
+        'statusCode': 405,
+        'headers': get_cors_headers(),
+        'body': json.dumps({'error': 'Method not allowed'})
+    }
+
+def handle_merchandise(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'GET')
+    
+    if method == 'GET':
+        try:
+            print('MERCHANDISE: Loading employee merchandise data')
+            response = employees_table.scan()
+            employees = response['Items']
+            
+            # Filter employees who have merchandise data
+            merchandise_data = []
+            for employee in employees:
+                merch_requested = employee.get('Merch Requested', employee.get('merch_requested', ''))
+                merch_sent = employee.get('Merch Sent', employee.get('merch_sent', 'No'))
+                merch_value = employee.get('merchandise_value', employee.get('Merchandise Value', 0))
+                merch_sent_date = employee.get('Merch Sent Date', employee.get('merch_sent_date', ''))
+                
+                if merch_requested or float(merch_value or 0) > 0:
+                    first_name = employee.get('First Name', employee.get('first_name', ''))
+                    last_name = employee.get('Last Name', employee.get('last_name', ''))
+                    employee_name = f"{first_name} {last_name}".strip() or 'Unknown'
+                    
+                    merchandise_data.append({
+                        'id': employee.get('id', ''),
+                        'employee_id': employee.get('id', employee.get('employee_id', '')),
+                        'employee_name': employee_name,
+                        'email': employee.get('Email', employee.get('email', '')),
+                        'department': employee.get('Department', employee.get('department', '')),
+                        'merch_requested': merch_requested,
+                        'merch_sent': merch_sent,
+                        'merch_sent_date': merch_sent_date,
+                        'merchandise_value': float(merch_value or 0),
+                        'status': 'shipped' if merch_sent == 'Yes' else 'pending'
+                    })
+            
+            print(f'MERCHANDISE: Found {len(merchandise_data)} employees with merchandise data')
+            
+            return {
+                'statusCode': 200,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'merchandise': merchandise_data})
+            }
+        except Exception as e:
+            print(f'MERCHANDISE ERROR: {e}')
+            import traceback
+            print(f'MERCHANDISE TRACEBACK: {traceback.format_exc()}')
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': f'Merchandise data error: {str(e)}'})
             }
     
     return {

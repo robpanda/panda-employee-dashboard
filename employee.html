@@ -655,8 +655,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button class="btn btn-primary" onclick="syncShopifyOrders()">
-                                <i class="fas fa-sync me-1"></i>Sync Shopify
+                            <button class="btn btn-primary" onclick="loadMerchandiseData()">
+                                <i class="fas fa-sync me-1"></i>Load Data
                             </button>
                         </div>
                         <div class="col-md-3">
@@ -684,7 +684,7 @@
                             <tr>
                                 <td colspan="7" class="text-center text-muted py-4">
                                     <i class="fas fa-shopping-cart fa-2x mb-2"></i>
-                                    <br>Click "Sync Shopify" to load merchandise orders
+                                    <br>Click "Load Data" to view employee merchandise information
                                 </td>
                             </tr>
                         </tbody>
@@ -1221,7 +1221,7 @@
             
             // Auto-load merchandise data when section is opened
             if (section === 'merchandise' && merchandiseOrders.length === 0) {
-                syncShopifyOrders();
+                loadMerchandiseData();
             }
         }
         
@@ -1782,23 +1782,29 @@
             input.click();
         }
         
-        async function syncShopifyOrders() {
+        async function loadMerchandiseData() {
             try {
+                console.log('Loading merchandise data...');
                 document.getElementById('merchandiseTableBody').innerHTML = 
-                    '<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin"></i> Syncing Shopify orders...</td></tr>';
+                    '<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading merchandise data...</td></tr>';
                 
-                const response = await fetch(`${API_URL}/shopify-orders`);
+                const response = await fetch(`${API_URL}/merchandise`);
+                console.log('Merchandise response status:', response.status);
+                
                 const data = await response.json();
+                console.log('Merchandise data:', data);
                 
                 if (response.ok) {
-                    merchandiseOrders = data.orders || [];
+                    merchandiseOrders = data.merchandise || [];
+                    console.log('Merchandise orders loaded:', merchandiseOrders.length);
                     filteredMerchandise = [...merchandiseOrders];
                     displayMerchandise();
-                    showSuccessMessage(`Synced ${merchandiseOrders.length} Shopify orders`);
+                    showSuccessMessage(`Loaded ${merchandiseOrders.length} merchandise records`);
                 } else {
-                    throw new Error(data.error || 'Failed to sync orders');
+                    throw new Error(data.error || 'Failed to load merchandise data');
                 }
             } catch (error) {
+                console.error('Merchandise loading error:', error);
                 document.getElementById('merchandiseTableBody').innerHTML = 
                     `<tr><td colspan="7" class="text-center text-danger">Error: ${error.message}</td></tr>`;
             }
@@ -1811,16 +1817,15 @@
             let totalOrders = merchandiseOrders.length;
             let pendingOrders = 0, shippedOrders = 0, totalValue = 0;
             
-            filteredMerchandise.forEach(order => {
+            filteredMerchandise.forEach(merch => {
                 const row = document.createElement('tr');
-                const employee = employees.find(e => e.email === order.customer_email);
-                const employeeName = employee ? (employee.name || `${employee['First Name']} ${employee['Last Name']}`) : order.customer_name;
+                const employeeName = merch.employee_name || 'Unknown';
                 
-                const status = order.fulfillment_status || 'pending';
+                const status = merch.status || 'pending';
                 if (status === 'pending') pendingOrders++;
                 else if (status === 'shipped') shippedOrders++;
                 
-                totalValue += parseFloat(order.total_price || 0);
+                totalValue += parseFloat(merch.merchandise_value || 0);
                 
                 row.innerHTML = `
                     <td>
@@ -1830,26 +1835,27 @@
                             </div>
                             <div>
                                 <strong>${employeeName}</strong>
-                                <br><small class="text-muted">${order.customer_email}</small>
+                                <br><small class="text-muted">${merch.email}</small>
+                                <br><small class="badge bg-light text-dark">${merch.employee_id}</small>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <strong>#${order.order_number}</strong>
-                        <br><small class="text-muted">${order.shipping_address ? order.shipping_address.city + ', ' + order.shipping_address.province : 'N/A'}</small>
+                        <strong>${merch.department}</strong>
+                        <br><small class="text-muted">Employee Merchandise</small>
                     </td>
                     <td>
-                        <small>${order.line_items ? order.line_items.map(item => `${item.quantity}x ${item.title}`).join('<br>') : 'N/A'}</small>
+                        <small>${merch.merch_requested || 'N/A'}</small>
                     </td>
-                    <td><strong>$${parseFloat(order.total_price || 0).toFixed(2)}</strong></td>
+                    <td><strong>$${parseFloat(merch.merchandise_value || 0).toFixed(2)}</strong></td>
                     <td>
                         <span class="badge bg-${status === 'shipped' ? 'success' : status === 'pending' ? 'warning' : 'secondary'}">
                             ${status.charAt(0).toUpperCase() + status.slice(1)}
                         </span>
                     </td>
-                    <td>${formatDate(order.created_at)}</td>
+                    <td>${formatDate(merch.merch_sent_date)}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="viewOrderDetails('${order.id}')">
+                        <button class="btn btn-sm btn-primary" onclick="viewMerchDetails('${merch.employee_id}')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </td>
@@ -1868,16 +1874,16 @@
             const searchTerm = document.getElementById('merchSearchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
             
-            filteredMerchandise = merchandiseOrders.filter(order => {
-                const employee = employees.find(e => e.email === order.customer_email);
-                const employeeName = employee ? (employee.name || `${employee['First Name']} ${employee['Last Name']}`) : order.customer_name;
+            filteredMerchandise = merchandiseOrders.filter(merch => {
+                const employeeName = merch.employee_name || '';
                 
                 const matchesSearch = !searchTerm || 
                     employeeName.toLowerCase().includes(searchTerm) ||
-                    order.customer_email.toLowerCase().includes(searchTerm) ||
-                    order.order_number.toString().includes(searchTerm);
+                    merch.email.toLowerCase().includes(searchTerm) ||
+                    merch.employee_id.toLowerCase().includes(searchTerm) ||
+                    (merch.merch_requested && merch.merch_requested.toLowerCase().includes(searchTerm));
                 
-                const matchesStatus = !statusFilter || (order.fulfillment_status || 'pending') === statusFilter;
+                const matchesStatus = !statusFilter || merch.status === statusFilter;
                 
                 return matchesSearch && matchesStatus;
             });
@@ -1885,31 +1891,28 @@
             displayMerchandise();
         }
         
-        function viewOrderDetails(orderId) {
-            const order = merchandiseOrders.find(o => o.id == orderId);
-            if (!order) return;
+        function viewMerchDetails(employeeId) {
+            const merch = merchandiseOrders.find(m => m.employee_id == employeeId);
+            if (!merch) return;
             
-            alert(`Order Details:\n\nOrder #${order.order_number}\nCustomer: ${order.customer_name}\nEmail: ${order.customer_email}\nTotal: $${order.total_price}\nStatus: ${order.fulfillment_status || 'pending'}\n\nItems:\n${order.line_items ? order.line_items.map(item => `• ${item.quantity}x ${item.title} - $${item.price}`).join('\n') : 'No items'}`);
+            alert(`Merchandise Details:\n\nEmployee: ${merch.employee_name}\nID: ${merch.employee_id}\nEmail: ${merch.email}\nDepartment: ${merch.department}\nValue: $${merch.merchandise_value.toFixed(2)}\nStatus: ${merch.status}\n\nItems Requested:\n${merch.merch_requested || 'No items specified'}\n\nSent Date: ${merch.merch_sent_date || 'Not sent'}`);
         }
         
         function exportMerchandise() {
             const csvContent = "data:text/csv;charset=utf-8," + 
-                "Employee Name,Email,Order Number,Total,Status,Date,Items\n" +
-                merchandiseOrders.map(order => {
-                    const employee = employees.find(e => e.email === order.customer_email);
-                    const employeeName = employee ? (employee.name || `${employee['First Name']} ${employee['Last Name']}`) : order.customer_name;
-                    const items = order.line_items ? order.line_items.map(item => `${item.quantity}x ${item.title}`).join('; ') : '';
+                "Employee Name,Employee ID,Email,Department,Items Requested,Value,Status,Sent Date\n" +
+                merchandiseOrders.map(merch => {
                     return [
-                        employeeName, order.customer_email, order.order_number, 
-                        order.total_price, order.fulfillment_status || 'pending', 
-                        order.created_at, items
+                        merch.employee_name, merch.employee_id, merch.email, 
+                        merch.department, merch.merch_requested || '', 
+                        merch.merchandise_value, merch.status, merch.merch_sent_date || ''
                     ].join(',');
                 }).join('\n');
             
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
             link.setAttribute('href', encodedUri);
-            link.setAttribute('download', `merchandise_orders_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', `employee_merchandise_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
