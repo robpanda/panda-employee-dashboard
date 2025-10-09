@@ -1168,7 +1168,11 @@
                         <strong>${office}</strong>
                         <br><small class="text-muted">${supervisor}</small>
                     </td>
-                    <td>${formatDate(hireDate)}</td>
+                    <td>
+                        ${formatDate(hireDate)}
+                        ${employee['Termination Date'] || employee.termination_date ? 
+                            `<br><small class="text-danger"><i class="fas fa-calendar-times"></i> Terminated: ${formatDate(employee['Termination Date'] || employee.termination_date)}</small>` : ''}
+                    </td>
                     <td>
                         <span class="points-badge">
                             <i class="fas fa-star me-1"></i>${employee.points || employee['Panda Points'] || 0}
@@ -1201,7 +1205,11 @@
                         <br><small class="text-muted">${department}</small>
                     </td>
                     <td>${office}</td>
-                    <td>${formatDate(hireDate)}</td>
+                    <td>
+                        ${formatDate(hireDate)}
+                        ${employee['Termination Date'] || employee.termination_date ? 
+                            `<br><small class="text-danger"><i class="fas fa-calendar-times"></i> ${formatDate(employee['Termination Date'] || employee.termination_date)}</small>` : ''}
+                    </td>
                     <td>
                         <span class="badge bg-secondary">Terminated</span>
                     </td>
