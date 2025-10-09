@@ -434,11 +434,16 @@ def update_employee(event):
             if key not in ['id']:
                 employee[key] = value
         
-        # Auto-set Terminated field when termination date is provided
+        # Auto-set Terminated field when termination date is provided or clear when removed
         if termination_date:
             employee['Terminated'] = 'Yes'
             employee['terminated'] = 'Yes'
             print(f'Set terminated status for employee {employee.get("id")}')
+        elif 'termination_date' in body or 'Termination Date' in body:
+            # Termination date field exists but is empty - clear terminated status
+            employee['Terminated'] = 'No'
+            employee['terminated'] = 'No'
+            print(f'Cleared terminated status for employee {employee.get("id")}')
         
         employee['updated_at'] = datetime.now().isoformat()
         
