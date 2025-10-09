@@ -1095,7 +1095,8 @@
                     const isTerminated = employee.Terminated === 'Yes' || 
                                        employee.status === 'terminated' || 
                                        employee.status === 'inactive' ||
-                                       employee['Employee Status Code'] === 'T';
+                                       employee['Employee Status Code'] === 'T' ||
+                                       employee['Termination Date'] || employee.termination_date;
                     
                     if (isTerminated) {
                         terminatedTableBody.appendChild(row);
@@ -1243,7 +1244,8 @@
         function filterByStatus(status) {
             if (status === 'active') {
                 filteredEmployees = employees.filter(emp => {
-                    const isTerminated = emp['Terminated'] === 'Yes' || emp.terminated === 'Yes';
+                    const isTerminated = emp['Terminated'] === 'Yes' || emp.terminated === 'Yes' ||
+                                       emp['Termination Date'] || emp.termination_date;
                     return !isTerminated;
                 });
             }
