@@ -2166,88 +2166,42 @@ def handle_merchandise(event):
     
     if method == 'GET':
         try:
-            print('MERCHANDISE: Loading employee merchandise data with Shopify orders')
+            print('MERCHANDISE: Loading employee merchandise data')
             
             # Get employees
             response = employees_table.scan()
             employees = response['Items']
             
-            # Get Shopify orders
-            shopify_orders = get_shopify_orders()
-            print(f'MERCHANDISE: Retrieved {len(shopify_orders)} Shopify orders')
-            
-            # Create email to employee mapping
-            email_to_employee = {}
-            for emp in employees:
-                email = emp.get('Email', emp.get('email', '')).lower().strip()
-                work_email = emp.get('Work Email', emp.get('work_email', '')).lower().strip()
-                if email:
-                    email_to_employee[email] = emp
-                if work_email:
-                    email_to_employee[work_email] = emp
-            
             merchandise_data = []
             
-            # Process Shopify orders first
-            for order in shopify_orders:
-                customer_email = order.get('customer_email', '').lower().strip()
-                if customer_email and customer_email in email_to_employee:
-                    employee = email_to_employee[customer_email]
-                    first_name = employee.get('First Name', employee.get('first_name', ''))
-                    last_name = employee.get('Last Name', employee.get('last_name', ''))
-                    employee_name = f"{first_name} {last_name}".strip() or 'Unknown'
-                    
-                    # Get line items as string
-                    items = ', '.join([f"{item.get('quantity', 1)}x {item.get('title', 'Item')}" 
-                                     for item in order.get('line_items', [])])
-                    
-                    fulfillment_status = order.get('fulfillment_status') or ''
-                    merchandise_data.append({
-                        'id': employee.get('id', ''),
-                        'employee_id': employee.get('id', employee.get('employee_id', '')),
-                        'employee_name': employee_name,
-                        'email': customer_email,
-                        'department': employee.get('Department', employee.get('department', '')),
-                        'merch_requested': items,
-                        'merch_sent': 'Yes' if fulfillment_status == 'fulfilled' else 'No',
-                        'merch_sent_date': order.get('created_at', '').split('T')[0] if order.get('created_at') else '',
-                        'merchandise_value': float(order.get('total_price', 0)),
-                        'status': 'shipped' if fulfillment_status == 'fulfilled' else 'pending',
-                        'order_number': order.get('order_number', ''),
-                        'shopify_order': True
-                    })
-            
-            # Add employees with merchandise data but no Shopify orders
-            processed_emails = {item['email'] for item in merchandise_data}
+            # Process employees with merchandise data
             for employee in employees:
-                emp_email = employee.get('Email', employee.get('email', '')).lower().strip()
-                if emp_email in processed_emails:
-                    continue
-                    
-                merch_requested = employee.get('Merch Requested', employee.get('merch_requested', ''))
-                merch_value = employee.get('merchandise_value', employee.get('Merchandise Value', 0))
+                merch_requested = employee.get('Merch Requested', employee.get('merch_requested', '')) or ''
+                merch_value = employee.get('merchandise_value', employee.get('Merchandise Value', 0)) or 0
                 
-                if merch_requested or float(merch_value or 0) > 0:
-                    first_name = employee.get('First Name', employee.get('first_name', ''))
-                    last_name = employee.get('Last Name', employee.get('last_name', ''))
+                if merch_requested or float(merch_value) > 0:
+                    first_name = employee.get('First Name', employee.get('first_name', '')) or ''
+                    last_name = employee.get('Last Name', employee.get('last_name', '')) or ''
                     employee_name = f"{first_name} {last_name}".strip() or 'Unknown'
                     
                     merch_sent_status = employee.get('Merch Sent', employee.get('merch_sent', 'No')) or 'No'
+                    emp_email = employee.get('Email', employee.get('email', '')) or ''
+                    
                     merchandise_data.append({
                         'id': employee.get('id', ''),
                         'employee_id': employee.get('id', employee.get('employee_id', '')),
                         'employee_name': employee_name,
                         'email': emp_email,
-                        'department': employee.get('Department', employee.get('department', '')),
+                        'department': employee.get('Department', employee.get('department', '')) or '',
                         'merch_requested': merch_requested,
                         'merch_sent': merch_sent_status,
-                        'merch_sent_date': employee.get('Merch Sent Date', employee.get('merch_sent_date', '')),
-                        'merchandise_value': float(merch_value or 0),
+                        'merch_sent_date': employee.get('Merch Sent Date', employee.get('merch_sent_date', '')) or '',
+                        'merchandise_value': float(merch_value),
                         'status': 'shipped' if merch_sent_status == 'Yes' else 'pending',
                         'shopify_order': False
                     })
             
-            print(f'MERCHANDISE: Found {len(merchandise_data)} total merchandise records')
+            print(f'MERCHANDISE: Found {len(merchandise_data)} merchandise records')
             
             return {
                 'statusCode': 200,
