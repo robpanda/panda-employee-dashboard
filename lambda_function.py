@@ -1037,7 +1037,7 @@ def get_shopify_credentials():
     except Exception as e:
         print(f'Error retrieving Shopify credentials: {e}')
         # Use new credentials
-        return 'panda-admin-com', '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'
+        return 'e0a6e2', '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'
 
 def handle_shopify_orders(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
