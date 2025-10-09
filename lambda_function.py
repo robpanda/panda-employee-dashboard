@@ -102,6 +102,9 @@ def lambda_handler(event, context):
         elif path == '/gift-cards':
             print(f'LAMBDA DEBUG: Calling handle_gift_cards')
             return handle_gift_cards(event)
+        elif path == '/shopify-orders':
+            print(f'LAMBDA DEBUG: Calling handle_shopify_orders')
+            return handle_shopify_orders(event)
         elif path.startswith('/login-history/'):
             print(f'LAMBDA DEBUG: Calling handle_login_history')
             return handle_login_history(event)
@@ -122,7 +125,8 @@ def lambda_handler(event, context):
                     'all_paths_checked': [
                         '/employees', '/contacts', '/collections', '/config',
                         '/admin-users', '/create-admin', '/points', '/points-history',
-                        '/referrals', '/employee-login', '/admin-login', '/test'
+                        '/referrals', '/employee-login', '/admin-login', '/gift-cards',
+                        '/shopify-orders', '/test'
                     ],
                     'cors_test': 'CORS headers should be present',
                     'timestamp': datetime.now().isoformat()
@@ -1027,6 +1031,86 @@ def get_shopify_credentials():
         print(f'Error retrieving Shopify credentials: {e}')
         # Fallback with working credentials for testing
         return 'pandaexteriors', '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'
+
+def handle_shopify_orders(event):
+    if 'requestContext' in event and 'http' in event['requestContext']:
+        method = event['requestContext']['http']['method']
+    else:
+        method = event.get('httpMethod', 'GET')
+    
+    if method == 'GET':
+        try:
+            orders = get_shopify_orders()
+            return {
+                'statusCode': 200,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'orders': orders})
+            }
+        except Exception as e:
+            print(f'Shopify orders error: {e}')
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': str(e)})
+            }
+    
+    return {
+        'statusCode': 405,
+        'headers': get_cors_headers(),
+        'body': json.dumps({'error': 'Method not allowed'})
+    }
+
+def get_shopify_orders():
+    import requests
+    
+    # Get Shopify credentials from AWS Secrets Manager
+    SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
+    
+    if not SHOPIFY_ACCESS_TOKEN:
+        print('Shopify access token not available')
+        return []
+    
+    url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/orders.json'
+    headers = {
+        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            orders = data.get('orders', [])
+            
+            # Filter and format orders for employee merchandise
+            formatted_orders = []
+            for order in orders:
+                formatted_order = {
+                    'id': order.get('id'),
+                    'order_number': order.get('order_number'),
+                    'customer_name': f"{order.get('customer', {}).get('first_name', '')} {order.get('customer', {}).get('last_name', '')}".strip(),
+                    'customer_email': order.get('customer', {}).get('email', ''),
+                    'total_price': order.get('total_price', '0'),
+                    'fulfillment_status': order.get('fulfillment_status'),
+                    'financial_status': order.get('financial_status'),
+                    'created_at': order.get('created_at'),
+                    'shipping_address': order.get('shipping_address'),
+                    'line_items': [{
+                        'title': item.get('title'),
+                        'quantity': item.get('quantity'),
+                        'price': item.get('price')
+                    } for item in order.get('line_items', [])]
+                }
+                formatted_orders.append(formatted_order)
+            
+            return formatted_orders
+        else:
+            print(f'Shopify API error: {response.status_code} - {response.text}')
+            return []
+    except Exception as e:
+        print(f'Shopify API request failed: {e}')
+        return []
 
 def create_shopify_gift_card(value, employee):
     import requests

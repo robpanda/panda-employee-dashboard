@@ -474,6 +474,7 @@
         <div class="section-nav">
             <button class="section-btn active" onclick="showSection('all')">All Employees</button>
             <button class="section-btn" onclick="showSection('terminated')">Terminated</button>
+            <button class="section-btn" onclick="showSection('merchandise')">🛍️ Merchandise</button>
             <button class="section-btn" onclick="showSection('import')">Import Data</button>
             <button class="section-btn" onclick="showSection('analytics')">Analytics</button>
         </div>
@@ -616,6 +617,78 @@
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Merchandise Section -->
+            <div id="merchandise-section" class="section-content" style="display: none;">
+                <div class="stats-row mb-4">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalOrders">0</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingOrders">0</div>
+                        <div class="stat-label">Pending Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="shippedOrders">0</div>
+                        <div class="stat-label">Shipped Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalValue">$0</div>
+                        <div class="stat-label">Total Value</div>
+                    </div>
+                </div>
+                
+                <div class="filters-card">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="merchSearchInput" placeholder="Search orders..." onkeyup="filterMerchandise()">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter" onchange="filterMerchandise()">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="delivered">Delivered</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary" onclick="syncShopifyOrders()">
+                                <i class="fas fa-sync me-1"></i>Sync Shopify
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success" onclick="exportMerchandise()">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Order Details</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="merchandiseTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                    <br>Click "Sync Shopify" to load merchandise orders
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
@@ -793,6 +866,8 @@
         const API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws';
         let employees = [];
         let filteredEmployees = [];
+        let merchandiseOrders = [];
+        let filteredMerchandise = [];
         let sortColumn = '';
         let sortDirection = 'asc';
 
@@ -1139,6 +1214,11 @@
             
             document.getElementById(section + '-section').style.display = 'block';
             event.target.classList.add('active');
+            
+            // Auto-load merchandise data when section is opened
+            if (section === 'merchandise' && merchandiseOrders.length === 0) {
+                syncShopifyOrders();
+            }
         }
         
         function filterByStatus(status) {
@@ -1694,6 +1774,139 @@
                 }
             };
             input.click();
+        }
+        
+        async function syncShopifyOrders() {
+            try {
+                document.getElementById('merchandiseTableBody').innerHTML = 
+                    '<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin"></i> Syncing Shopify orders...</td></tr>';
+                
+                const response = await fetch(`${API_URL}/shopify-orders`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    merchandiseOrders = data.orders || [];
+                    filteredMerchandise = [...merchandiseOrders];
+                    displayMerchandise();
+                    showSuccessMessage(`Synced ${merchandiseOrders.length} Shopify orders`);
+                } else {
+                    throw new Error(data.error || 'Failed to sync orders');
+                }
+            } catch (error) {
+                document.getElementById('merchandiseTableBody').innerHTML = 
+                    `<tr><td colspan="7" class="text-center text-danger">Error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        function displayMerchandise() {
+            const tableBody = document.getElementById('merchandiseTableBody');
+            tableBody.innerHTML = '';
+            
+            let totalOrders = merchandiseOrders.length;
+            let pendingOrders = 0, shippedOrders = 0, totalValue = 0;
+            
+            filteredMerchandise.forEach(order => {
+                const row = document.createElement('tr');
+                const employee = employees.find(e => e.email === order.customer_email);
+                const employeeName = employee ? (employee.name || `${employee['First Name']} ${employee['Last Name']}`) : order.customer_name;
+                
+                const status = order.fulfillment_status || 'pending';
+                if (status === 'pending') pendingOrders++;
+                else if (status === 'shipped') shippedOrders++;
+                
+                totalValue += parseFloat(order.total_price || 0);
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="employee-avatar me-3">
+                                ${getEmployeeInitials(employeeName)}
+                            </div>
+                            <div>
+                                <strong>${employeeName}</strong>
+                                <br><small class="text-muted">${order.customer_email}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <strong>#${order.order_number}</strong>
+                        <br><small class="text-muted">${order.shipping_address ? order.shipping_address.city + ', ' + order.shipping_address.province : 'N/A'}</small>
+                    </td>
+                    <td>
+                        <small>${order.line_items ? order.line_items.map(item => `${item.quantity}x ${item.title}`).join('<br>') : 'N/A'}</small>
+                    </td>
+                    <td><strong>$${parseFloat(order.total_price || 0).toFixed(2)}</strong></td>
+                    <td>
+                        <span class="badge bg-${status === 'shipped' ? 'success' : status === 'pending' ? 'warning' : 'secondary'}">
+                            ${status.charAt(0).toUpperCase() + status.slice(1)}
+                        </span>
+                    </td>
+                    <td>${formatDate(order.created_at)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewOrderDetails('${order.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Update stats
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('pendingOrders').textContent = pendingOrders;
+            document.getElementById('shippedOrders').textContent = shippedOrders;
+            document.getElementById('totalValue').textContent = `$${totalValue.toFixed(2)}`;
+        }
+        
+        function filterMerchandise() {
+            const searchTerm = document.getElementById('merchSearchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            filteredMerchandise = merchandiseOrders.filter(order => {
+                const employee = employees.find(e => e.email === order.customer_email);
+                const employeeName = employee ? (employee.name || `${employee['First Name']} ${employee['Last Name']}`) : order.customer_name;
+                
+                const matchesSearch = !searchTerm || 
+                    employeeName.toLowerCase().includes(searchTerm) ||
+                    order.customer_email.toLowerCase().includes(searchTerm) ||
+                    order.order_number.toString().includes(searchTerm);
+                
+                const matchesStatus = !statusFilter || (order.fulfillment_status || 'pending') === statusFilter;
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            displayMerchandise();
+        }
+        
+        function viewOrderDetails(orderId) {
+            const order = merchandiseOrders.find(o => o.id == orderId);
+            if (!order) return;
+            
+            alert(`Order Details:\n\nOrder #${order.order_number}\nCustomer: ${order.customer_name}\nEmail: ${order.customer_email}\nTotal: $${order.total_price}\nStatus: ${order.fulfillment_status || 'pending'}\n\nItems:\n${order.line_items ? order.line_items.map(item => `• ${item.quantity}x ${item.title} - $${item.price}`).join('\n') : 'No items'}`);
+        }
+        
+        function exportMerchandise() {
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Employee Name,Email,Order Number,Total,Status,Date,Items\n" +
+                merchandiseOrders.map(order => {
+                    const employee = employees.find(e => e.email === order.customer_email);
+                    const employeeName = employee ? (employee.name || `${employee['First Name']} ${employee['Last Name']}`) : order.customer_name;
+                    const items = order.line_items ? order.line_items.map(item => `${item.quantity}x ${item.title}`).join('; ') : '';
+                    return [
+                        employeeName, order.customer_email, order.order_number, 
+                        order.total_price, order.fulfillment_status || 'pending', 
+                        order.created_at, items
+                    ].join(',');
+                }).join('\n');
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `merchandise_orders_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
         
         function createAnalyticsCharts() {
