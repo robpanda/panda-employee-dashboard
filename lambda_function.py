@@ -2232,6 +2232,7 @@ def handle_merchandise(event):
                     last_name = employee.get('Last Name', employee.get('last_name', ''))
                     employee_name = f"{first_name} {last_name}".strip() or 'Unknown'
                     
+                    merch_sent_status = employee.get('Merch Sent', employee.get('merch_sent', 'No')) or 'No'
                     merchandise_data.append({
                         'id': employee.get('id', ''),
                         'employee_id': employee.get('id', employee.get('employee_id', '')),
@@ -2239,10 +2240,10 @@ def handle_merchandise(event):
                         'email': emp_email,
                         'department': employee.get('Department', employee.get('department', '')),
                         'merch_requested': merch_requested,
-                        'merch_sent': employee.get('Merch Sent', employee.get('merch_sent', 'No')),
+                        'merch_sent': merch_sent_status,
                         'merch_sent_date': employee.get('Merch Sent Date', employee.get('merch_sent_date', '')),
                         'merchandise_value': float(merch_value or 0),
-                        'status': 'shipped' if employee.get('Merch Sent', employee.get('merch_sent', 'No')) == 'Yes' else 'pending',
+                        'status': 'shipped' if merch_sent_status == 'Yes' else 'pending',
                         'shopify_order': False
                     })
             
