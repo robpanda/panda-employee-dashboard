@@ -1091,8 +1091,9 @@ def handle_shopify_orders(event):
 
 def get_shopify_orders():
     try:
-        import requests
-        print('SHOPIFY: Using GraphQL API')
+        import urllib.request
+        import urllib.parse
+        print('SHOPIFY: Using GraphQL API with urllib')
         
         # Get Shopify credentials from AWS Secrets Manager
         SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
@@ -1104,10 +1105,6 @@ def get_shopify_orders():
         
         # Use GraphQL API for better data retrieval
         url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/graphql.json'
-        headers = {
-            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-            'Content-Type': 'application/json'
-        }
         
         # GraphQL query to get orders with line items
         query = """
@@ -1145,19 +1142,23 @@ def get_shopify_orders():
         }
         """
         
+        data = json.dumps({'query': query}).encode('utf-8')
+        
+        req = urllib.request.Request(url, data=data)
+        req.add_header('X-Shopify-Access-Token', SHOPIFY_ACCESS_TOKEN)
+        req.add_header('Content-Type', 'application/json')
+        
         print(f'SHOPIFY: Making GraphQL request to {url}')
         
-        response = requests.post(url, headers=headers, json={'query': query}, timeout=30)
-        print(f'SHOPIFY: Response status: {response.status_code}')
-        
-        if response.status_code == 200:
-            data = response.json()
+        with urllib.request.urlopen(req, timeout=30) as response:
+            response_data = json.loads(response.read().decode('utf-8'))
+            print(f'SHOPIFY: Response received')
             
-            if 'errors' in data:
-                print(f'SHOPIFY: GraphQL errors: {data["errors"]}')
+            if 'errors' in response_data:
+                print(f'SHOPIFY: GraphQL errors: {response_data["errors"]}')
                 return []
             
-            orders = data.get('data', {}).get('orders', {}).get('edges', [])
+            orders = response_data.get('data', {}).get('orders', {}).get('edges', [])
             print(f'SHOPIFY: Found {len(orders)} orders')
             
             # Format orders for employee merchandise
@@ -1190,13 +1191,7 @@ def get_shopify_orders():
             
             print(f'SHOPIFY: Successfully formatted {len(formatted_orders)} orders')
             return formatted_orders
-        else:
-            print(f'SHOPIFY: GraphQL request failed: {response.status_code} - {response.text[:200]}')
-            return []
         
-    except ImportError as e:
-        print(f'SHOPIFY IMPORT ERROR: {e}')
-        return []
     except Exception as e:
         print(f'SHOPIFY API REQUEST FAILED: {e}')
         import traceback
@@ -1204,7 +1199,8 @@ def get_shopify_orders():
         return []
 
 def create_shopify_gift_card(value, employee):
-    import requests
+    import urllib.request
+    import urllib.parse
     
     # Get Shopify credentials from AWS Secrets Manager
     SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
@@ -1232,16 +1228,17 @@ def create_shopify_gift_card(value, employee):
     print(f'DEBUG: Gift card data: {gift_card_data}')
     
     try:
-        response = requests.post(url, headers=headers, json=gift_card_data, timeout=30)
-        print(f'DEBUG: Response status: {response.status_code}')
-        print(f'DEBUG: Response text: {response.text}')
+        data = json.dumps(gift_card_data).encode('utf-8')
+        req = urllib.request.Request(url, data=data)
+        req.add_header('X-Shopify-Access-Token', SHOPIFY_ACCESS_TOKEN)
+        req.add_header('Content-Type', 'application/json')
         
-        if response.status_code == 201:
-            gift_card = response.json()['gift_card']
+        with urllib.request.urlopen(req, timeout=30) as response:
+            response_data = json.loads(response.read().decode('utf-8'))
+            print(f'DEBUG: Gift card created successfully')
+            
+            gift_card = response_data['gift_card']
             return gift_card['code']
-        else:
-            print(f'Shopify API error: {response.status_code} - {response.text}')
-            return None
     except Exception as e:
         print(f'Shopify API request failed: {e}')
         return None
