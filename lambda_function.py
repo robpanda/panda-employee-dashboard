@@ -1110,7 +1110,7 @@ def get_shopify_orders():
                                 amount
                             }
                         }
-                        fulfillmentStatus
+                        displayFulfillmentStatus
                         displayFinancialStatus
                         createdAt
                         lineItems(first: 10) {
