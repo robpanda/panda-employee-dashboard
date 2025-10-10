@@ -195,11 +195,17 @@ def send_test_termination_refund_email():
 def send_test_referral_notification():
     """Test email for referral system"""
 
+    recipients = [
+        'robwinters@pandaexteriors.com',
+        'camilaarango@pandaexteriors.com',
+        'nickgessler@pandaexteriors.com'
+    ]
+
     try:
         response = ses.send_email(
             Source='noreply@pandaexteriors.com',
             Destination={
-                'ToAddresses': ['robwinters@pandaexteriors.com']
+                'ToAddresses': recipients
             },
             Message={
                 'Subject': {

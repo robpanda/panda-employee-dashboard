@@ -1733,9 +1733,16 @@ def send_referral_notification(referral_data):
         {f'Notes: {referral_data["notes"]}' if referral_data.get('notes') else ''}
         """
         
+        # Send to multiple recipients
+        recipients = [
+            'robwinters@pandaexteriors.com',
+            'camilaarango@pandaexteriors.com',
+            'nickgessler@pandaexteriors.com'
+        ]
+
         ses.send_email(
             Source='noreply@pandaexteriors.com',
-            Destination={'ToAddresses': ['robwinters@pandaexteriors.com']},
+            Destination={'ToAddresses': recipients},
             Message={
                 'Subject': {'Data': subject},
                 'Body': {
@@ -1744,7 +1751,7 @@ def send_referral_notification(referral_data):
                 }
             }
         )
-        print(f'Email notification sent for referral: {referral_data["name"]}')
+        print(f'Email notification sent for referral: {referral_data["name"]} to {", ".join(recipients)}')
     except Exception as e:
         print(f'Failed to send email notification: {e}')
         raise e
