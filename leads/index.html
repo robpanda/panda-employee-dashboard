@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Management - Panda Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
+            min-height: 100vh;
+            color: #374151;
+            font-weight: 400;
+        }
+        .main-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 20px auto;
+            border: 1px solid #f3f4f6;
+        }
+        .utility-nav {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            font-weight: 400;
+            font-size: 14px;
+        }
+        .nav-link:hover {
+            background: #f9fafb;
+            color: #374151;
+            text-decoration: none;
+        }
+        .nav-link.active {
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .logout-btn {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.15s ease;
+        }
+        .logout-btn:hover { 
+            background: #ef4444;
+            color: white;
+        }
+        .header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
+            color: #374151;
+            padding: 32px 40px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .logo img { height: 40px; }
+        .header h1 { 
+            margin: 16px 0 8px 0; 
+            font-size: 28px; 
+            font-weight: 600;
+            color: #111827;
+        }
+        .header p { 
+            color: #6b7280;
+            margin-bottom: 0;
+            font-size: 16px;
+            font-weight: 400;
+        }
+        .content-area {
+            padding: 32px 40px;
+            background: white;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .btn-xs {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .card {
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border-radius: 12px;
+            transition: all 0.15s ease;
+            background: white;
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #e5e7eb;
+        }
+        .card-header {
+            background: #fafbfc;
+            border-bottom: 1px solid #f3f4f6;
+            padding: 16px 20px;
+            font-weight: 500;
+            color: #374151;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .nav-pills .nav-link {
+            border-radius: 8px;
+            font-weight: 400;
+            color: #6b7280;
+            padding: 12px 20px;
+        }
+        .nav-pills .nav-link.active {
+            background: #3b82f6;
+            color: white;
+            font-weight: 500;
+        }
+        .nav-pills .nav-link:hover {
+            background: #f9fafb;
+            color: #374151;
+        }
+        .btn {
+            font-weight: 400;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        .btn-success {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        .btn-success:hover {
+            background: #059669;
+            border-color: #059669;
+        }
+        .form-control, .form-select {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .table {
+            font-size: 14px;
+        }
+        .table th {
+            background: #fafbfc;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 500;
+            color: #374151;
+            padding: 12px;
+        }
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .badge {
+            font-weight: 400;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="utility-nav">
+            <div class="logo">
+                <img src="panda-logo.png" alt="Panda Exteriors">
+            </div>
+            <div class="nav-links">
+                <a href="#" onclick="navigate('/employee')" class="nav-link">👥 Employees</a>
+                <a href="#" onclick="navigate('/points')" class="nav-link">⭐ Points</a>
+                <a href="#" onclick="navigate('/leads')" class="nav-link active">📊 Leads</a>
+                <a href="#" onclick="navigate('/referrals')" class="nav-link">🤝 Referrals</a>
+                <a href="#" onclick="navigate('/assets')" class="nav-link">📦 Assets</a>
+                <a href="#" onclick="navigate('/admin')" class="nav-link">⚙️ Admin</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="header">
+            <h1>📊 Lead Management Dashboard</h1>
+            <p>Track sales leads, opportunities, and customer pipeline</p>
+        </div>
+        
+        <div class="content-area">
+        
+        <ul class="nav nav-pills nav-fill mb-4" id="leadTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Contacts
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="collections-tab" data-bs-toggle="tab" data-bs-target="#collections" type="button" role="tab">
+                    <i class="fas fa-dollar-sign me-2"></i>Collections
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="campaigns-tab" data-bs-toggle="tab" data-bs-target="#campaigns" type="button" role="tab">
+                    <i class="fas fa-envelope me-2"></i>Campaigns
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
+                    <i class="fas fa-cog me-2"></i>Admin
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-chart-bar me-2"></i>Overview
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="leadTabContent">
+            <!-- Contacts Tab -->
+            <div class="tab-pane fade" id="contacts" role="tabpanel">
+                <!-- Contact Management Header -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-users"></i> Contact Management</h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" onclick="showAddContact()">
+                                <i class="fas fa-plus"></i> Add Contact
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="showBulkUpload()">
+                                <i class="fas fa-upload"></i> Bulk Upload
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="exportContacts()">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Search and Filters -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="contactSearch" placeholder="Search contacts..." onkeyup="filterContacts()">
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="statusFilter" onchange="filterContacts()">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="do-not-contact">Do Not Contact</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="listFilter" onchange="filterContacts()">
+                                    <option value="">All Lists</option>
+                                    <option value="leads">Leads</option>
+                                    <option value="customers">Customers</option>
+                                    <option value="prospects">Prospects</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-primary w-100" onclick="refreshContacts()">
+                                    <i class="fas fa-sync"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Bulk Actions -->
+                        <div class="row mb-3 d-none" id="bulkActions">
+                            <div class="col-md-12">
+                                <div class="alert alert-info d-flex justify-content-between align-items-center">
+                                    <span><span id="selectedCount">0</span> contacts selected</span>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-success" onclick="bulkAddToList()">
+                                            <i class="fas fa-plus"></i> Add to List
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="bulkUpdateStatus()">
+                                            <i class="fas fa-edit"></i> Update Status
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="bulkDelete()">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contacts Table -->
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="40">
+                                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Lists</th>
+                                        <th>Created</th>
+                                        <th width="120">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contactsTable">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collections Tab -->
+            <div class="tab-pane fade" id="collections" role="tabpanel">
+                <!-- Collections Upload -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-upload"></i> Import Collections</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label">Upload CSV File</label>
+                                <input type="file" class="form-control" id="collectionsFile" accept=".csv" onchange="previewCollectionsFile()">
+                                <small class="text-muted">Format: Name, Email, Phone, Amount, Install Date</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Collection Stage</label>
+                                <select class="form-select" id="collectionStage">
+                                    <option value="0-30">0-30 Days</option>
+                                    <option value="31-60">31-60 Days</option>
+                                    <option value="61-90">61-90 Days</option>
+                                    <option value="91-plus">91+ Days</option>
+                                    <option value="judgment">In Judgment</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary" onclick="uploadCollections()" disabled id="uploadCollectionsBtn">
+                                    <i class="fas fa-database"></i> Save Collections
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collections Dashboard -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between">
+                        <h5><i class="fas fa-chart-pie"></i> Collections Overview</h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" onclick="showAddCollection()">
+                                <i class="fas fa-plus"></i> Add Collection
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshCollections()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-success bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('0-30')">
+                                    <h4 class="text-success" id="count-0-30">0</h4>
+                                    <small>0-30 Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-warning bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('31-60')">
+                                    <h4 class="text-warning" id="count-31-60">0</h4>
+                                    <small>31-60 Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-danger bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('61-90')">
+                                    <h4 class="text-danger" id="count-61-90">0</h4>
+                                    <small>61-90 Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-dark bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('91-plus')">
+                                    <h4 class="text-dark" id="count-91-plus">0</h4>
+                                    <small>91+ Days</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-secondary bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('judgment')">
+                                    <h4 class="text-secondary" id="count-judgment">0</h4>
+                                    <small>In Judgment</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="border rounded p-3 bg-info bg-opacity-10 cursor-pointer" onclick="viewCollectionStage('resolved')">
+                                    <h4 class="text-info" id="count-resolved">0</h4>
+                                    <small>Resolved</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collections List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-list"></i> Collections Details</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Amount</th>
+                                        <th>Stage</th>
+                                        <th>Install Date</th>
+                                        <th>Days Overdue</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="collectionsTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-3 text-muted">No collections data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white text-center">
+                            <div class="card-body">
+                                <h3 id="totalContacts">-</h3>
+                                <p class="mb-0">Total Contacts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white text-center">
+                            <div class="card-body">
+                                <h3 id="totalCollections">-</h3>
+                                <p class="mb-0">Collections</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white text-center">
+                            <div class="card-body">
+                                <h3 id="activeCollections">-</h3>
+                                <p class="mb-0">Active</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark text-center">
+                            <div class="card-body">
+                                <h3 id="totalAmount">-</h3>
+                                <p class="mb-0">Total Amount</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="overviewError" style="display: none;">
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Unable to load overview data. Check API connection.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Admin Tab -->
+            <div class="tab-pane fade" id="admin" role="tabpanel">
+                <!-- Bulk Upload Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-upload"></i> Bulk Data Import</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6><i class="fas fa-users"></i> Import Contacts</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <input type="file" class="form-control mb-3" id="contactsUpload" accept=".csv,.xlsx,.xls" onchange="previewContactsFile()">
+                                        <button class="btn btn-primary w-100" onclick="showContactsMapping()" disabled id="contactsMapBtn">
+                                            <i class="fas fa-map"></i> Map Fields & Import
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6><i class="fas fa-dollar-sign"></i> Import Collections</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <input type="file" class="form-control mb-3" id="collectionsUpload" accept=".csv,.xlsx,.xls" onchange="previewCollectionsUpload()">
+                                        <button class="btn btn-success w-100" onclick="showCollectionsMapping()" disabled id="collectionsMapBtn">
+                                            <i class="fas fa-map"></i> Map Fields & Import
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Configuration -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-cogs"></i> System Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6><i class="fas fa-tags"></i> Contact Status</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="statusList" class="mb-2"></div>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="newStatus" placeholder="New status">
+                                            <button class="btn btn-info" onclick="addStatus()">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6><i class="fas fa-list"></i> Contact Lists</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="listsList" class="mb-2"></div>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="newList" placeholder="New list">
+                                            <button class="btn btn-warning" onclick="addList()">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6><i class="fas fa-user-cog"></i> Custom Fields</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="customFieldsList" class="mb-2"></div>
+                                        <button class="btn btn-success btn-sm w-100" onclick="showAddCustomField()">
+                                            <i class="fas fa-plus"></i> Add Field
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-database"></i> Data Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary" id="adminTotalContacts">0</h4>
+                                    <small>Total Contacts</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-success" id="adminTotalCollections">0</h4>
+                                    <small>Total Collections</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-warning w-100" onclick="cleanupDuplicates()">
+                                    <i class="fas fa-broom"></i> Remove Duplicates
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-danger w-100" onclick="confirmDataReset()">
+                                    <i class="fas fa-trash"></i> Reset All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaigns Tab -->
+            <div class="tab-pane fade" id="campaigns" role="tabpanel">
+                <!-- Campaign Builder -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-magic"></i> Drip Campaign Builder</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Target Collection Stage</label>
+                                <select class="form-select mb-3" id="campaignStage">
+                                    <option value="0-30">0-30 Days (Gentle Reminder)</option>
+                                    <option value="31-60">31-60 Days (Follow-up)</option>
+                                    <option value="61-90">61-90 Days (Urgent)</option>
+                                    <option value="91-plus">91+ Days (Final Notice)</option>
+                                    <option value="judgment">In Judgment (Legal)</option>
+                                </select>
+                                
+                                <label class="form-label">Campaign Type</label>
+                                <div class="btn-group w-100 mb-3" role="group">
+                                    <input type="radio" class="btn-check" name="campaignType" id="email" value="email" checked>
+                                    <label class="btn btn-outline-primary" for="email">Email</label>
+                                    
+                                    <input type="radio" class="btn-check" name="campaignType" id="sms" value="sms">
+                                    <label class="btn btn-outline-success" for="sms">SMS</label>
+                                    
+                                    <input type="radio" class="btn-check" name="campaignType" id="mixed" value="mixed">
+                                    <label class="btn btn-outline-info" for="mixed">Mixed</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Drip Schedule</label>
+                                <div class="border rounded p-3 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="day1" checked>
+                                        <label class="form-check-label" for="day1">Day 1 - Initial Contact</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="day3" checked>
+                                        <label class="form-check-label" for="day3">Day 3 - Follow-up</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="day7">
+                                        <label class="form-check-label" for="day7">Day 7 - Reminder</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="day14">
+                                        <label class="form-check-label" for="day14">Day 14 - Final Notice</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="createDripCampaign()">
+                                <i class="fas fa-rocket"></i> Launch Campaign
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="previewCampaign()">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Campaigns -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Active Campaigns</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Campaign</th>
+                                        <th>Type</th>
+                                        <th>Stage</th>
+                                        <th>Recipients</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activeCampaigns">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No active campaigns</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Platform Integration -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-plug"></i> Platform Integration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-envelope"></i> Email Service</h6>
+                                        <p class="small text-muted">External AWS Account</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-success" id="emailStatus">Connected</span>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="testEmailConnection()">
+                                                Test
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-sms"></i> SMS Service</h6>
+                                        <p class="small text-muted">External AWS Account</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-success" id="smsStatus">Connected</span>
+                                            <button class="btn btn-outline-success btn-sm" onclick="testSMSConnection()">
+                                                Test
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-robot"></i> Riley Agent</h6>
+                                        <p class="small text-muted">Same AWS Account</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-success" id="rileyStatus">Connected</span>
+                                            <button class="btn btn-outline-info btn-sm" onclick="openRileyDashboard()">
+                                                Open
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="contactForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="contactName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="contactEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="contactPhone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="contactStatus">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="do-not-contact">Do Not Contact</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Lists</label>
+                            <input type="text" class="form-control" id="contactLists" placeholder="leads, customers, prospects">
+                            <small class="text-muted">Comma-separated list names</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveContact()">Save Contact</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collection Modal -->
+    <div class="modal fade" id="collectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Collection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="collectionForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="collectionName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="collectionEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="collectionPhone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount *</label>
+                            <input type="number" class="form-control" id="collectionAmount" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Install Date *</label>
+                            <input type="date" class="form-control" id="collectionInstallDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Stage</label>
+                            <select class="form-select" id="collectionStageModal">
+                                <option value="0-30">0-30 Days</option>
+                                <option value="31-60">31-60 Days</option>
+                                <option value="61-90">61-90 Days</option>
+                                <option value="91-plus">91+ Days</option>
+                                <option value="judgment">In Judgment</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveCollection()">Save Collection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field Mapping Modal -->
+    <div class="modal fade" id="mappingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mappingTitle">Map Fields</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>File Columns</h6>
+                            <div id="fileColumns" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Database Fields</h6>
+                            <div id="mappingFields"></div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Default Status</label>
+                            <select class="form-select" id="defaultStatus"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Default Lists</label>
+                            <select class="form-select" id="defaultLists" multiple></select>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <small><i class="fas fa-info-circle"></i> Drag file columns to database fields. Click mapped fields to remove mapping.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="processBulkImport()">Import Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Field Modal -->
+    <div class="modal fade" id="customFieldModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Custom Field</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customFieldForm">
+                        <div class="mb-3">
+                            <label class="form-label">Field Name *</label>
+                            <input type="text" class="form-control" id="fieldName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Field Type *</label>
+                            <select class="form-select" id="fieldType" required>
+                                <option value="text">Text</option>
+                                <option value="number">Number</option>
+                                <option value="date">Date</option>
+                                <option value="email">Email</option>
+                                <option value="phone">Phone</option>
+                                <option value="select">Dropdown</option>
+                                <option value="checkbox">Checkbox</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 d-none" id="optionsGroup">
+                            <label class="form-label">Options (comma-separated)</label>
+                            <input type="text" class="form-control" id="fieldOptions" placeholder="Option 1, Option 2, Option 3">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fieldRequired">
+                                <label class="form-check-label" for="fieldRequired">Required Field</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveCustomField()">Save Field</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        function navigate(path) {
+            window.location.href = `https://www.pandaadmin.com${path}`;
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = '/login.html';
+        }
+        // Initialize data and collections
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverviewData();
+            refreshCollections();
+            refreshContacts();
+            loadCollectionsTable();
+            restoreActiveTab();
+            
+            // Add tab change listeners
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(e) {
+                    saveActiveTab(e.target.id);
+                });
+            });
+            
+            // Load admin stats and config
+            loadAdminStats();
+            
+            // Test connections on load
+            setTimeout(async () => {
+                await testEmailConnection();
+                await testSMSConnection();
+                await testRileyConnection();
+            }, 2000);
+        });
+        
+        async function loadAdminStats() {
+            try {
+                const contactsRes = await apiCall(`${API_BASE}/contacts`);
+                const contactsData = await contactsRes.json();
+                const contactsCount = (contactsData.contacts || []).length;
+                
+                const collectionsRes = await apiCall(`${API_BASE}/collections`);
+                const collectionsData = await collectionsRes.json();
+                const collectionsCount = (collectionsData.collections || []).length;
+                
+                document.getElementById('adminTotalContacts').textContent = contactsCount;
+                document.getElementById('adminTotalCollections').textContent = collectionsCount;
+                
+                displaySystemConfig();
+            } catch (error) {
+                console.error('Failed to load admin stats:', error);
+                document.getElementById('adminTotalContacts').textContent = '0';
+                document.getElementById('adminTotalCollections').textContent = '0';
+                displaySystemConfig();
+            }
+        }
+        
+        function displaySystemConfig() {
+            // Display statuses
+            const statusList = document.getElementById('statusList');
+            statusList.innerHTML = systemConfig.statuses.map(status => 
+                `<span class="badge bg-info m-1">${status} <i class="fas fa-times ms-1 cursor-pointer" onclick="removeStatus('${status}')"></i></span>`
+            ).join('');
+            
+            // Display lists
+            const listsList = document.getElementById('listsList');
+            listsList.innerHTML = systemConfig.lists.map(list => 
+                `<span class="badge bg-warning m-1">${list} <i class="fas fa-times ms-1 cursor-pointer" onclick="removeList('${list}')"></i></span>`
+            ).join('');
+            
+            // Display custom fields
+            const customFieldsList = document.getElementById('customFieldsList');
+            customFieldsList.innerHTML = systemConfig.customFields.map(field => 
+                `<div class="d-flex justify-content-between align-items-center mb-1">
+                    <small>${field.name} (${field.type})</small>
+                    <i class="fas fa-times text-danger cursor-pointer" onclick="removeCustomField('${field.name}')"></i>
+                </div>`
+            ).join('');
+        }
+        
+        async function addStatus() {
+            const status = document.getElementById('newStatus').value.trim();
+            if (status && !systemConfig.statuses.includes(status)) {
+                systemConfig.statuses.push(status);
+                await saveConfig();
+                document.getElementById('newStatus').value = '';
+                displaySystemConfig();
+            }
+        }
+        
+        async function removeStatus(status) {
+            systemConfig.statuses = systemConfig.statuses.filter(s => s !== status);
+            await saveConfig();
+            displaySystemConfig();
+        }
+        
+        async function addList() {
+            const list = document.getElementById('newList').value.trim();
+            if (list && !systemConfig.lists.includes(list)) {
+                systemConfig.lists.push(list);
+                await saveConfig();
+                document.getElementById('newList').value = '';
+                displaySystemConfig();
+            }
+        }
+        
+        async function removeList(list) {
+            systemConfig.lists = systemConfig.lists.filter(l => l !== list);
+            await saveConfig();
+            displaySystemConfig();
+        }
+        
+        function showAddCustomField() {
+            document.getElementById('customFieldForm').reset();
+            document.getElementById('optionsGroup').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('customFieldModal')).show();
+        }
+        
+        async function saveCustomField() {
+            const form = document.getElementById('customFieldForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const field = {
+                name: document.getElementById('fieldName').value.trim(),
+                type: document.getElementById('fieldType').value,
+                required: document.getElementById('fieldRequired').checked,
+                options: document.getElementById('fieldOptions').value.split(',').map(s => s.trim()).filter(s => s)
+            };
+            
+            if (!systemConfig.customFields.find(f => f.name === field.name)) {
+                systemConfig.customFields.push(field);
+                await saveConfig();
+                displaySystemConfig();
+                bootstrap.Modal.getInstance(document.getElementById('customFieldModal')).hide();
+            } else {
+                alert('Field name already exists');
+            }
+        }
+        
+        async function removeCustomField(fieldName) {
+            systemConfig.customFields = systemConfig.customFields.filter(f => f.name !== fieldName);
+            await saveConfig();
+            displaySystemConfig();
+        }
+        
+        async function saveConfig() {
+            try {
+                await apiCall(`${API_BASE}/config`, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'save', config: systemConfig })
+                });
+            } catch (error) {
+                console.error('Failed to save config:', error);
+            }
+        }
+        
+        // Show/hide options for select fields
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'fieldType') {
+                const optionsGroup = document.getElementById('optionsGroup');
+                if (e.target.value === 'select') {
+                    optionsGroup.classList.remove('d-none');
+                } else {
+                    optionsGroup.classList.add('d-none');
+                }
+            }
+        });
+
+        async function loadOverviewData() {
+            try {
+                const [contactsRes, collectionsRes] = await Promise.all([
+                    apiCall(`${API_BASE}/contacts`),
+                    apiCall(`${API_BASE}/collections`)
+                ]);
+                
+                const contactsData = await contactsRes.json();
+                const collectionsData = await collectionsRes.json();
+                
+                const contacts = contactsData.contacts || [];
+                const collections = collectionsData.collections || [];
+                
+                const activeCollections = collections.filter(c => c.status === 'active');
+                const totalAmount = activeCollections.reduce((sum, c) => sum + (c.amount || 0), 0);
+                
+                document.getElementById('totalContacts').textContent = contacts.length;
+                document.getElementById('totalCollections').textContent = collections.length;
+                document.getElementById('activeCollections').textContent = activeCollections.length;
+                document.getElementById('totalAmount').textContent = '$' + totalAmount.toLocaleString();
+                
+                document.getElementById('overviewError').style.display = 'none';
+            } catch (error) {
+                console.error('Failed to load overview data:', error);
+                document.getElementById('overviewError').style.display = 'block';
+                document.getElementById('totalContacts').textContent = 'Error';
+                document.getElementById('totalCollections').textContent = 'Error';
+                document.getElementById('activeCollections').textContent = 'Error';
+                document.getElementById('totalAmount').textContent = 'Error';
+            }
+        }
+
+        function showLeadDetails(type) {
+            alert(`Showing ${type} lead details - Integration with CRM system`);
+        }
+
+        function createCampaign(type) {
+            alert(`Creating ${type} campaign - Integration with marketing automation`);
+        }
+
+        function validateContacts() {
+            alert('Running contact validation - Integration with validation service');
+        }
+
+        function runValidation() {
+            alert('Running full validation process...');
+        }
+
+        function exportValid() {
+            alert('Exporting valid contacts to CSV...');
+        }
+
+        function enrichData() {
+            alert('Starting data enrichment process...');
+        }
+
+        function viewEnrichment() {
+            alert('Viewing enriched data results...');
+        }
+
+        // CRM & Collections Management
+        const API_BASE = 'https://cbtr8iqu56.execute-api.us-east-1.amazonaws.com/prod';
+        const EMAIL_API = 'https://jtpw1iado5.execute-api.us-east-2.amazonaws.com/prod';
+        const SMS_API = 'https://jtpw1iado5.execute-api.us-east-2.amazonaws.com/prod';
+        const RILEY_API = 'https://cbtr8iqu56.execute-api.us-east-1.amazonaws.com/prod';
+        const HATCH_API = 'https://api.usehatchapp.com';
+        
+        // API Keys
+        const PODOPS_API_KEY = 'e2a7aa895e77fcc85fc1b7334264da6fb21f849c499bcf6c2639c5cb905c584a';
+        const RILEY_API_KEY = '46752f4f366f8faffe2dac8fb74b14591a2994a7bd06fadcca012ec0b79d789b';
+        
+        // Use real API
+        const MOCK_MODE = false;
+        
+        let selectedContacts = [];
+        let systemConfig = {
+            statuses: ['active', 'inactive', 'do-not-contact'],
+            lists: ['leads', 'customers', 'prospects'],
+            customFields: []
+        };
+        
+        // Mock data for development
+        let mockContacts = [
+            { id: '1', name: 'John Doe', email: 'john@example.com', phone: '555-0123', status: 'active', lists: ['leads'], created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '555-0124', status: 'active', lists: ['customers'], created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+        ];
+        
+        let mockCollections = [
+            { id: '1', name: 'John Doe', email: 'john@example.com', phone: '555-0123', amount: 1500.00, install_date: '2024-01-15', stage: '31-60', status: 'active', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+        ];
+        
+        // Real API function
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+        
+        // Tab persistence
+        function saveActiveTab(tabId) {
+            localStorage.setItem('activeLeadTab', tabId);
+        }
+        
+        function restoreActiveTab() {
+            const activeTab = localStorage.getItem('activeLeadTab');
+            if (activeTab) {
+                const tab = document.getElementById(activeTab);
+                if (tab) {
+                    tab.click();
+                }
+            }
+        }
+        
+        // Contact Management
+        async function refreshContacts() {
+            try {
+                const response = await apiCall(`${API_BASE}/contacts`);
+                const data = await response.json();
+                const contacts = data.contacts || [];
+                displayContacts(contacts);
+            } catch (error) {
+                console.error('Failed to load contacts:', error);
+                displayContacts([]);
+            }
+        }
+        
+        function displayContacts(contacts) {
+            const tbody = document.getElementById('contactsTable');
+            if (!contacts.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3 text-muted">No contacts found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = contacts.map(contact => `
+                <tr>
+                    <td><input type="checkbox" class="contact-checkbox" value="${contact.id}" onchange="updateSelection()"></td>
+                    <td>${contact.name}</td>
+                    <td>${contact.email}</td>
+                    <td>${contact.phone || '-'}</td>
+                    <td><span class="badge bg-${contact.status === 'active' ? 'success' : 'secondary'}">${contact.status}</span></td>
+                    <td>${contact.lists?.join(', ') || '-'}</td>
+                    <td>${new Date(contact.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary btn-xs" onclick="editContact('${contact.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-xs" onclick="deleteContact('${contact.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function updateSelection() {
+            const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
+            selectedContacts = Array.from(checkboxes).map(cb => cb.value);
+            document.getElementById('selectedCount').textContent = selectedContacts.length;
+            document.getElementById('bulkActions').classList.toggle('d-none', selectedContacts.length === 0);
+        }
+        
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.contact-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateSelection();
+        }
+        
+        function filterContacts() {
+            const search = document.getElementById('contactSearch').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const list = document.getElementById('listFilter').value;
+            
+            // Apply filters to table rows
+            const rows = document.querySelectorAll('#contactsTable tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 2) return;
+                
+                const name = cells[1].textContent.toLowerCase();
+                const email = cells[2].textContent.toLowerCase();
+                const rowStatus = cells[4].textContent.toLowerCase();
+                const rowLists = cells[5].textContent.toLowerCase();
+                
+                const matchesSearch = !search || name.includes(search) || email.includes(search);
+                const matchesStatus = !status || rowStatus.includes(status);
+                const matchesList = !list || rowLists.includes(list);
+                
+                row.style.display = matchesSearch && matchesStatus && matchesList ? '' : 'none';
+            });
+        }
+        
+        function showAddContact() {
+            document.getElementById('contactForm').reset();
+            new bootstrap.Modal(document.getElementById('contactModal')).show();
+        }
+        
+        function showAddCollection() {
+            document.getElementById('collectionForm').reset();
+            new bootstrap.Modal(document.getElementById('collectionModal')).show();
+        }
+        
+        async function saveContact() {
+            const form = document.getElementById('contactForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const contact = {
+                name: document.getElementById('contactName').value,
+                email: document.getElementById('contactEmail').value,
+                phone: document.getElementById('contactPhone').value,
+                status: document.getElementById('contactStatus').value,
+                lists: document.getElementById('contactLists').value.split(',').map(s => s.trim()).filter(s => s)
+            };
+            
+            await addContact(contact);
+            bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
+        }
+        
+        async function saveCollection() {
+            const form = document.getElementById('collectionForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const collection = {
+                name: document.getElementById('collectionName').value,
+                email: document.getElementById('collectionEmail').value,
+                phone: document.getElementById('collectionPhone').value,
+                amount: parseFloat(document.getElementById('collectionAmount').value),
+                installDate: document.getElementById('collectionInstallDate').value,
+                stage: document.getElementById('collectionStageModal').value
+            };
+            
+            try {
+                const response = await apiCall(`${API_BASE}/collections`, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'create', collection })
+                });
+                
+                if (response.ok) {
+                    refreshCollections();
+                    loadCollectionsTable();
+                    bootstrap.Modal.getInstance(document.getElementById('collectionModal')).hide();
+                } else {
+                    alert('Failed to save collection');
+                }
+            } catch (error) {
+                alert('Error saving collection: ' + error.message);
+            }
+        }
+        
+        async function addContact(contact) {
+            try {
+                const response = await apiCall(`${API_BASE}/contacts`, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'create', contact })
+                });
+                
+                refreshContacts();
+                alert('Contact added successfully');
+            } catch (error) {
+                alert('Error adding contact: ' + error.message);
+            }
+        }
+        
+        function showBulkUpload() {
+            document.getElementById('admin-tab').click();
+        }
+        
+        // Bulk Upload Functions
+        let currentFileData = null;
+        let currentImportType = null;
+        
+        function previewContactsFile() {
+            const file = document.getElementById('contactsUpload').files[0];
+            document.getElementById('contactsMapBtn').disabled = !file;
+        }
+        
+        function previewCollectionsUpload() {
+            const file = document.getElementById('collectionsUpload').files[0];
+            document.getElementById('collectionsMapBtn').disabled = !file;
+        }
+        
+        async function showContactsMapping() {
+            const file = document.getElementById('contactsUpload').files[0];
+            currentImportType = 'contacts';
+            await processFileForMapping(file);
+        }
+        
+        async function showCollectionsMapping() {
+            const file = document.getElementById('collectionsUpload').files[0];
+            currentImportType = 'collections';
+            await processFileForMapping(file);
+        }
+        
+        async function processFileForMapping(file) {
+            const data = await readFile(file);
+            currentFileData = data;
+            
+            const columns = Object.keys(data[0] || {});
+            displayMappingModal(columns);
+        }
+        
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        let data;
+                        if (file.name.endsWith('.csv')) {
+                            const text = e.target.result;
+                            const lines = text.split('\n').filter(line => line.trim());
+                            const headers = lines[0].split(',').map(h => h.trim());
+                            data = lines.slice(1).map(line => {
+                                const values = line.split(',');
+                                const obj = {};
+                                headers.forEach((header, index) => {
+                                    obj[header] = values[index]?.trim() || '';
+                                });
+                                return obj;
+                            });
+                        } else {
+                            const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                            const sheetName = workbook.SheetNames[0];
+                            data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                        }
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                if (file.name.endsWith('.csv')) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsBinaryString(file);
+                }
+            });
+        }
+        
+        function displayMappingModal(columns) {
+            document.getElementById('mappingTitle').textContent = `Map ${currentImportType} Fields`;
+            
+            const fileColumnsDiv = document.getElementById('fileColumns');
+            fileColumnsDiv.innerHTML = columns.map(col => 
+                `<div class="badge bg-secondary m-1 draggable" draggable="true" data-column="${col}">${col}</div>`
+            ).join('');
+            
+            let fields = currentImportType === 'contacts' 
+                ? ['name', 'email', 'phone', 'status', 'lists']
+                : ['name', 'email', 'phone', 'amount', 'installDate', 'stage'];
+            
+            // Add custom fields for contacts
+            if (currentImportType === 'contacts') {
+                fields = fields.concat(systemConfig.customFields.map(f => f.name));
+            }
+            
+            const mappingFieldsDiv = document.getElementById('mappingFields');
+            mappingFieldsDiv.innerHTML = fields.map(field => 
+                `<div class="mb-2">
+                    <label class="form-label">${field} ${field === 'name' || field === 'email' || field === 'amount' || field === 'installDate' ? '*' : ''}</label>
+                    <div class="border rounded p-2 drop-zone" data-field="${field}" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="removeMapping(this)">
+                        Drop column here
+                    </div>
+                </div>`
+            ).join('');
+            
+            // Populate default dropdowns
+            const statusSelect = document.getElementById('defaultStatus');
+            statusSelect.innerHTML = systemConfig.statuses.map(status => 
+                `<option value="${status}">${status}</option>`
+            ).join('');
+            
+            const listsSelect = document.getElementById('defaultLists');
+            listsSelect.innerHTML = systemConfig.lists.map(list => 
+                `<option value="${list}">${list}</option>`
+            ).join('');
+            
+            // Add drag functionality
+            document.querySelectorAll('.draggable').forEach(el => {
+                el.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.column);
+                });
+            });
+            
+            new bootstrap.Modal(document.getElementById('mappingModal')).show();
+        }
+        
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+        
+        function drop(ev) {
+            ev.preventDefault();
+            const column = ev.dataTransfer.getData('text/plain');
+            const field = ev.target.dataset.field;
+            if (field) {
+                ev.target.innerHTML = `${column} <small class="text-muted">(click to remove)</small>`;
+                ev.target.dataset.mapped = column;
+                ev.target.classList.add('bg-light', 'border-success');
+            }
+        }
+        
+        function removeMapping(element) {
+            if (element.dataset.mapped) {
+                element.innerHTML = 'Drop column here';
+                delete element.dataset.mapped;
+                element.classList.remove('bg-light', 'border-success');
+            }
+        }
+        
+        async function processBulkImport() {
+            const mappings = {};
+            document.querySelectorAll('.drop-zone[data-mapped]').forEach(el => {
+                mappings[el.dataset.field] = el.dataset.mapped;
+            });
+            
+            const requiredFields = currentImportType === 'contacts' 
+                ? ['name', 'email'] 
+                : ['name', 'email', 'amount', 'installDate'];
+            
+            const missingFields = requiredFields.filter(field => !mappings[field]);
+            if (missingFields.length > 0) {
+                alert(`Please map required fields: ${missingFields.join(', ')}`);
+                return;
+            }
+            
+            const defaultStatus = document.getElementById('defaultStatus').value;
+            const defaultLists = Array.from(document.getElementById('defaultLists').selectedOptions).map(o => o.value);
+            
+            const mappedData = currentFileData.map(row => {
+                const mapped = {};
+                Object.keys(mappings).forEach(field => {
+                    mapped[field] = row[mappings[field]];
+                });
+                
+                // Apply defaults
+                if (currentImportType === 'contacts') {
+                    if (!mapped.status) mapped.status = defaultStatus;
+                    if (!mapped.lists) mapped.lists = defaultLists;
+                }
+                
+                return mapped;
+            }).filter(row => row.name && row.email);
+            
+            try {
+                const endpoint = currentImportType === 'contacts' ? '/contacts' : '/collections';
+                const action = currentImportType === 'contacts' ? 'bulk_create' : 'bulk_create';
+                const dataKey = currentImportType === 'contacts' ? 'contacts' : 'collections';
+                
+                const response = await apiCall(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ action, [dataKey]: mappedData })
+                });
+                
+                if (response.ok) {
+                    alert(`Successfully imported ${mappedData.length} ${currentImportType}`);
+                    bootstrap.Modal.getInstance(document.getElementById('mappingModal')).hide();
+                    if (currentImportType === 'contacts') {
+                        refreshContacts();
+                    } else {
+                        refreshCollections();
+                        loadCollectionsTable();
+                    }
+                } else {
+                    alert('Import failed');
+                }
+            } catch (error) {
+                alert('Import error: ' + error.message);
+            }
+        }
+        
+        async function cleanupDuplicates() {
+            if (confirm('Remove duplicate contacts and collections based on email?')) {
+                try {
+                    await fetch(`${API_BASE}/admin/cleanup-duplicates`, { method: 'POST' });
+                    alert('Duplicates removed successfully');
+                    refreshContacts();
+                    refreshCollections();
+                } catch (error) {
+                    alert('Cleanup failed: ' + error.message);
+                }
+            }
+        }
+        
+        function confirmDataReset() {
+            if (confirm('WARNING: This will delete ALL contacts and collections data. Are you sure?')) {
+                if (confirm('This action cannot be undone. Type YES to confirm:') === 'YES') {
+                    resetAllData();
+                }
+            }
+        }
+        
+        async function resetAllData() {
+            try {
+                await fetch(`${API_BASE}/admin/reset-all`, { method: 'POST' });
+                alert('All data has been reset');
+                refreshContacts();
+                refreshCollections();
+            } catch (error) {
+                alert('Reset failed: ' + error.message);
+            }
+        }
+        
+        async function exportContacts() {
+            try {
+                const response = await apiCall(`${API_BASE}/contacts`);
+                const data = await response.json();
+                const contacts = data.contacts || [];
+                
+                const csv = 'Name,Email,Phone,Status\n' + 
+                    contacts.map(c => `${c.name},${c.email},${c.phone || ''},${c.status}`).join('\n');
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'contacts.csv';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Export failed: ' + error.message);
+            }
+        }
+        
+        // Collections Management
+        function previewCollectionsFile() {
+            const file = document.getElementById('collectionsFile').files[0];
+            document.getElementById('uploadCollectionsBtn').disabled = !file;
+        }
+
+        async function uploadCollections() {
+            const file = document.getElementById('collectionsFile').files[0];
+            const stage = document.getElementById('collectionStage').value;
+            
+            if (!file) return;
+            
+            const text = await file.text();
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            const collections = lines.map(line => {
+                const [name, email, phone, amount, installDate] = line.split(',');
+                return {
+                    contactId: null, // Will be created/linked
+                    name: name?.trim(),
+                    email: email?.trim(),
+                    phone: phone?.trim(),
+                    amount: parseFloat(amount) || 0,
+                    installDate: installDate?.trim() || new Date().toISOString().split('T')[0],
+                    stage: stage,
+                    status: 'active',
+                    createdAt: new Date().toISOString()
+                };
+            }).filter(item => item.name && item.email);
+            
+            try {
+                // Save to collections table (separate from contacts)
+                const response = await apiCall(`${API_BASE}/collections`, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'bulk_create', collections })
+                });
+                
+                if (response.ok) {
+                    alert(`${collections.length} collections saved successfully`);
+                    refreshCollections();
+                    loadCollectionsTable();
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                alert('Upload failed: ' + error.message);
+            }
+            
+            document.getElementById('collectionsFile').value = '';
+            document.getElementById('uploadCollectionsBtn').disabled = true;
+        }
+
+        async function refreshCollections() {
+            try {
+                const response = await apiCall(`${API_BASE}/collections?action=counts`);
+                const data = await response.json();
+                const counts = data.counts || {};
+                
+                Object.keys(counts).forEach(stage => {
+                    const element = document.getElementById(`count-${stage}`);
+                    if (element) element.textContent = counts[stage] || 0;
+                });
+            } catch (error) {
+                console.error('Failed to refresh collections:', error);
+            }
+        }
+        
+        async function loadCollectionsTable() {
+            try {
+                const response = await apiCall(`${API_BASE}/collections`);
+                const data = await response.json();
+                const collections = data.collections || [];
+                displayCollectionsTable(collections);
+            } catch (error) {
+                console.error('Failed to load collections:', error);
+                displayCollectionsTable([]);
+            }
+        }
+        
+        function displayCollectionsTable(collections) {
+            const tbody = document.getElementById('collectionsTable');
+            if (!collections.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No collections data</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = collections.map(item => {
+                const installDate = new Date(item.installDate);
+                const today = new Date();
+                const daysOverdue = Math.floor((today - installDate) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>$${item.amount.toLocaleString()}</td>
+                        <td><span class="badge bg-${getStageColor(item.stage)}">${item.stage}</span></td>
+                        <td>${installDate.toLocaleDateString()}</td>
+                        <td>${daysOverdue} days</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-success btn-xs" onclick="resolveCollection('${item.id}')">
+                                    Resolve
+                                </button>
+                                <button class="btn btn-outline-primary btn-xs" onclick="addToCampaign('${item.id}')">
+                                    Campaign
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function getStageColor(stage) {
+            const colors = {
+                '0-30': 'success',
+                '31-60': 'warning', 
+                '61-90': 'danger',
+                '91-plus': 'dark',
+                'judgment': 'secondary',
+                'resolved': 'info'
+            };
+            return colors[stage] || 'secondary';
+        }
+        
+        function viewCollectionStage(stage) {
+            // Filter table by stage
+            const rows = document.querySelectorAll('#collectionsTable tr');
+            rows.forEach(row => {
+                const stageCell = row.querySelector('td:nth-child(3)');
+                if (stageCell) {
+                    const rowStage = stageCell.textContent.toLowerCase();
+                    row.style.display = stage === 'all' || rowStage.includes(stage) ? '' : 'none';
+                }
+            });
+        }
+
+        async function createDripCampaign() {
+            const stage = document.getElementById('campaignStage').value;
+            const type = document.querySelector('input[name="campaignType"]:checked').value;
+            const schedule = {
+                day1: document.getElementById('day1').checked,
+                day3: document.getElementById('day3').checked,
+                day7: document.getElementById('day7').checked,
+                day14: document.getElementById('day14').checked
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/campaigns`, {
+                    method: 'POST',
+       they can access          if (response.ok) {
+                    const campaign = await response.json();
+                    if (type === 'email' || type === 'mixed') {
+                        await launchEmailCampaign(campaign.id, stage);
+                    }
+                    if (type === 'sms' || type === 'mixed') {
+                        await launchSMSCampaign(campaign.id, stage);
+                    }
+                    alert('Campaign launched successfully!');
+                } else {
+                    throw new Error('Campaign creation failed');
+                }
+            } catch (error) {
+                alert('Failed to create campaign: ' + error.message);
+            }
+        }
+
+        async function launchEmailCampaign(campaignId, stage) {
+            try {
+                // Get recipients from current collection stage
+                const recipients = await getRecipientsForStage(stage);
+                
+                const response = await fetch(`${EMAIL_API}/email/campaign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': PODOPS_API_KEY
+                    },
+                    body: JSON.stringify({
+                        campaignId: campaignId,
+                        campaignName: `PandaAdmin ${stage} Email Campaign`,
+                        stage: stage,
+                        source: 'pandaadmin',
+                        templateId: getTemplateForStage(stage),
+                        recipients: recipients
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Email campaign result:', result);
+                return response.ok;
+            } catch (error) {
+                console.error('Email launch failed:', error);
+                return false;
+            }
+        }
+
+        async function launchSMSCampaign(campaignId, stage) {
+            try {
+                // Get recipients from current collection stage
+                const recipients = await getRecipientsForStage(stage);
+                
+                const response = await fetch(`${SMS_API}/sms/campaign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': PODOPS_API_KEY
+                    },
+                    body: JSON.stringify({
+                        campaignId: `sms_${campaignId}`,
+                        campaignName: `PandaAdmin ${stage} SMS Campaign`,
+                        stage: stage,
+                        source: 'pandaadmin',
+                        message: getSMSMessageForStage(stage),
+                        recipients: recipients
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('SMS campaign result:', result);
+                return response.ok;
+            } catch (error) {
+                console.error('SMS launch failed:', error);
+                return false;
+            }
+        }
+
+        async function openRileyInterface() {
+            try {
+                const response = await fetch(`${RILEY_API}/riley/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': RILEY_API_KEY
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: '+13019736753',
+                        message: 'Opening Riley chat from PandaAdmin CRM',
+                        source: 'pandaadmin'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.chat_url) {
+                    window.open(data.chat_url, '_blank');
+                } else {
+                    // Fallback to direct Riley interface
+                    window.open('https://riley-chat.pandaexteriors.com', '_blank');
+                }
+            } catch (error) {
+                console.error('Riley chat error:', error);
+                window.open('https://riley-chat.pandaexteriors.com', '_blank');
+            }
+        }
+
+        async function openRileyDashboard() {
+            try {
+                const response = await fetch(`${RILEY_API}/riley/auth`, {
+                    method: 'GET',
+                    headers: {
+                        'x-api-key': RILEY_API_KEY
+                    }
+                });
+                
+                const data = await response.json();
+                
+                // Open Riley dashboard with API key
+                const dashboardUrl = `https://riley-dashboard.pandaexteriors.com?api_key=${data.api_key}`;
+                window.open(dashboardUrl, '_blank');
+            } catch (error) {
+                console.error('Riley dashboard error:', error);
+                window.open('https://riley-dashboard.pandaexteriors.com', '_blank');
+            }
+        }
+
+        async function testEmailConnection() {
+            try {
+                const response = await fetch(`${EMAIL_API}/email/health`, {
+                    headers: { 'x-api-key': PODOPS_API_KEY }
+                });
+                document.getElementById('emailStatus').className = response.ok ? 'badge bg-success' : 'badge bg-danger';
+                document.getElementById('emailStatus').textContent = response.ok ? 'Connected' : 'Failed';
+            } catch (error) {
+                document.getElementById('emailStatus').className = 'badge bg-danger';
+                document.getElementById('emailStatus').textContent = 'Failed';
+            }
+        }
+
+        async function testSMSConnection() {
+            try {
+                const response = await fetch(`${SMS_API}/sms/health`, {
+                    headers: { 'x-api-key': PODOPS_API_KEY }
+                });
+                document.getElementById('smsStatus').className = response.ok ? 'badge bg-success' : 'badge bg-danger';
+                document.getElementById('smsStatus').textContent = response.ok ? 'Connected' : 'Failed';
+            } catch (error) {
+                document.getElementById('smsStatus').className = 'badge bg-danger';
+                document.getElementById('smsStatus').textContent = 'Failed';
+            }
+        }
+        
+        function previewContactsFile(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const lines = content.split('\n').slice(0, 5);
+                    alert('File preview (first 5 lines):\n' + lines.join('\n'));
+                };
+                reader.readAsText(file);
+            }
+        }
+        
+        async function testRileyConnection() {
+            try {
+                const response = await fetch(`${RILEY_API}/riley/auth`, {
+                    headers: { 'x-api-key': RILEY_API_KEY }
+                });
+                
+                if (response.ok) {
+                    document.getElementById('rileyStatus').className = 'badge bg-success';
+                    document.getElementById('rileyStatus').textContent = 'Connected';
+                } else {
+                    throw new Error('Auth failed');
+                }
+            } catch (error) {
+                document.getElementById('rileyStatus').className = 'badge bg-danger';
+                document.getElementById('rileyStatus').textContent = 'Failed';
+            }
+        }
+
+        function previewCampaign() {
+            const stage = document.getElementById('campaignStage').value;
+            const type = document.querySelector('input[name="campaignType"]:checked').value;
+            alert(`Preview: ${type.toUpperCase()} campaign for ${stage} stage`);
+        }
+        
+        // Helper functions for campaign integration
+        async function getRecipientsForStage(stage) {
+            try {
+                const response = await apiCall(`${API_BASE}/collections`);
+                const data = await response.json();
+                const collections = data.collections || [];
+                
+                return collections
+                    .filter(item => item.stage === stage && item.status === 'active')
+                    .map(item => ({
+                        name: item.name,
+                        email: item.email,
+                        phone: item.phone,
+                        amount: item.amount
+                    }));
+            } catch (error) {
+                console.error('Failed to get recipients:', error);
+                return [];
+            }
+        }
+        
+        function getTemplateForStage(stage) {
+            const templates = {
+                '0-30': 'template_gentle_reminder',
+                '31-60': 'template_follow_up',
+                '61-90': 'template_urgent_notice',
+                '91-plus': 'template_final_notice',
+                'judgment': 'template_legal_notice'
+            };
+            return templates[stage] || 'template_default';
+        }
+        
+        function getSMSMessageForStage(stage) {
+            const messages = {
+                '0-30': 'Hi {{name}}, friendly reminder about your ${{amount}} balance. Please contact us to arrange payment.',
+                '31-60': 'Hello {{name}}, your ${{amount}} payment is now 30+ days overdue. Please call us immediately.',
+                '61-90': 'URGENT: {{name}}, your ${{amount}} balance is seriously overdue. Contact us today to avoid further action.',
+                '91-plus': 'FINAL NOTICE: {{name}}, your ${{amount}} balance will be sent to collections if not paid immediately.',
+                'judgment': 'LEGAL NOTICE: {{name}}, legal proceedings have begun for your ${{amount}} balance.'
+            };
+            return messages[stage] || 'Please contact us regarding your account balance of ${{amount}}.';
+        }
+    </script>
+</body>
+</html>

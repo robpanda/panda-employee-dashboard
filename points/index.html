@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Points Management - Panda Admin</title>
+    <!-- Cache bust: 2025-10-08-14:15 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
+            min-height: 100vh;
+            color: #374151;
+            font-weight: 400;
+        }
+        .main-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 20px auto;
+            border: 1px solid #f3f4f6;
+        }
+        .utility-nav {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            font-weight: 400;
+            font-size: 14px;
+        }
+        .nav-link:hover {
+            background: #f9fafb;
+            color: #374151;
+            text-decoration: none;
+        }
+        .nav-link.active {
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .logout-btn {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.15s ease;
+        }
+        .logout-btn:hover { 
+            background: #ef4444;
+            color: white;
+        }
+        .header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
+            color: #374151;
+            padding: 32px 40px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .logo img { height: 40px; }
+        .header h1 { 
+            margin: 16px 0 8px 0; 
+            font-size: 28px; 
+            font-weight: 600;
+            color: #111827;
+        }
+        .header p { 
+            color: #6b7280;
+            margin-bottom: 0;
+            font-size: 16px;
+            font-weight: 400;
+        }
+        .content-area {
+            padding: 32px 40px;
+            background: white;
+        }
+        .card { border: 1px solid #f3f4f6; border-radius: 12px; }
+        .btn-primary { background: #3b82f6; border-color: #3b82f6; }
+        .budget-card { background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%); }
+        .points-awarded { color: #dc3545; font-weight: 600; }
+        .points-remaining { color: #28a745; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="utility-nav">
+            <div class="logo">
+                <img src="panda-logo.png" alt="Panda Exteriors">
+            </div>
+            <div class="nav-links">
+                <a href="../employee.html" class="nav-link">👥 Employees</a>
+                <a href="../points.html" class="nav-link active">⭐ Points</a>
+                <a href="../leads.html" class="nav-link">📊 Leads</a>
+                <a href="../referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="../assets.html" class="nav-link">📦 Assets</a>
+                <a href="../admin.html" class="nav-link">⚙️ Admin</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="header">
+            <h1>⭐ Points Management</h1>
+            <p>Award and manage Panda Points for your team members</p>
+        </div>
+        
+        <div class="content-area">
+        <!-- Main Dashboard -->
+        <div id="dashboardSection">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 id="managerName">Points Manager Dashboard</h3>
+                                    <p class="text-muted mb-0" id="managerInfo">Manage and award Panda Points to your team</p>
+                                </div>
+                                <div>
+                                    <button class="btn btn-outline-info me-2" onclick="showChangePasswordModal()">
+                                        <i class="fas fa-key"></i> Change Password
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Overview -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card budget-card">
+                        <div class="card-body text-center">
+                            <h4 class="text-primary" id="totalBudget">0</h4>
+                            <p class="mb-0">Total Budget</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card budget-card">
+                        <div class="card-body text-center">
+                            <h4 class="points-awarded" id="totalAwarded">0</h4>
+                            <p class="mb-0">Points Awarded</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card budget-card">
+                        <div class="card-body text-center">
+                            <h4 class="points-remaining" id="totalRemaining">0</h4>
+                            <p class="mb-0">Points Remaining</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card budget-card">
+                        <div class="card-body text-center">
+                            <h4 class="text-info" id="teamSize">0</h4>
+                            <p class="mb-0">Team Members</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Management -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-pills nav-fill" id="teamTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="your-team-tab" data-bs-toggle="tab" data-bs-target="#your-team" type="button" role="tab">
+                                        <i class="fas fa-users me-2"></i>Your Team
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="all-staff-tab" data-bs-toggle="tab" data-bs-target="#all-staff" type="button" role="tab">
+                                        <i class="fas fa-building me-2"></i>All Staff
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content" id="teamTabContent">
+                                <div class="tab-pane fade show active" id="your-team" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Employee</th>
+                                                    <th>Department</th>
+                                                    <th>Current Points</th>
+                                                    <th>Points Awarded</th>
+                                                    <th>Team Budget Remaining</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="teamTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="all-staff" role="tabpanel">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" id="allStaffSearch" placeholder="Search employees by name or department..." onkeyup="filterAllStaff()">
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Employee</th>
+                                                    <th>Department</th>
+                                                    <th>Manager</th>
+                                                    <th>Current Points</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="allStaffTable"></tbody>
+                                        </table>
+                                    </div>
+                                    <small class="text-muted"><i class="fas fa-info-circle"></i> Awards to non-team members do not count against your budget</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-history"></i> Recent Awards</h5>
+                        </div>
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                            <div id="recentAwards"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points Report -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-chart-bar"></i> Points Report</h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportReport()">
+                                <i class="fas fa-download"></i> Export Report
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Employee</th>
+                                            <th>Points Awarded</th>
+                                            <th>Reason</th>
+                                            <th>Awarded By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reportTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Award Points Modal -->
+    <div class="modal fade" id="awardPointsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Award Points</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Employee:</label>
+                        <input type="text" class="form-control" id="awardEmployeeName" readonly>
+                        <input type="hidden" id="awardEmployeeId">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Points to Award:</label>
+                        <input type="number" class="form-control" id="awardPoints" min="1" max="500">
+                        <small class="text-muted">Remaining budget: <span id="remainingBudget">0</span> points</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason:</label>
+                        <textarea class="form-control" id="awardReason" rows="3" placeholder="Enter reason for awarding points..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAwardPoints()">Award Points</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-lock"></i> Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Current Password:</label>
+                        <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password:</label>
+                        <input type="password" class="form-control" id="newPassword" placeholder="Enter new password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm New Password:</label>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">Change Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth-check.js"></script>
+    <script>
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            sessionStorage.removeItem('adminData');
+            window.location.href = '../login.html';
+        }
+        const API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws';
+        let currentManager = null;
+        let teamMembers = [];
+        let pointsHistory = [];
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            try {
+                // Try admin login first
+                const adminResponse = await fetch(`${API_URL}/admin-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (adminResponse.ok) {
+                    const adminResult = await adminResponse.json();
+                    if (adminResult.success) {
+                        // Super admin access
+                        currentManager = {
+                            id: 'admin',
+                            employee_id: 'admin',
+                            'First Name': 'Super',
+                            'Last Name': 'Admin',
+                            name: 'Super Admin',
+                            email: email,
+                            'Department': 'Administration',
+                            points_budget: 10000,
+                            is_super_admin: true
+                        };
+                        sessionStorage.setItem('pointsManager', JSON.stringify(currentManager));
+                        
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('dashboardSection').style.display = 'block';
+                        
+                        loadDashboard();
+                        return;
+                    }
+                }
+                
+                // Try employee login
+                const response = await fetch(`${API_URL}/employee-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.employee) {
+                    // Check if employee is a points manager
+                    const employee = result.employee;
+                    const isPointsManager = employee.points_manager === 'Yes';
+                    
+                    if (!isPointsManager) {
+                        alert('Access denied. You are not authorized as a Points Manager.');
+                        return;
+                    }
+                    
+                    currentManager = employee;
+                    sessionStorage.setItem('pointsManager', JSON.stringify(currentManager));
+                    
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('dashboardSection').style.display = 'block';
+                    
+                    loadDashboard();
+                } else {
+                    alert(result.error || 'Invalid email or password');
+                }
+            } catch (error) {
+                alert('Error logging in. Please try again.');
+            }
+        }
+        
+        function showLogin() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('resetSection').style.display = 'none';
+            document.getElementById('changePasswordSection').style.display = 'none';
+        }
+        
+        function showResetPassword() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('resetSection').style.display = 'block';
+            document.getElementById('changePasswordSection').style.display = 'none';
+        }
+        
+        function showChangePasswordModal() {
+            // Clear form fields
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+        }
+        
+        async function sendResetEmail() {
+            const email = document.getElementById('resetEmail').value.trim();
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+            
+            // For now, just reset to default password
+            alert('Your password has been reset to the default: Panda2025!');
+            showLogin();
+        }
+        
+        async function changePassword() {
+            const currentPwd = document.getElementById('currentPassword').value.trim();
+            const newPwd = document.getElementById('newPassword').value.trim();
+            const confirmPwd = document.getElementById('confirmPassword').value.trim();
+            
+            if (!currentPwd || !newPwd || !confirmPwd) {
+                alert('Please fill in all password fields');
+                return;
+            }
+            
+            if (newPwd !== confirmPwd) {
+                alert('New passwords do not match');
+                return;
+            }
+            
+            if (newPwd.length < 6) {
+                alert('New password must be at least 6 characters long');
+                return;
+            }
+            
+            try {
+                if (currentManager.is_super_admin) {
+                    // Update admin user password
+                    const response = await fetch(`${API_URL}/admin-users/${currentManager.email}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            password: newPwd
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        alert('Password changed successfully');
+                        bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+                    } else {
+                        alert('Error changing password');
+                    }
+                } else {
+                    // Update employee password
+                    const empId = currentManager.id || currentManager.employee_id;
+                    const response = await fetch(`${API_URL}/employees/${empId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            password: newPwd
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        alert('Password changed successfully');
+                        bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+                    } else {
+                        alert('Error changing password');
+                    }
+                }
+            } catch (error) {
+                console.error('Password change error:', error);
+                alert('Error changing password. Please try again.');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            sessionStorage.removeItem('adminData');
+            sessionStorage.removeItem('pointsManager');
+            window.location.href = '../login.html';
+        }
+
+        async function loadDashboard() {
+            if (!currentManager) return;
+
+            const managerName = currentManager['First Name'] && currentManager['Last Name'] ? 
+                `${currentManager['First Name']} ${currentManager['Last Name']}` : 
+                currentManager.name || 'Manager';
+
+            document.getElementById('managerName').textContent = `Welcome, ${managerName}`;
+            document.getElementById('managerInfo').textContent = `Department: ${currentManager['Department'] || currentManager.department || 'Unknown'}`;
+
+            await loadTeamMembers();
+            await loadPointsHistory();
+            updateBudgetOverview();
+            displayTeam();
+            displayAllStaff();
+            displayRecentAwards();
+            displayReport();
+        }
+
+        let allEmployees = [];
+        let filteredAllStaff = [];
+
+        async function loadTeamMembers() {
+            try {
+                const response = await fetch(`${API_URL}/employees`);
+                const data = await response.json();
+                const employees = data.employees || data || [];
+                
+                // Store all employees for All Staff tab
+                allEmployees = employees.filter(emp => {
+                    const terminated = emp['Terminated'] || emp.terminated || 'No';
+                    return terminated === 'No';
+                }).sort((a, b) => {
+                    const nameA = a['First Name'] && a['Last Name'] ? 
+                        `${a['First Name']} ${a['Last Name']}` : a.name || '';
+                    const nameB = b['First Name'] && b['Last Name'] ? 
+                        `${b['First Name']} ${b['Last Name']}` : b.name || '';
+                    return nameA.localeCompare(nameB);
+                });
+                
+                filteredAllStaff = [...allEmployees];
+                
+                if (currentManager.is_super_admin) {
+                    // Super admin can manage all active employees
+                    teamMembers = [...allEmployees];
+                } else {
+                    // Regular manager - find their direct reports
+                    const managerName = currentManager.name || 
+                        `${currentManager['First Name'] || ''} ${currentManager['Last Name'] || ''}`.trim();
+                    
+                    teamMembers = employees.filter(emp => {
+                        const terminated = emp['Terminated'] || emp.terminated || 'No';
+                        const supervisor = emp.supervisor || emp.manager || '';
+                        
+                        return terminated === 'No' && supervisor === managerName;
+                    }).sort((a, b) => {
+                        const nameA = a['First Name'] && a['Last Name'] ? 
+                            `${a['First Name']} ${a['Last Name']}` : a.name || '';
+                        const nameB = b['First Name'] && b['Last Name'] ? 
+                            `${b['First Name']} ${b['Last Name']}` : b.name || '';
+                        return nameA.localeCompare(nameB);
+                    });
+                }
+                
+                console.log(`Loaded ${teamMembers.length} team members and ${allEmployees.length} total employees for ${currentManager.name}`);
+            } catch (error) {
+                console.error('Error loading team members:', error);
+                teamMembers = [];
+                allEmployees = [];
+            }
+        }
+
+        async function loadPointsHistory() {
+            try {
+                const response = await fetch(`${API_URL}/points-history`);
+                if (response.ok) {
+                    const data = await response.json();
+                    pointsHistory = data.history || [];
+                } else {
+                    pointsHistory = [];
+                }
+            } catch (error) {
+                pointsHistory = [];
+            }
+        }
+
+        function updateBudgetOverview() {
+            let quarterlyBudget;
+            
+            if (currentManager.is_super_admin) {
+                // Super admin has unlimited budget
+                quarterlyBudget = 50000;
+            } else {
+                // Regular manager: fixed 500 points per team per quarter
+                quarterlyBudget = 500;
+            }
+            
+            const currentQuarter = getCurrentQuarter();
+            const managerId = currentManager.employee_id || currentManager.id;
+            
+            const awardedThisQuarter = pointsHistory
+                .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
+                .reduce((sum, h) => sum + h.points, 0);
+            
+            const remaining = quarterlyBudget - awardedThisQuarter;
+
+            document.getElementById('totalBudget').textContent = quarterlyBudget.toLocaleString();
+            document.getElementById('totalAwarded').textContent = awardedThisQuarter.toLocaleString();
+            document.getElementById('totalRemaining').textContent = remaining.toLocaleString();
+            document.getElementById('teamSize').textContent = teamMembers.length;
+        }
+
+        function displayTeam() {
+            const tbody = document.getElementById('teamTable');
+            const currentQuarter = getCurrentQuarter();
+            const managerId = currentManager.employee_id || currentManager.id;
+            
+            if (teamMembers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No team members found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = teamMembers.map(emp => {
+                const name = emp['First Name'] && emp['Last Name'] ? 
+                    `${emp['First Name']} ${emp['Last Name']}` : emp.name || 'Unknown';
+                const empId = emp.employee_id || emp.id;
+                const department = emp['Department'] || emp.department || 'Unknown';
+                const currentPoints = emp.points || emp['Panda Points'] || 0;
+                
+                const budgetUsed = pointsHistory
+                    .filter(h => h.employee_id === empId && h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
+                    .reduce((sum, h) => sum + h.points, 0);
+                
+                // Team budget calculation - show remaining team budget, not individual
+                const teamBudgetUsed = pointsHistory
+                    .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
+                    .reduce((sum, h) => sum + h.points, 0);
+                
+                const teamBudget = currentManager.is_super_admin ? 50000 : 500;
+                const budgetRemaining = teamBudget - teamBudgetUsed;
+                
+                return `
+                    <tr>
+                        <td><strong>${name}</strong><br><small class="text-muted">ID: ${empId}</small></td>
+                        <td>${department}</td>
+                        <td><span class="badge bg-warning text-dark">${currentPoints} pts</span></td>
+                        <td><span class="points-awarded">${budgetUsed} pts</span></td>
+                        <td><span class="points-remaining">${budgetRemaining} pts (team)</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="showAwardModal('${empId}', '${name}', ${budgetRemaining}, true)" ${!currentManager.is_super_admin && budgetRemaining <= 0 ? 'disabled' : ''}>
+                                <i class="fas fa-plus"></i> Award
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function displayAllStaff() {
+            const tbody = document.getElementById('allStaffTable');
+            
+            if (filteredAllStaff.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No employees found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filteredAllStaff.map(emp => {
+                const name = emp['First Name'] && emp['Last Name'] ? 
+                    `${emp['First Name']} ${emp['Last Name']}` : emp.name || 'Unknown';
+                const empId = emp.employee_id || emp.id;
+                const department = emp['Department'] || emp.department || 'Unknown';
+                const supervisor = emp.supervisor || emp.manager || 'No Manager';
+                const currentPoints = emp.points || emp['Panda Points'] || 0;
+                
+                return `
+                    <tr>
+                        <td><strong>${name}</strong><br><small class="text-muted">ID: ${empId}</small></td>
+                        <td>${department}</td>
+                        <td>${supervisor}</td>
+                        <td><span class="badge bg-warning text-dark">${currentPoints} pts</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="showAwardModal('${empId}', '${name}', 0, false)">
+                                <i class="fas fa-plus"></i> Award
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterAllStaff() {
+            const search = document.getElementById('allStaffSearch').value.toLowerCase();
+            
+            filteredAllStaff = allEmployees.filter(emp => {
+                const name = (emp['First Name'] && emp['Last Name'] ? 
+                    `${emp['First Name']} ${emp['Last Name']}` : emp.name || '').toLowerCase();
+                const department = (emp['Department'] || emp.department || '').toLowerCase();
+                const supervisor = (emp.supervisor || emp.manager || '').toLowerCase();
+                
+                return !search || name.includes(search) || department.includes(search) || supervisor.includes(search);
+            });
+            
+            displayAllStaff();
+        }
+
+        function displayRecentAwards() {
+            const container = document.getElementById('recentAwards');
+            const recentAwards = pointsHistory
+                .filter(h => h.awarded_by === currentManager.employee_id)
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 10);
+
+            if (recentAwards.length === 0) {
+                container.innerHTML = '<p class="text-muted">No awards yet</p>';
+                return;
+            }
+
+            container.innerHTML = recentAwards.map(award => `
+                <div class="border-bottom pb-2 mb-2">
+                    <div class="d-flex justify-content-between">
+                        <strong>${award.employee_name}</strong>
+                        <span class="badge bg-success">${award.points} pts</span>
+                    </div>
+                    <small class="text-muted">${new Date(award.date).toLocaleDateString()}</small>
+                    ${award.reason ? `<br><small>${award.reason}</small>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function displayReport() {
+            const tbody = document.getElementById('reportTable');
+            const managerAwards = pointsHistory
+                .filter(h => h.awarded_by === currentManager.employee_id)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            tbody.innerHTML = managerAwards.map(award => `
+                <tr>
+                    <td>${new Date(award.date).toLocaleDateString()}</td>
+                    <td>${award.employee_name}</td>
+                    <td><span class="badge bg-success">${award.points} pts</span></td>
+                    <td>${award.reason || 'No reason provided'}</td>
+                    <td>${award.awarded_by_name}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showAwardModal(empId, empName, remaining, countsAgainstBudget = true) {
+            document.getElementById('awardEmployeeId').value = empId;
+            document.getElementById('awardEmployeeName').value = empName;
+            
+            if (countsAgainstBudget) {
+                // Calculate actual team budget remaining
+                const currentQuarter = getCurrentQuarter();
+                const managerId = currentManager.employee_id || currentManager.id;
+                const teamBudgetUsed = pointsHistory
+                    .filter(h => h.awarded_by === managerId && getQuarter(h.date) === currentQuarter && h.counts_against_budget !== false)
+                    .reduce((sum, h) => sum + h.points, 0);
+                const teamBudget = currentManager.is_super_admin ? 50000 : 500;
+                const teamBudgetRemaining = teamBudget - teamBudgetUsed;
+                
+                document.getElementById('awardPoints').max = teamBudgetRemaining;
+                document.getElementById('remainingBudget').textContent = teamBudgetRemaining + ' team points remaining';
+            } else {
+                document.getElementById('awardPoints').max = 1000; // Higher limit for non-budget awards
+                document.getElementById('remainingBudget').textContent = 'No budget limit (non-team member)';
+            }
+            
+            document.getElementById('awardPoints').value = '';
+            document.getElementById('awardReason').value = '';
+            
+            // Store whether this counts against budget
+            document.getElementById('awardPointsModal').setAttribute('data-counts-budget', countsAgainstBudget);
+            
+            new bootstrap.Modal(document.getElementById('awardPointsModal')).show();
+        }
+
+        async function confirmAwardPoints() {
+            const empId = document.getElementById('awardEmployeeId').value;
+            const points = parseInt(document.getElementById('awardPoints').value);
+            const reason = document.getElementById('awardReason').value.trim();
+            const countsAgainstBudget = document.getElementById('awardPointsModal').getAttribute('data-counts-budget') === 'true';
+
+            if (!points || points <= 0) {
+                alert('Please enter a valid number of points');
+                return;
+            }
+
+            try {
+                // Find employee in either team members or all employees
+                let employee = teamMembers.find(e => (e.employee_id || e.id) === empId);
+                if (!employee) {
+                    employee = allEmployees.find(e => (e.employee_id || e.id) === empId);
+                }
+                
+                if (!employee) {
+                    alert('Employee not found');
+                    return;
+                }
+                
+                const newTotal = (employee.points || employee['Panda Points'] || 0) + points;
+                
+                const updateResponse = await fetch(`${API_URL}/employees/${empId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        'points': newTotal,
+                        'Panda Points': newTotal
+                    })
+                });
+
+                // Record points history
+                const historyRecord = {
+                    employee_id: empId,
+                    employee_name: document.getElementById('awardEmployeeName').value,
+                    points: points,
+                    reason: reason,
+                    awarded_by: currentManager.employee_id || currentManager.id,
+                    awarded_by_name: currentManager['First Name'] && currentManager['Last Name'] ? 
+                        `${currentManager['First Name']} ${currentManager['Last Name']}` : 
+                        currentManager.name,
+                    date: new Date().toISOString(),
+                    counts_against_budget: countsAgainstBudget
+                };
+
+                await fetch(`${API_URL}/points-history`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(historyRecord)
+                });
+
+                if (updateResponse.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('awardPointsModal')).hide();
+                    await loadTeamMembers();
+                    await loadPointsHistory();
+                    updateBudgetOverview();
+                    displayTeam();
+                    displayAllStaff();
+                    displayRecentAwards();
+                    displayReport();
+                } else {
+                    throw new Error('Failed to update employee points');
+                }
+            } catch (error) {
+                alert('Error awarding points: ' + error.message);
+            }
+        }
+
+        function getCurrentQuarter() {
+            const month = new Date().getMonth();
+            return Math.floor(month / 3) + 1;
+        }
+
+        function getQuarter(dateString) {
+            const month = new Date(dateString).getMonth();
+            return Math.floor(month / 3) + 1;
+        }
+
+        function exportReport() {
+            const managerAwards = pointsHistory
+                .filter(h => h.awarded_by === currentManager.employee_id)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const csv = 'Date,Employee,Points,Reason,Awarded By\n' +
+                managerAwards.map(award => 
+                    `${new Date(award.date).toLocaleDateString()},"${award.employee_name}",${award.points},"${award.reason || ''}","${award.awarded_by_name}"`
+                ).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `points-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize with admin session
+        document.addEventListener('DOMContentLoaded', async function() {
+            const adminData = sessionStorage.getItem('adminData');
+            if (adminData) {
+                const admin = JSON.parse(adminData);
+                
+                // Check if super admin or find actual employee record
+                if (admin.email === 'admin' || admin.role === 'super_admin') {
+                    currentManager = {
+                        id: 'admin',
+                        employee_id: 'admin',
+                        'First Name': 'Super',
+                        'Last Name': 'Admin',
+                        name: 'Super Admin',
+                        email: admin.email,
+                        'Department': 'Administration',
+                        points_budget: 10000,
+                        is_super_admin: true
+                    };
+                } else {
+                    // Find the actual employee record for this admin user
+                    try {
+                        const response = await fetch(`${API_URL}/employees`);
+                        const data = await response.json();
+                        const employees = data.employees || data || [];
+                        
+                        const employee = employees.find(emp => 
+                            (emp.email || emp['Email'] || '').toLowerCase() === admin.email.toLowerCase()
+                        );
+                        
+                        if (employee) {
+                            currentManager = {
+                                ...employee,
+                                id: employee.id || employee.employee_id,
+                                employee_id: employee.id || employee.employee_id,
+                                'First Name': employee['First Name'] || employee.first_name,
+                                'Last Name': employee['Last Name'] || employee.last_name,
+                                name: `${employee['First Name'] || employee.first_name || ''} ${employee['Last Name'] || employee.last_name || ''}`.trim(),
+                                email: admin.email,
+                                'Department': employee['Department'] || employee.department,
+                                points_budget: employee.points_budget || 500,
+                                is_super_admin: false
+                            };
+                        } else {
+                            // Fallback if employee not found
+                            currentManager = {
+                                id: 'admin',
+                                employee_id: 'admin',
+                                'First Name': admin.name || 'Admin',
+                                'Last Name': 'User',
+                                name: admin.name || 'Admin User',
+                                email: admin.email,
+                                'Department': 'Administration',
+                                points_budget: 500,
+                                is_super_admin: false
+                            };
+                        }
+                    } catch (error) {
+                        console.error('Error loading employee data:', error);
+                        currentManager = {
+                            id: 'admin',
+                            employee_id: 'admin',
+                            'First Name': 'Admin',
+                            'Last Name': 'User',
+                            name: 'Admin User',
+                            email: admin.email,
+                            'Department': 'Administration',
+                            points_budget: 500,
+                            is_super_admin: false
+                        };
+                    }
+                }
+                
+                loadDashboard();
+            } else {
+                alert('Please login through the admin dashboard first.');
+                window.location.href = '../login.html';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Referrals - Panda Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
+            min-height: 100vh;
+            color: #374151;
+            font-weight: 400;
+        }
+        .main-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 20px auto;
+            border: 1px solid #f3f4f6;
+        }
+        .utility-nav {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .utility-nav .logo img {
+            height: 32px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            font-weight: 400;
+            font-size: 14px;
+        }
+        .nav-link:hover {
+            background: #f9fafb;
+            color: #374151;
+            text-decoration: none;
+        }
+        .nav-link.active {
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .logout-btn {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.15s ease;
+        }
+        .logout-btn:hover { 
+            background: #ef4444;
+            color: white;
+        }
+        .card { border: 1px solid #f3f4f6; border-radius: 12px; }
+        .kanban-column { background: #f8f9fa; border-radius: 8px; min-height: 500px; }
+        .kanban-card { cursor: pointer; transition: all 0.2s; }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .badge-new { background: #6c757d; }
+        .badge-disqualified { background: #dc3545; }
+        .badge-no-phone { background: #fd7e14; }
+        .badge-contacted { background: #20c997; }
+        .badge-screened { background: #0dcaf0; }
+        .badge-offer { background: #6f42c1; }
+        .badge-hired { background: #198754; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="utility-nav">
+            <div class="logo">
+                <img src="panda-logo.png" alt="Panda Exteriors">
+            </div>
+            <div class="nav-links">
+                <a href="../employee.html" class="nav-link">👥 Employees</a>
+                <a href="../points.html" class="nav-link">⭐ Points</a>
+                <a href="../leads.html" class="nav-link">📊 Leads</a>
+                <a href="../referrals.html" class="nav-link active">🤝 Referrals</a>
+                <a href="../assets.html" class="nav-link">📦 Assets</a>
+                <a href="../admin.html" class="nav-link">⚙️ Admin</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="container-fluid mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3><i class="fas fa-users"></i> Employee Referrals</h3>
+                                <p class="text-muted mb-0">Track and manage employee referrals through the hiring process</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" onclick="refreshReferrals()">
+                                    <i class="fas fa-sync"></i> Refresh
+                                </button>
+                                <button class="btn btn-info" onclick="showAllContacts()">
+                                    <i class="fas fa-address-book"></i> All Contacts
+                                </button>
+                                <button class="btn btn-success" onclick="showEmployeeReport()">
+                                    <i class="fas fa-chart-line"></i> Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-primary" id="totalReferrals">0</h4>
+                        <p class="mb-0">Total Referrals</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-success" id="totalHired">0</h4>
+                        <p class="mb-0">Hired</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-info" id="totalScreened">0</h4>
+                        <p class="mb-0">Phone Screens</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-warning" id="topReferrer">-</h4>
+                        <p class="mb-0">Top Referrer</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-secondary" id="conversionRate">0%</h4>
+                        <p class="mb-0">Hire Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="row" id="kanbanSection">
+            <div class="col-md-12">
+                <div class="row" id="kanbanBoard">
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-new">New</span> (<span id="count-new">0</span>)</h6>
+                            <div id="column-new" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-disqualified">Disqualified</span> (<span id="count-disqualified">0</span>)</h6>
+                            <div id="column-disqualified" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-no-phone">No Phone</span> (<span id="count-no-phone">0</span>)</h6>
+                            <div id="column-no-phone" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-contacted">Contacted</span> (<span id="count-contacted">0</span>)</h6>
+                            <div id="column-contacted" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-screened">Screened</span> (<span id="count-screened">0</span>)</h6>
+                            <div id="column-screened" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-offer">Sent Offer</span> (<span id="count-offer">0</span>)</h6>
+                            <div id="column-offer" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1-7 mb-3">
+                        <div class="kanban-column p-3">
+                            <h6 class="text-center mb-3"><span class="badge badge-hired">Hired</span> (<span id="count-hired">0</span>)</h6>
+                            <div id="column-hired" class="kanban-cards"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reportsSection" class="row" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h3><i class="fas fa-chart-bar"></i> Referral Reports</h3>
+                                <p class="text-muted mb-0">Employee referral performance and bonus tracking</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <select class="form-select" id="monthFilter" onchange="filterReports()">
+                                    <option value="">All Time</option>
+                                </select>
+                                <button class="btn btn-success" onclick="exportReports()">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                                <button class="btn btn-secondary" onclick="hideReports()">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th onclick="sortReports('employee')" style="cursor: pointer;">Employee <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('total')" style="cursor: pointer;">Total Referrals <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('screened')" style="cursor: pointer;">Phone Screens <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('hired')" style="cursor: pointer;">Hired <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortReports('bonus')" style="cursor: pointer;">Bonus Earned <i class="fas fa-sort"></i></th>
+                                        <th>Referrals</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Contacts Modal -->
+    <div class="modal fade" id="contactsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-address-book"></i> All Contacts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="contactsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button" role="tab">
+                                <i class="fas fa-users"></i> Contacts (<span id="contactsCount">0</span>)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="archive-tab" data-bs-toggle="tab" data-bs-target="#archive" type="button" role="tab">
+                                <i class="fas fa-archive"></i> Archive (<span id="archiveCount">0</span>)
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="contactsTabContent">
+                        <div class="tab-pane fade show active" id="contacts" role="tabpanel">
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <input type="text" class="form-control" id="contactsSearch" placeholder="Search contacts..." style="max-width: 300px;">
+                                    <button class="btn btn-success btn-sm" onclick="exportContacts('contacts')">
+                                        <i class="fas fa-download"></i> Export
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Phone</th>
+                                                <th>Department</th>
+                                                <th>Status</th>
+                                                <th>Referred By</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="contactsTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="archive" role="tabpanel">
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <input type="text" class="form-control" id="archiveSearch" placeholder="Search archived contacts..." style="max-width: 300px;">
+                                    <button class="btn btn-success btn-sm" onclick="exportContacts('archive')">
+                                        <i class="fas fa-download"></i> Export
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Phone</th>
+                                                <th>Department</th>
+                                                <th>Status</th>
+                                                <th>Referred By</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="archiveTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Detail Modal -->
+    <div class="modal fade" id="referralModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Referral Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Candidate Information</h6>
+                            <p><strong>Name:</strong> <span id="modal-name"></span></p>
+                            <p><strong>Email:</strong> <span id="modal-email"></span></p>
+                            <p><strong>Phone:</strong> <span id="modal-phone"></span></p>
+                            <p><strong>Department:</strong> <span id="modal-department"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Referral Information</h6>
+                            <p><strong>Referred By:</strong> <span id="modal-referrer"></span></p>
+                            <p><strong>Date:</strong> <span id="modal-date"></span></p>
+                            <p><strong>Status:</strong> <span id="modal-status"></span></p>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="modal-phone-screen">
+                                <label class="form-check-label">Phone Screen Complete</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Status</h6>
+                            <select class="form-select" id="modal-status-select">
+                                <option value="new">New</option>
+                                <option value="disqualified">Disqualified</option>
+                                <option value="no-phone">No Phone</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="screened">Screened</option>
+                                <option value="offer">Sent Offer</option>
+                                <option value="hired">Hired</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Notes</h6>
+                            <textarea class="form-control" id="modal-notes" rows="4" placeholder="Add notes about this referral..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" onclick="archiveReferral()">
+                        <i class="fas fa-archive"></i> Archive
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveReferral()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- Employee Report Modal -->
+    <div class="modal fade" id="employeeReportModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-chart-line"></i> Employee Referral Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <label class="form-label">Filter by Month:</label>
+                            <select id="reportMonthFilter" class="form-select" onchange="filterEmployeeReport()" style="width: 200px;">
+                                <option value="">All Months</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-success btn-sm" onclick="exportEmployeeReport()">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="cursor: pointer;" onclick="sortEmployeeReport('name')">
+                                        Employee Name <span id="name-sort-icon">↕️</span>
+                                    </th>
+                                    <th style="cursor: pointer;" onclick="sortEmployeeReport('count')">
+                                        Total Referrals <span id="count-sort-icon">↕️</span>
+                                    </th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeeReportTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth-check.js"></script>
+    <script>
+        function logout() {
+            sessionStorage.removeItem('pandaAdmin');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = '../login.html';
+        }
+        
+        const API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws';
+        let referrals = [];
+        let currentReferral = null;
+        let employeeReportData = [];
+        let employeeReportSortField = 'count';
+        let employeeReportSortDirection = 'desc';
+
+        // Custom CSS for 7 columns
+        const style = document.createElement('style');
+        style.textContent = '.col-md-1-7 { flex: 0 0 14.285714%; max-width: 14.285714%; }';
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReferrals();
+        });
+
+        async function loadReferrals() {
+            try {
+                const response = await fetch(`${API_URL}/referrals`);
+                const data = await response.json();
+                referrals = data.referrals || [];
+                displayKanban();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading referrals:', error);
+                referrals = [];
+                displayKanban();
+            }
+        }
+
+        function displayKanban() {
+            const columns = ['new', 'disqualified', 'no-phone', 'contacted', 'screened', 'offer', 'hired'];
+            
+            columns.forEach(status => {
+                const column = document.getElementById(`column-${status}`);
+                const statusReferrals = referrals.filter(r => r.status === status);
+                
+                column.innerHTML = statusReferrals.map(referral => `
+                    <div class="card kanban-card mb-2" onclick="openReferralModal('${referral.id}')">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">${referral.name}</h6>
+                            <small class="text-muted">${referral.department}</small><br>
+                            <small class="text-primary">By: ${referral.referred_by_name}</small>
+                            ${referral.phone_screen_complete ? '<br><small class="text-success"><i class="fas fa-check"></i> Screened</small>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById(`count-${status}`).textContent = statusReferrals.length;
+            });
+        }
+
+        function updateStats() {
+            const total = referrals.length;
+            const hired = referrals.filter(r => r.status === 'hired').length;
+            const screened = referrals.filter(r => r.phone_screen_complete).length;
+            
+            document.getElementById('totalReferrals').textContent = total;
+            document.getElementById('totalHired').textContent = hired;
+            document.getElementById('totalScreened').textContent = screened;
+            document.getElementById('conversionRate').textContent = total > 0 ? Math.round((hired / total) * 100) + '%' : '0%';
+            
+            // Top referrer
+            const referrerCounts = {};
+            referrals.forEach(r => {
+                referrerCounts[r.referred_by_name] = (referrerCounts[r.referred_by_name] || 0) + 1;
+            });
+            
+            const topReferrer = Object.keys(referrerCounts).reduce((a, b) => 
+                referrerCounts[a] > referrerCounts[b] ? a : b, '-'
+            );
+            
+            document.getElementById('topReferrer').textContent = topReferrer;
+        }
+
+        function openReferralModal(referralId) {
+            currentReferral = referrals.find(r => r.id === referralId);
+            if (!currentReferral) return;
+            
+            document.getElementById('modal-name').textContent = currentReferral.name;
+            document.getElementById('modal-email').textContent = currentReferral.email;
+            document.getElementById('modal-phone').textContent = currentReferral.phone;
+            document.getElementById('modal-department').textContent = currentReferral.department;
+            document.getElementById('modal-referrer').textContent = currentReferral.referred_by_name;
+            document.getElementById('modal-date').textContent = new Date(currentReferral.created_at).toLocaleDateString();
+            document.getElementById('modal-status').textContent = currentReferral.status;
+            document.getElementById('modal-status-select').value = currentReferral.status;
+            document.getElementById('modal-phone-screen').checked = currentReferral.phone_screen_complete || false;
+            document.getElementById('modal-notes').value = currentReferral.notes || '';
+            
+            new bootstrap.Modal(document.getElementById('referralModal')).show();
+        }
+
+        async function saveReferral() {
+            if (!currentReferral) return;
+            
+            const updates = {
+                status: document.getElementById('modal-status-select').value,
+                phone_screen_complete: document.getElementById('modal-phone-screen').checked,
+                notes: document.getElementById('modal-notes').value
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/referrals/${currentReferral.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('referralModal')).hide();
+                    loadReferrals();
+                } else {
+                    alert('Error updating referral');
+                }
+            } catch (error) {
+                alert('Error updating referral');
+            }
+        }
+        
+        async function archiveReferral() {
+            if (!currentReferral) return;
+            
+            if (!confirm('Are you sure you want to archive this referral? It will be removed from the kanban board.')) {
+                return;
+            }
+            
+            const updates = {
+                status: 'archived',
+                notes: document.getElementById('modal-notes').value
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/referrals/${currentReferral.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('referralModal')).hide();
+                    loadReferrals();
+                } else {
+                    alert('Error archiving referral');
+                }
+            } catch (error) {
+                alert('Error archiving referral');
+            }
+        }
+
+        function refreshReferrals() {
+            loadReferrals();
+        }
+
+        function showReports() {
+            document.getElementById('kanbanSection').style.display = 'none';
+            document.getElementById('reportsSection').style.display = 'block';
+            loadReports();
+            populateMonthFilter();
+        }
+
+        function hideReports() {
+            document.getElementById('reportsSection').style.display = 'none';
+            document.getElementById('kanbanSection').style.display = 'block';
+        }
+
+        function populateMonthFilter() {
+            const monthFilter = document.getElementById('monthFilter');
+            const months = new Set();
+            
+            referrals.forEach(r => {
+                const date = new Date(r.created_at);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                months.add(monthYear);
+            });
+            
+            const sortedMonths = Array.from(months).sort().reverse();
+            monthFilter.innerHTML = '<option value="">All Time</option>' + 
+                sortedMonths.map(month => {
+                    const [year, monthNum] = month.split('-');
+                    const monthName = new Date(year, monthNum - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    return `<option value="${month}">${monthName}</option>`;
+                }).join('');
+        }
+
+        let reportsData = [];
+        let sortDirection = {};
+
+        function loadReports() {
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                const empId = referral.referred_by_id;
+                const empName = referral.referred_by_name;
+                
+                if (!employeeStats[empId]) {
+                    employeeStats[empId] = {
+                        employee: empName,
+                        total: 0,
+                        screened: 0,
+                        hired: 0,
+                        bonus: 0,
+                        referrals: []
+                    };
+                }
+                
+                employeeStats[empId].total++;
+                employeeStats[empId].referrals.push(referral);
+                
+                if (referral.phone_screen_complete) {
+                    employeeStats[empId].screened++;
+                    employeeStats[empId].bonus += 25; // $25 per phone screen
+                }
+                
+                if (referral.status === 'hired') {
+                    employeeStats[empId].hired++;
+                    employeeStats[empId].bonus += 1975; // Additional $1975 for hire ($2000 total)
+                }
+            });
+            
+            reportsData = Object.values(employeeStats);
+            displayReports(reportsData);
+        }
+
+        function filterReports() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            
+            if (!selectedMonth) {
+                displayReports(reportsData);
+                return;
+            }
+            
+            const filteredData = reportsData.map(emp => {
+                const filteredReferrals = emp.referrals.filter(r => {
+                    const date = new Date(r.created_at);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    return monthYear === selectedMonth;
+                });
+                
+                const screened = filteredReferrals.filter(r => r.phone_screen_complete).length;
+                const hired = filteredReferrals.filter(r => r.status === 'hired').length;
+                
+                return {
+                    employee: emp.employee,
+                    total: filteredReferrals.length,
+                    screened: screened,
+                    hired: hired,
+                    bonus: (screened * 25) + (hired * 1975),
+                    referrals: filteredReferrals
+                };
+            }).filter(emp => emp.total > 0);
+            
+            displayReports(filteredData);
+        }
+
+        function displayReports(data) {
+            const tbody = document.getElementById('reportsTableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No referrals found for selected period</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.map(emp => `
+                <tr>
+                    <td><strong>${emp.employee}</strong></td>
+                    <td><span class="badge bg-primary">${emp.total}</span></td>
+                    <td><span class="badge bg-info">${emp.screened}</span></td>
+                    <td><span class="badge bg-success">${emp.hired}</span></td>
+                    <td><strong class="text-success">$${emp.bonus}</strong></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showReferralDetails('${emp.employee}')">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function sortReports(column) {
+            const currentData = Array.from(document.querySelectorAll('#reportsTableBody tr')).length > 0 ? 
+                getCurrentDisplayData() : reportsData;
+            
+            const direction = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+            sortDirection[column] = direction;
+            
+            currentData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (column === 'employee') {
+                    return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                }
+                
+                return direction === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+            
+            displayReports(currentData);
+        }
+
+        function getCurrentDisplayData() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            return selectedMonth ? reportsData.map(emp => {
+                const filteredReferrals = emp.referrals.filter(r => {
+                    const date = new Date(r.created_at);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    return monthYear === selectedMonth;
+                });
+                
+                const screened = filteredReferrals.filter(r => r.phone_screen_complete).length;
+                const hired = filteredReferrals.filter(r => r.status === 'hired').length;
+                
+                return {
+                    employee: emp.employee,
+                    total: filteredReferrals.length,
+                    screened: screened,
+                    hired: hired,
+                    bonus: (screened * 25) + (hired * 1975),
+                    referrals: filteredReferrals
+                };
+            }).filter(emp => emp.total > 0) : reportsData;
+        }
+
+        function showReferralDetails(employeeName) {
+            const emp = reportsData.find(e => e.employee === employeeName);
+            if (!emp) return;
+            
+            const selectedMonth = document.getElementById('monthFilter').value;
+            const referralsToShow = selectedMonth ? 
+                emp.referrals.filter(r => {
+                    const date = new Date(r.created_at);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    return monthYear === selectedMonth;
+                }) : emp.referrals;
+            
+            const details = referralsToShow.map(r => 
+                `${r.name} (${r.department}) - ${r.status}${r.phone_screen_complete ? ' - Screened' : ''}`
+            ).join('\n');
+            
+            alert(`${employeeName}'s Referrals:\n\n${details}`);
+        }
+
+        function exportReports() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            const data = getCurrentDisplayData();
+            
+            const csv = 'Employee,Total Referrals,Phone Screens,Hired,Bonus Earned\n' + 
+                data.map(emp => `${emp.employee},${emp.total},${emp.screened},${emp.hired},$${emp.bonus}`).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `referral-reports${selectedMonth ? '-' + selectedMonth : ''}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showAllContacts() {
+            loadAllContacts();
+            new bootstrap.Modal(document.getElementById('contactsModal')).show();
+        }
+
+        function loadAllContacts() {
+            const activeContacts = referrals.filter(r => !['archived'].includes(r.status));
+            const archivedContacts = referrals.filter(r => r.status === 'archived');
+            
+            document.getElementById('contactsCount').textContent = activeContacts.length;
+            document.getElementById('archiveCount').textContent = archivedContacts.length;
+            
+            displayContacts(activeContacts, 'contactsTableBody');
+            displayContacts(archivedContacts, 'archiveTableBody');
+            
+            // Add search functionality
+            document.getElementById('contactsSearch').oninput = (e) => {
+                const filtered = activeContacts.filter(contact => 
+                    contact.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                    contact.email.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                    contact.referred_by_name.toLowerCase().includes(e.target.value.toLowerCase())
+                );
+                displayContacts(filtered, 'contactsTableBody');
+            };
+            
+            document.getElementById('archiveSearch').oninput = (e) => {
+                const filtered = archivedContacts.filter(contact => 
+                    contact.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                    contact.email.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                    contact.referred_by_name.toLowerCase().includes(e.target.value.toLowerCase())
+                );
+                displayContacts(filtered, 'archiveTableBody');
+            };
+        }
+
+        function displayContacts(contacts, tableBodyId) {
+            const tbody = document.getElementById(tableBodyId);
+            
+            if (contacts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No contacts found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = contacts.map(contact => {
+                const statusBadge = getStatusBadge(contact.status);
+                const phoneScreenBadge = contact.phone_screen_complete ? 
+                    '<span class="badge bg-success ms-1"><i class="fas fa-check"></i></span>' : '';
+                
+                return `
+                    <tr>
+                        <td><strong>${contact.name}</strong></td>
+                        <td>${contact.email}</td>
+                        <td>${contact.phone}</td>
+                        <td>${contact.department}</td>
+                        <td>${statusBadge}${phoneScreenBadge}</td>
+                        <td>${contact.referred_by_name}</td>
+                        <td>${new Date(contact.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openReferralModal('${contact.id}'); bootstrap.Modal.getInstance(document.getElementById('contactsModal')).hide();">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'new': '<span class="badge bg-secondary">New</span>',
+                'disqualified': '<span class="badge bg-danger">Disqualified</span>',
+                'no-phone': '<span class="badge bg-warning">No Phone</span>',
+                'contacted': '<span class="badge bg-info">Contacted</span>',
+                'screened': '<span class="badge bg-primary">Screened</span>',
+                'offer': '<span class="badge bg-purple">Sent Offer</span>',
+                'hired': '<span class="badge bg-success">Hired</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+        }
+
+        function exportContacts(type) {
+            const contacts = type === 'contacts' ? 
+                referrals.filter(r => r.status !== 'archived') :
+                referrals.filter(r => r.status === 'archived');
+            
+            const csv = 'Name,Email,Phone,Department,Status,Phone Screen Complete,Referred By,Date\n' + 
+                contacts.map(c => 
+                    `"${c.name}","${c.email}","${c.phone}","${c.department}","${c.status}","${c.phone_screen_complete ? 'Yes' : 'No'}","${c.referred_by_name}","${new Date(c.created_at).toLocaleDateString()}"`
+                ).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${type}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showEmployeeReport() {
+            loadEmployeeReport();
+            new bootstrap.Modal(document.getElementById('employeeReportModal')).show();
+        }
+
+        function loadEmployeeReport() {
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                const empName = referral.referred_by_name;
+                
+                if (!employeeStats[empName]) {
+                    employeeStats[empName] = {
+                        name: empName,
+                        total: 0,
+                        byMonth: {}
+                    };
+                }
+                
+                employeeStats[empName].total++;
+                
+                const date = new Date(referral.created_at);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (!employeeStats[empName].byMonth[monthKey]) {
+                    employeeStats[empName].byMonth[monthKey] = 0;
+                }
+                employeeStats[empName].byMonth[monthKey]++;
+            });
+            
+            employeeReportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            sortEmployeeReport('count'); // Default sort by count descending
+            populateMonthFilterReport();
+        }
+
+        function sortEmployeeReport(field) {
+            if (employeeReportSortField === field) {
+                employeeReportSortDirection = employeeReportSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                employeeReportSortField = field;
+                employeeReportSortDirection = field === 'count' ? 'desc' : 'asc';
+            }
+            
+            // Update sort icons
+            document.getElementById('name-sort-icon').textContent = '↕️';
+            document.getElementById('count-sort-icon').textContent = '↕️';
+            
+            const icon = employeeReportSortDirection === 'asc' ? '↑' : '↓';
+            document.getElementById(field === 'name' ? 'name-sort-icon' : 'count-sort-icon').textContent = icon;
+            
+            // Sort data
+            employeeReportData.sort((a, b) => {
+                let aVal = field === 'name' ? a.name : a.total;
+                let bVal = field === 'name' ? b.name : b.total;
+                
+                if (field === 'name') {
+                    return employeeReportSortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return employeeReportSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+            
+            displayEmployeeReport(employeeReportData);
+        }
+        
+        function displayEmployeeReport(data) {
+            const tbody = document.getElementById('employeeReportTableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No referrals found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.map(emp => `
+                <tr>
+                    <td><strong>${emp.name}</strong></td>
+                    <td><span class="badge bg-primary">${emp.total}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="showMonthlyBreakdown('${emp.name}')">
+                            <i class="fas fa-chart-bar"></i> View Monthly
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateMonthFilterReport() {
+            const monthFilter = document.getElementById('reportMonthFilter');
+            const months = new Set();
+            
+            referrals.forEach(r => {
+                const date = new Date(r.created_at);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                months.add(monthYear);
+            });
+            
+            const sortedMonths = Array.from(months).sort().reverse();
+            monthFilter.innerHTML = '<option value="">All Months</option>' + 
+                sortedMonths.map(month => {
+                    const [year, monthNum] = month.split('-');
+                    const monthName = new Date(year, monthNum - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    return `<option value="${month}">${monthName}</option>`;
+                }).join('');
+        }
+
+        function filterEmployeeReport() {
+            const selectedMonth = document.getElementById('reportMonthFilter').value;
+            
+            if (!selectedMonth) {
+                loadEmployeeReport();
+                return;
+            }
+            
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                const date = new Date(referral.created_at);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (monthKey !== selectedMonth) return;
+                
+                const empName = referral.referred_by_name;
+                
+                if (!employeeStats[empName]) {
+                    employeeStats[empName] = {
+                        name: empName,
+                        total: 0,
+                        byMonth: {}
+                    };
+                }
+                
+                employeeStats[empName].total++;
+            });
+            
+            employeeReportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            sortEmployeeReport('count'); // Default sort by count descending
+        }
+
+        function showMonthlyBreakdown(employeeName) {
+            const employee = referrals.filter(r => r.referred_by_name === employeeName);
+            const monthlyData = {};
+            
+            employee.forEach(referral => {
+                const date = new Date(referral.created_at);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                
+                if (!monthlyData[monthName]) {
+                    monthlyData[monthName] = 0;
+                }
+                monthlyData[monthName]++;
+            });
+            
+            const breakdown = Object.entries(monthlyData)
+                .sort(([a], [b]) => new Date(a) - new Date(b))
+                .map(([month, count]) => `${month}: ${count} referrals`)
+                .join('\n');
+            
+            alert(`${employeeName} Monthly Breakdown:\n\n${breakdown}`);
+        }
+
+        function exportEmployeeReport() {
+            const selectedMonth = document.getElementById('reportMonthFilter').value;
+            const monthText = selectedMonth ? ` - ${selectedMonth}` : '';
+            
+            const employeeStats = {};
+            
+            referrals.forEach(referral => {
+                if (selectedMonth) {
+                    const date = new Date(referral.created_at);
+                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    if (monthKey !== selectedMonth) return;
+                }
+                
+                const empName = referral.referred_by_name;
+                if (!employeeStats[empName]) {
+                    employeeStats[empName] = { name: empName, total: 0 };
+                }
+                employeeStats[empName].total++;
+            });
+            
+            const reportData = Object.values(employeeStats).sort((a, b) => b.total - a.total);
+            
+            const csv = 'Employee Name,Total Referrals\n' + 
+                reportData.map(emp => `"${emp.name}",${emp.total}`).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `employee-referral-report${monthText}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
