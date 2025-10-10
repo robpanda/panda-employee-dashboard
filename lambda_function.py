@@ -426,11 +426,16 @@ def update_employee(event):
         
         if termination_date and not existing_termination:
             # This is a new termination - check if we need to send refund email
-            print(f'New termination detected for employee {employee.get("First Name")} {employee.get("Last Name")}')
+            emp_name = f"{employee.get('First Name')} {employee.get('Last Name')}"
+            print(f'NEW TERMINATION DETECTED for employee: {emp_name}')
+            print(f'Termination Date: {termination_date}')
             try:
                 send_termination_refund_email_if_needed(employee, termination_date)
+                print(f'Termination email processing completed for: {emp_name}')
             except Exception as e:
-                print(f'Failed to send termination refund email: {e}')
+                print(f'ERROR sending termination refund email: {str(e)}')
+                import traceback
+                print(f'ERROR TRACEBACK: {traceback.format_exc()}')
         
         # Update fields
         for key, value in body.items():
@@ -1723,22 +1728,28 @@ def send_referral_notification(referral_data):
 
 def send_termination_refund_email_if_needed(employee, termination_date):
     try:
+        print('EMAIL: Starting termination email check')
+
         # Calculate days employed
         hire_date_str = employee.get('Employment Date') or employee.get('hire_date') or employee.get('employment_date')
+        print(f'EMAIL: Hire date string: {hire_date_str}')
+
         if not hire_date_str:
-            print('No hire date found, cannot calculate employment duration')
+            print('EMAIL: No hire date found, cannot calculate employment duration - SKIPPING EMAIL')
             return
-        
+
         hire_date = datetime.strptime(hire_date_str, '%Y-%m-%d')
         term_date = datetime.strptime(termination_date, '%Y-%m-%d')
         days_employed = (term_date - hire_date).days
-        
-        print(f'Employee employed for {days_employed} days')
-        
+
+        print(f'EMAIL: Employee employed for {days_employed} days (hire: {hire_date_str}, term: {termination_date})')
+
         # Only send email if employed for 90 days or less
         if days_employed > 90:
-            print('Employee employed for more than 90 days, no refund email needed')
+            print(f'EMAIL: Employee employed for {days_employed} days (> 90), no refund email needed - SKIPPING EMAIL')
             return
+
+        print(f'EMAIL: Employee employed <= 90 days ({days_employed}), checking merchandise...')
         
         # Get employee name and email
         first_name = employee.get('First Name', employee.get('first_name', ''))
@@ -1767,10 +1778,14 @@ def send_termination_refund_email_if_needed(employee, termination_date):
         merch_requested = employee.get('Merch Requested', employee.get('merch_requested', ''))
         merch_value = float(employee.get('merchandise_value', employee.get('Merchandise Value', 0)) or 0)
         
+        print(f'EMAIL: Shopify orders found: {len(employee_orders)}, Merch requested: {merch_requested}, Merch value: {merch_value}')
+
         if not employee_orders and not merch_requested and merch_value == 0:
-            print('No merchandise purchases found, no refund email needed')
+            print('EMAIL: No merchandise purchases found, no refund email needed - SKIPPING EMAIL')
             return
-        
+
+        print('EMAIL: Merchandise found, preparing email...')
+
         # Prepare purchase details
         if employee_orders:
             purchase_items = []
@@ -1857,6 +1872,10 @@ def send_termination_refund_email_if_needed(employee, termination_date):
         HR Team
         """
         
+        print(f'EMAIL: Sending email to robwinters@pandaexteriors.com')
+        print(f'EMAIL: Subject: {subject}')
+        print(f'EMAIL: Amount to collect: ${amount_to_collect:.2f}')
+
         ses.send_email(
             Source='noreply@pandaexteriors.com',
             Destination={'ToAddresses': ['robwinters@pandaexteriors.com']},
@@ -1868,7 +1887,7 @@ def send_termination_refund_email_if_needed(employee, termination_date):
                 }
             }
         )
-        print(f'Termination refund email sent for: {employee_name} (${amount_to_collect:.2f})')
+        print(f'EMAIL: ✅ SUCCESS - Termination refund email sent for: {employee_name} (${amount_to_collect:.2f})')
     except Exception as e:
         print(f'Failed to send termination refund email: {e}')
         import traceback
