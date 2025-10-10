@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Points Portal - Employee 11147</title>
+    <script>
+        // Auto-fill and load for employee 11147
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test');
+
+            if (testMode === 'true') {
+                // Redirect to actual portal with employee ID pre-filled
+                window.location.href = 'points-portal.html?id=11147';
+            } else {
+                document.getElementById('instructions').style.display = 'block';
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #3b82f6;
+        }
+        .button {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background: #2563eb;
+        }
+        .info {
+            background: #e0f2fe;
+            padding: 15px;
+            border-left: 4px solid #3b82f6;
+            margin: 20px 0;
+        }
+        .feature {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        .feature:before {
+            content: "✅ ";
+        }
+    </style>
+</head>
+<body>
+    <div class="card" id="instructions">
+        <h1>🎉 Test the Updated Points Portal!</h1>
+
+        <div class="info">
+            <strong>Test User:</strong> Ryan Dunlap (ryan.juaquine.dunlap@gmail.com)<br>
+            <strong>Employee ID:</strong> 11147
+        </div>
+
+        <h2>What's New:</h2>
+
+        <div class="feature">Transaction history showing all points activity</div>
+        <div class="feature">Gift card codes displayed for all redemptions</div>
+        <div class="feature">Three-stat dashboard: Total Earned, Redeemed, Available</div>
+        <div class="feature">Real-time balance updates</div>
+        <div class="feature">Chronological transaction list</div>
+
+        <h2>Current Stats for Employee 11147:</h2>
+        <ul>
+            <li><strong>Total Earned:</strong> 100 points</li>
+            <li><strong>Total Redeemed:</strong> 40 points</li>
+            <li><strong>Current Balance:</strong> 85 points</li>
+        </ul>
+
+        <h2>Gift Cards Issued:</h2>
+        <ol>
+            <li><code>d88b3d9e92ae988h</code> - $25</li>
+            <li><code>5ffb874c77445h4f</code> - $10</li>
+            <li><code>f3h626785gdd6dhc</code> - $5</li>
+        </ol>
+
+        <h2>Test the Portal:</h2>
+        <a href="points-portal.html?id=11147" class="button">Open Points Portal with Employee 11147</a>
+
+        <p style="margin-top: 30px; color: #666;">
+            <small>The portal will auto-load employee 11147's data and display the transaction history with all gift card codes.</small>
+        </p>
+
+        <hr style="margin: 30px 0;">
+
+        <h2>Manual Testing Steps:</h2>
+        <ol>
+            <li>Click the button above to open the portal</li>
+            <li>Verify the three stats cards show: 100 (earned), 40 (redeemed), 85 (available)</li>
+            <li>Scroll down to "Recent Transactions" section</li>
+            <li>Verify you can see all 3 gift card redemptions with codes</li>
+            <li>(Optional) Try redeeming 5 more points to see real-time update</li>
+        </ol>
+
+        <div class="info" style="background: #fef3c7; border-left-color: #f59e0b;">
+            <strong>⚠️ Note:</strong> Make sure you're connected to the internet to access the Lambda API at:<br>
+            <code>https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws</code>
+        </div>
+    </div>
+</body>
+</html>
