@@ -1574,6 +1574,14 @@ def handle_employee_login(event):
                 print(f'Failed to update last login: {e}')
             
             # Successful login - return employee data
+            current_points = float(employee.get('points', employee.get('Panda Points', 0)) or 0)
+            redeemed_points = float(employee.get('redeemed_points', 0) or 0)
+            lifetime_points = float(employee.get('points_lifetime', 0) or 0)
+
+            # Calculate lifetime if not set
+            if lifetime_points == 0:
+                lifetime_points = current_points + redeemed_points
+
             employee_data = {
                 'id': employee.get('id', employee.get('employee_id', '')),
                 'employee_id': employee.get('id', employee.get('employee_id', '')),
@@ -1583,7 +1591,10 @@ def handle_employee_login(event):
                 'email': employee.get('Email', ''),
                 'department': employee.get('Department', ''),
                 'position': employee.get('Position', ''),
-                'points': float(employee.get('points', employee.get('Panda Points', 0)) or 0),
+                'points': current_points,
+                'points_balance': current_points,
+                'points_lifetime': lifetime_points,
+                'points_redeemed': redeemed_points,
                 'supervisor': employee.get('supervisor', ''),
                 'manager': employee.get('supervisor', ''),
                 'office': employee.get('office', ''),
@@ -1592,8 +1603,8 @@ def handle_employee_login(event):
                 'last_login': employee.get('last_login'),
                 'points_manager': employee.get('points_manager', 'No'),
                 'points_budget': employee.get('points_budget', 0),
-                'total_points_received': float(employee.get('total_points_received', 0) or 0),
-                'total_points_redeemed': float(employee.get('total_points_redeemed', 0) or 0)
+                'total_points_received': lifetime_points,
+                'total_points_redeemed': redeemed_points
             }
             
             return {
