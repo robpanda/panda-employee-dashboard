@@ -1895,13 +1895,21 @@ def send_termination_refund_email_if_needed(employee, termination_date):
         HR Team
         """
         
-        print(f'EMAIL: Sending email to robwinters@pandaexteriors.com')
+        # Send to multiple recipients
+        recipients = [
+            'robwinters@pandaexteriors.com',
+            'valerieliebno@pandaexteriors.com',
+            'madeleineferrerosa@pandaexteriors.com',
+            'sheenakurian@pandaexteriors.com'
+        ]
+
+        print(f'EMAIL: Sending email to: {", ".join(recipients)}')
         print(f'EMAIL: Subject: {subject}')
         print(f'EMAIL: Amount to collect: ${amount_to_collect:.2f}')
 
         ses.send_email(
             Source='noreply@pandaexteriors.com',
-            Destination={'ToAddresses': ['robwinters@pandaexteriors.com']},
+            Destination={'ToAddresses': recipients},
             Message={
                 'Subject': {'Data': subject},
                 'Body': {
