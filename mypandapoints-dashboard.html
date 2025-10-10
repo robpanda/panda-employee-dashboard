@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Panda Points - Dashboard</title>
+    <!-- Cache bust: 2025-10-10-15:30 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+        // Redirect to login if not authenticated
+        if (sessionStorage.getItem('pandaPoints') !== 'authenticated') {
+            window.location.replace('login.html');
+        }
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .navbar { 
+            background: rgba(255, 255, 255, 0.95) !important; 
+            backdrop-filter: blur(10px); 
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .navbar-brand { color: #ffc107 !important; }
+        .nav-link { color: #6c757d !important; transition: color 0.3s ease; }
+        .nav-link:hover { color: #ffc107 !important; }
+        .card { 
+            border: none; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12); 
+        }
+        .btn { 
+            border-radius: 12px; 
+            padding: 12px 24px; 
+            font-weight: 500; 
+            transition: all 0.3s ease;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .points-card { 
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%); 
+            color: white; 
+        }
+        .stats-card { background: white; }
+        .transaction-item {
+            border-left: 4px solid #ffc107;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .promotional-banner {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .promotional-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="./"><i class="fas fa-star me-2"></i>My Panda Points</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="./"><i class="fas fa-home me-1"></i>Home</a>
+                <a class="nav-link" href="https://pandaexteriors.myshopify.com" target="_blank"><i class="fas fa-shopping-cart me-1"></i>Rewards</a>
+                <a class="nav-link" href="profile.html"><i class="fas fa-user me-1"></i>Profile</a>
+                <a class="nav-link" href="referrals.html"><i class="fas fa-users me-1"></i>Referrals</a>
+                <a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- Promotional Banner -->
+        <div class="promotional-banner" id="promoBanner">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1"><i class="fas fa-gift me-2"></i>New Referral Program!</h5>
+                    <p class="mb-0">Refer friends and earn 25 Panda Points for each Phone Screening, 50 if they're located in KOP, VA or FL!</p>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="dismissBanner()">×</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="row g-4">
+                    <!-- Points Balance Card -->
+                    <div class="col-md-6">
+                        <div class="card points-card">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-star display-4 mb-3"></i>
+                                <h3 class="fw-bold mb-2" id="pointsBalance">0</h3>
+                                <p class="mb-0">Available Points</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lifetime Points Card -->
+                    <div class="col-md-6">
+                        <div class="card stats-card">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-trophy display-4 text-warning mb-3"></i>
+                                <h3 class="fw-bold mb-2 text-warning" id="lifetimePoints">0</h3>
+                                <p class="mb-0 text-muted">Lifetime Total</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Redeemed Points Card -->
+                    <div class="col-md-6">
+                        <div class="card stats-card">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-shopping-cart display-4 text-success mb-3"></i>
+                                <h3 class="fw-bold mb-2 text-success" id="redeemedPoints">0</h3>
+                                <p class="mb-0 text-muted">Points Redeemed</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions Card -->
+                    <div class="col-md-6">
+                        <div class="card stats-card">
+                            <div class="card-body text-center py-4">
+                                <i class="fas fa-gift display-4 text-primary mb-3"></i>
+                                <h5 class="fw-bold mb-3">Redeem Points</h5>
+                                <button class="btn btn-primary" onclick="showRedeemModal()" id="redeemBtn">Redeem Gift Card</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Employee Info Card -->
+                <div class="card stats-card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-user me-2"></i>Employee Info</h5>
+                        <div id="employeeInfo">
+                            <p class="mb-1"><strong>Name:</strong> <span id="employeeName">Loading...</span></p>
+                            <p class="mb-1"><strong>Role:</strong> <span id="employeeRole">Loading...</span></p>
+                            <p class="mb-1"><strong>Department:</strong> <span id="employeeDept">Loading...</span></p>
+                            <p class="mb-0"><strong>Hire Date:</strong> <span id="employeeHire">Loading...</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Links Card -->
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-link me-2"></i>Quick Links</h5>
+                        <div class="d-grid gap-2">
+                            <a href="https://pandaexteriors.myshopify.com" target="_blank" class="btn btn-outline-success">
+                                <i class="fas fa-shopping-cart me-2"></i>Rewards Store
+                            </a>
+                            <a href="referrals.html" class="btn btn-outline-warning">
+                                <i class="fas fa-users me-2"></i>Submit Referral
+                            </a>
+                            <a href="profile.html" class="btn btn-outline-info">
+                                <i class="fas fa-user me-2"></i>My Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-history me-2"></i>Recent Transactions</h5>
+                        <div id="transactionHistory">
+                            <p class="text-muted">Loading transaction history...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws';
+        let employeeData = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmployeeData();
+        });
+
+        async function loadEmployeeData() {
+            const storedData = sessionStorage.getItem('employeeData');
+            if (storedData) {
+                employeeData = JSON.parse(storedData);
+                // Refresh data from API to get latest points
+                await refreshEmployeeData();
+            } else {
+                // Fallback: redirect to login
+                window.location.href = 'login.html';
+            }
+        }
+        
+        async function refreshEmployeeData() {
+            if (!employeeData || !employeeData.employee_id) return;
+
+            try {
+                // Fetch directly from the /points endpoint for accurate data
+                const response = await fetch(`${API_URL}/points/${employeeData.employee_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Update employee data with latest points info
+                    employeeData = {
+                        ...employeeData,
+                        points_balance: data.points || 0,
+                        points_lifetime: data.points_lifetime || data.total_received || 0,
+                        points_redeemed: data.points_redeemed || 0,
+                        name: data.name || employeeData.name,
+                        department: data.department || employeeData.department,
+                        employee_id: data.employee_id || employeeData.employee_id
+                    };
+
+                    // Update sessionStorage with fresh data
+                    sessionStorage.setItem('employeeData', JSON.stringify(employeeData));
+                }
+
+                updateDashboard();
+                loadTransactionHistory();
+            } catch (error) {
+                console.error('Error refreshing employee data:', error);
+                // Still update dashboard with stored data
+                updateDashboard();
+                loadTransactionHistory();
+            }
+        }
+
+        function updateDashboard() {
+            if (!employeeData) return;
+            
+            // Update points display
+            document.getElementById('pointsBalance').textContent = employeeData.points_balance || 0;
+            document.getElementById('lifetimePoints').textContent = employeeData.points_lifetime || 0;
+            document.getElementById('redeemedPoints').textContent = employeeData.points_redeemed || 0;
+            
+            // Update employee info
+            document.getElementById('employeeName').textContent = employeeData.name || 'N/A';
+            document.getElementById('employeeRole').textContent = employeeData.role || 'N/A';
+            document.getElementById('employeeDept').textContent = employeeData.department || 'N/A';
+            document.getElementById('employeeHire').textContent = employeeData.hire_date || 'N/A';
+            
+            // Enable/disable redeem button
+            const redeemBtn = document.getElementById('redeemBtn');
+            if ((employeeData.points_balance || 0) > 0) {
+                redeemBtn.disabled = false;
+                redeemBtn.textContent = 'Redeem Gift Card';
+            } else {
+                redeemBtn.disabled = true;
+                redeemBtn.textContent = 'No Points Available';
+            }
+        }
+
+        async function loadTransactionHistory() {
+            if (!employeeData) return;
+
+            try {
+                const response = await fetch(`${API_URL}/points-history?employee_id=${employeeData.employee_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const transactions = data.history || [];
+                    displayTransactions(transactions);
+                } else {
+                    document.getElementById('transactionHistory').innerHTML =
+                        '<p class="text-muted">No transaction history available</p>';
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                document.getElementById('transactionHistory').innerHTML =
+                    '<p class="text-muted">Unable to load transaction history</p>';
+            }
+        }
+
+        function displayTransactions(transactions) {
+            const container = document.getElementById('transactionHistory');
+
+            if (!transactions || transactions.length === 0) {
+                container.innerHTML = '<p class="text-muted">No transactions yet</p>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedTransactions = [...transactions].sort((a, b) =>
+                new Date(b.date || b.created_at) - new Date(a.date || a.created_at)
+            );
+
+            const transactionHTML = sortedTransactions.slice(0, 10).map(transaction => {
+                const isRedemption = transaction.type === 'redemption' || transaction.points < 0;
+                const isPositive = transaction.points > 0;
+                const icon = isRedemption ? 'fas fa-gift' : (isPositive ? 'fas fa-plus-circle' : 'fas fa-minus-circle');
+                const iconColor = isRedemption ? 'text-primary' : (isPositive ? 'text-success' : 'text-danger');
+                const sign = isPositive ? '+' : '';
+                const points = Math.abs(transaction.points);
+
+                let details = '';
+                if (isRedemption && transaction.gift_card_code) {
+                    details = `
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small>
+                                <strong>🎁 Gift Card Code:</strong>
+                                <code class="text-primary fs-6">${transaction.gift_card_code}</code><br>
+                                <strong>Value:</strong> $${points}<br>
+                                <strong>Status:</strong> <span class="badge bg-success">Available</span>
+                            </small>
+                        </div>
+                    `;
+                } else if (transaction.reason) {
+                    details = `<small class="text-muted">${transaction.reason}</small>`;
+                }
+
+                return `
+                    <div class="transaction-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="${icon} ${iconColor} me-2"></i>
+                                    <strong>${isRedemption ? 'Gift Card Redeemed' : (isPositive ? 'Points Awarded' : 'Points Deducted')}</strong>
+                                </div>
+                                <small class="text-muted d-block">${new Date(transaction.date || transaction.created_at).toLocaleDateString()}</small>
+                                ${details}
+                            </div>
+                            <div class="text-end ms-3">
+                                <h5 class="mb-0 ${isPositive ? 'text-success' : 'text-danger'}">${sign}${points}</h5>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = transactionHTML;
+        }
+
+        function showRedeemModal() {
+            if (!employeeData || (employeeData.points_balance || 0) <= 0) {
+                alert('You have no points available to redeem.');
+                return;
+            }
+            
+            const points = prompt(`Redeem Gift Card\n\nAvailable Points: ${employeeData.points_balance}\nEnter points to redeem (1 point = $1):`);
+            
+            if (points && parseInt(points) > 0) {
+                if (parseInt(points) <= employeeData.points_balance) {
+                    processRedemption(parseInt(points));
+                } else {
+                    alert('Insufficient points balance');
+                }
+            }
+        }
+
+        async function processRedemption(pointsToRedeem) {
+            try {
+                const response = await fetch(`${API_URL}/gift-cards`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employee_id: employeeData.employee_id,
+                        points: pointsToRedeem
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Success! Gift card code: ${result.gift_card_code}\nValue: $${result.value}\nNew Balance: ${result.new_balance} points`);
+                    
+                    // Update local data
+                    employeeData.points_balance = result.new_balance;
+                    employeeData.points_redeemed = (employeeData.points_redeemed || 0) + pointsToRedeem;
+                    sessionStorage.setItem('employeeData', JSON.stringify(employeeData));
+                    
+                    updateDashboard();
+                    loadTransactionHistory();
+                } else {
+                    const error = await response.json();
+                    alert('Redemption failed: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error processing redemption. Please try again.');
+            }
+        }
+
+        function dismissBanner() {
+            document.getElementById('promoBanner').style.display = 'none';
+            localStorage.setItem('promoBannerDismissed', 'true');
+        }
+
+        // Check if banner was previously dismissed
+        if (localStorage.getItem('promoBannerDismissed') === 'true') {
+            document.getElementById('promoBanner').style.display = 'none';
+        }
+
+        function logout() {
+            sessionStorage.removeItem('pandaPoints');
+            sessionStorage.removeItem('employeeData');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
