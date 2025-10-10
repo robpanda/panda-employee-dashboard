@@ -108,6 +108,9 @@ def lambda_handler(event, context):
         elif path == '/merchandise':
             print(f'LAMBDA DEBUG: Calling handle_merchandise')
             return handle_merchandise(event)
+        elif path == '/sync-shopify-merchandise':
+            print(f'LAMBDA DEBUG: Calling sync_shopify_merchandise')
+            return sync_shopify_merchandise(event)
         elif path.startswith('/login-history/'):
             print(f'LAMBDA DEBUG: Calling handle_login_history')
             return handle_login_history(event)
@@ -2237,6 +2240,134 @@ def handle_merchandise(event):
         'headers': get_cors_headers(),
         'body': json.dumps({'error': 'Method not allowed'})
     }
+
+def sync_shopify_merchandise(event):
+    """Sync Shopify orders to employee merchandise records"""
+    try:
+        print('SYNC: Starting Shopify merchandise sync')
+
+        # Get Shopify orders
+        shopify_orders = get_shopify_orders()
+        print(f'SYNC: Retrieved {len(shopify_orders)} Shopify orders')
+
+        if not shopify_orders:
+            return {
+                'statusCode': 200,
+                'headers': get_cors_headers(),
+                'body': json.dumps({
+                    'success': True,
+                    'message': 'No Shopify orders found to sync',
+                    'synced': 0,
+                    'errors': []
+                })
+            }
+
+        # Get all employees
+        response = employees_table.scan()
+        employees = response['Items']
+        print(f'SYNC: Found {len(employees)} employees')
+
+        # Create email to employee map
+        employee_map = {}
+        for emp in employees:
+            email = (emp.get('Email') or emp.get('email') or '').lower().strip()
+            if email:
+                employee_map[email] = emp
+
+        synced_count = 0
+        errors = []
+
+        # Match orders to employees and update
+        for order in shopify_orders:
+            try:
+                customer_email = (order.get('customer_email') or '').lower().strip()
+
+                if not customer_email:
+                    print(f'SYNC: Order {order.get("order_number")} has no email, skipping')
+                    continue
+
+                if customer_email not in employee_map:
+                    print(f'SYNC: No employee found for email {customer_email}')
+                    errors.append(f'No employee found for {customer_email}')
+                    continue
+
+                employee = employee_map[customer_email]
+                employee_id = employee.get('id') or employee.get('employee_id')
+
+                # Build merchandise description from line items
+                merch_items = []
+                for item in order.get('line_items', []):
+                    quantity = item.get('quantity', 1)
+                    title = item.get('title', 'Unknown Item')
+                    merch_items.append(f"{title} (x{quantity})")
+
+                merch_description = ', '.join(merch_items) if merch_items else 'Shopify Order'
+
+                # Get values
+                total_price = float(order.get('total_price', 0))
+                order_number = order.get('order_number', '')
+                created_at = order.get('created_at', '')
+                fulfillment_status = order.get('fulfillment_status', 'unfulfilled')
+
+                # Update employee record
+                current_merch = employee.get('Merch Requested') or employee.get('merch_requested') or ''
+                current_value = float(employee.get('merchandise_value') or employee.get('Merchandise Value') or 0)
+
+                # Append new order info
+                if current_merch:
+                    new_merch = f"{current_merch} | [Shopify #{order_number}] {merch_description}"
+                else:
+                    new_merch = f"[Shopify #{order_number}] {merch_description}"
+
+                new_value = current_value + total_price
+
+                # Update the employee
+                employees_table.put_item(Item={
+                    **employee,
+                    'merch_requested': new_merch,
+                    'Merch Requested': new_merch,
+                    'merchandise_value': Decimal(str(new_value)),
+                    'Merchandise Value': Decimal(str(new_value)),
+                    'Merch Sent': 'Yes' if fulfillment_status in ['fulfilled', 'partial'] else 'No',
+                    'merch_sent': 'Yes' if fulfillment_status in ['fulfilled', 'partial'] else 'No',
+                    'Merch Sent Date': created_at if fulfillment_status in ['fulfilled', 'partial'] else '',
+                    'merch_sent_date': created_at if fulfillment_status in ['fulfilled', 'partial'] else '',
+                    'shopify_order_number': order_number,
+                    'shopify_order_date': created_at,
+                    'updated_at': datetime.now().isoformat()
+                })
+
+                synced_count += 1
+                print(f'SYNC: Updated employee {employee_id} with order #{order_number}')
+
+            except Exception as e:
+                error_msg = f'Error syncing order {order.get("order_number")}: {str(e)}'
+                print(f'SYNC ERROR: {error_msg}')
+                errors.append(error_msg)
+
+        print(f'SYNC: Completed - {synced_count} orders synced, {len(errors)} errors')
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'message': f'Successfully synced {synced_count} Shopify orders',
+                'synced': synced_count,
+                'total_orders': len(shopify_orders),
+                'errors': errors
+            })
+        }
+
+    except Exception as e:
+        print(f'SYNC CRITICAL ERROR: {e}')
+        import traceback
+        print(f'SYNC TRACEBACK: {traceback.format_exc()}')
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': f'Sync failed: {str(e)}'})
+        }
 
 def create_super_admin(event):
     return {

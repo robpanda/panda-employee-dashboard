@@ -646,7 +646,7 @@
                         <div class="col-md-3">
                             <input type="text" class="form-control" id="merchSearchInput" placeholder="Search orders..." onkeyup="filterMerchandise()">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <select class="form-select" id="statusFilter" onchange="filterMerchandise()">
                                 <option value="">All Statuses</option>
                                 <option value="pending">Pending</option>
@@ -654,12 +654,17 @@
                                 <option value="delivered">Delivered</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <button class="btn btn-primary" onclick="loadMerchandiseData()">
-                                <i class="fas fa-sync me-1"></i>Load Data
+                                <i class="fas fa-sync me-1"></i>Refresh
                             </button>
                         </div>
                         <div class="col-md-3">
+                            <button class="btn btn-warning" onclick="syncShopifyMerchandise()" id="syncShopifyBtn">
+                                <i class="fab fa-shopify me-1"></i>Sync Shopify Orders
+                            </button>
+                        </div>
+                        <div class="col-md-2">
                             <button class="btn btn-success" onclick="exportMerchandise()">
                                 <i class="fas fa-download me-1"></i>Export
                             </button>
@@ -1992,16 +1997,16 @@
         }
         
         function exportMerchandise() {
-            const csvContent = "data:text/csv;charset=utf-8," + 
+            const csvContent = "data:text/csv;charset=utf-8," +
                 "Employee Name,Employee ID,Email,Department,Items Requested,Value,Status,Sent Date\n" +
                 merchandiseOrders.map(merch => {
                     return [
-                        merch.employee_name, merch.employee_id, merch.email, 
-                        merch.department, merch.merch_requested || '', 
+                        merch.employee_name, merch.employee_id, merch.email,
+                        merch.department, merch.merch_requested || '',
                         merch.merchandise_value, merch.status, merch.merch_sent_date || ''
                     ].join(',');
                 }).join('\n');
-            
+
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
             link.setAttribute('href', encodedUri);
@@ -2010,7 +2015,48 @@
             link.click();
             document.body.removeChild(link);
         }
-        
+
+        async function syncShopifyMerchandise() {
+            const btn = document.getElementById('syncShopifyBtn');
+            const originalHTML = btn.innerHTML;
+
+            try {
+                // Disable button and show loading
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Syncing...';
+
+                console.log('Starting Shopify sync...');
+                const response = await fetch(`${API_URL}/sync-shopify-merchandise`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                const result = await response.json();
+                console.log('Sync result:', result);
+
+                if (response.ok && result.success) {
+                    showSuccessMessage(`✅ Successfully synced ${result.synced} Shopify orders!`);
+
+                    if (result.errors && result.errors.length > 0) {
+                        console.warn('Sync errors:', result.errors);
+                        showWarningMessage(`⚠️ ${result.errors.length} orders could not be matched to employees`);
+                    }
+
+                    // Reload merchandise data
+                    await loadMerchandiseData();
+                } else {
+                    throw new Error(result.error || 'Sync failed');
+                }
+            } catch (error) {
+                console.error('Shopify sync error:', error);
+                showErrorMessage(`❌ Sync failed: ${error.message}`);
+            } finally {
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
         function sortMerchandise(column) {
             if (sortColumn === column) {
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
