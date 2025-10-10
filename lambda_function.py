@@ -874,6 +874,14 @@ def handle_points(event):
                 )
                 if response['Items']:
                     emp = response['Items'][0]
+                    current_points = float(emp.get('points', emp.get('Panda Points', 0)) or 0)
+                    redeemed_points = float(emp.get('redeemed_points', 0) or 0)
+                    lifetime_points = float(emp.get('points_lifetime', 0) or 0)
+
+                    # If lifetime_points is 0, calculate it from current + redeemed
+                    if lifetime_points == 0:
+                        lifetime_points = current_points + redeemed_points
+
                     return {
                         'statusCode': 200,
                         'headers': {
@@ -882,8 +890,10 @@ def handle_points(event):
                         'body': json.dumps({
                             'employee_id': emp_id,
                             'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
-                            'points': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
-                            'total_received': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
+                            'points': current_points,
+                            'points_redeemed': redeemed_points,
+                            'points_lifetime': lifetime_points,
+                            'total_received': lifetime_points,
                             'department': emp.get('Department', ''),
                             'supervisor': emp.get('supervisor', '')
                         })
@@ -979,12 +989,16 @@ def handle_gift_cards(event):
             gift_card_code = create_shopify_gift_card(points_to_redeem, employee)
             
             if gift_card_code:
-                # Deduct points from employee
+                # Deduct points from employee and update redeemed total
                 new_balance = current_points - points_to_redeem
+                current_redeemed = float(employee.get('redeemed_points', 0) or 0)
+                new_redeemed_total = current_redeemed + points_to_redeem
+
                 employees_table.put_item(Item={
                     **employee,
                     'points': Decimal(str(new_balance)),
                     'Panda Points': Decimal(str(new_balance)),
+                    'redeemed_points': Decimal(str(new_redeemed_total)),
                     'updated_at': datetime.now().isoformat()
                 })
                 

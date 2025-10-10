@@ -81,7 +81,36 @@
                                 </button>
                             </div>
                         </div>
-                        
+
+                        <div id="statsSection" style="display: none;">
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted">Total Earned</h6>
+                                            <h4 class="text-primary" id="totalLifetime">0</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted">Redeemed</h6>
+                                            <h4 class="text-danger" id="totalRedeemed">0</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted">Available</h6>
+                                            <h4 class="text-success" id="totalAvailable">0</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="redemptionSection" style="display: none;">
                             <div class="card mb-3">
                                 <div class="card-header bg-success text-white">
@@ -98,7 +127,18 @@
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <div id="transactionsSection" style="display: none;">
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h5><i class="fas fa-history"></i> Recent Transactions</h5>
+                                </div>
+                                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                    <div id="transactionsList"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
                             <strong>How to earn points:</strong> Points are awarded by your manager for excellent performance, achievements, and going above and beyond!
@@ -112,14 +152,15 @@
     <script>
         const API_URL = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws';
         let currentEmployee = null;
-        
+        let transactionHistory = [];
+
         async function loadPoints() {
             const empId = document.getElementById('employeeId').value.trim();
             if (!empId) {
                 alert('Please enter your Employee ID');
                 return;
             }
-            
+
             try {
                 const response = await fetch(`${API_URL}/points/${empId}`);
                 if (response.ok) {
@@ -129,18 +170,97 @@
                     document.getElementById('employeeName').textContent = data.name || 'Unknown';
                     document.getElementById('employeeDept').textContent = data.department || 'Unknown';
                     document.getElementById('employeeManager').textContent = data.supervisor || 'Unknown';
-                    
+
+                    // Update stats section
+                    document.getElementById('totalLifetime').textContent = data.points_lifetime || data.total_received || 0;
+                    document.getElementById('totalRedeemed').textContent = data.points_redeemed || 0;
+                    document.getElementById('totalAvailable').textContent = data.points || 0;
+                    document.getElementById('statsSection').style.display = 'block';
+
                     // Show redemption section if employee has points
                     if (data.points > 0) {
                         document.getElementById('redemptionSection').style.display = 'block';
                         document.getElementById('pointsToRedeem').max = data.points;
                     }
+
+                    // Load transaction history
+                    await loadTransactionHistory(empId);
                 } else {
                     alert('Employee not found. Please check your Employee ID.');
                 }
             } catch (error) {
                 alert('Error loading points. Please try again.');
             }
+        }
+
+        async function loadTransactionHistory(empId) {
+            try {
+                const response = await fetch(`${API_URL}/points-history?employee_id=${empId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    transactionHistory = data.history || [];
+
+                    // Display transactions
+                    displayTransactions();
+                    document.getElementById('transactionsSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading transaction history:', error);
+            }
+        }
+
+        function displayTransactions() {
+            const container = document.getElementById('transactionsList');
+
+            if (transactionHistory.length === 0) {
+                container.innerHTML = '<p class="text-muted">No transactions yet</p>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedTransactions = [...transactionHistory].sort((a, b) =>
+                new Date(b.date || b.created_at) - new Date(a.date || b.created_at)
+            );
+
+            container.innerHTML = sortedTransactions.map(transaction => {
+                const date = new Date(transaction.date || transaction.created_at).toLocaleDateString();
+                const isRedemption = transaction.type === 'redemption' || transaction.points < 0;
+                const points = Math.abs(transaction.points);
+                const icon = isRedemption ? '🎁' : '⭐';
+                const color = isRedemption ? 'danger' : 'success';
+                const sign = isRedemption ? '-' : '+';
+
+                let details = '';
+                if (isRedemption && transaction.gift_card_code) {
+                    details = `
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <strong>Gift Card Code:</strong> <code class="text-primary">${transaction.gift_card_code}</code><br>
+                            <strong>Value:</strong> $${points}<br>
+                            <strong>Status:</strong> <span class="badge bg-success">Available</span>
+                        </div>
+                    `;
+                } else if (transaction.reason) {
+                    details = `<small class="text-muted">${transaction.reason}</small>`;
+                }
+
+                return `
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="me-2">${icon}</span>
+                                    <strong>${isRedemption ? 'Gift Card Redeemed' : 'Points Awarded'}</strong>
+                                </div>
+                                <small class="text-muted d-block">${date}</small>
+                                ${details}
+                            </div>
+                            <div class="text-end">
+                                <h5 class="mb-0 text-${color}">${sign}${points}</h5>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
         
         async function redeemGiftCard() {
@@ -176,10 +296,10 @@
                 
                 if (response.ok) {
                     const result = await response.json();
-                    alert(`Success! Your gift card code is: ${result.gift_card_code}\n\nValue: $${result.value}\nNew Balance: ${result.new_balance} points`);
-                    
-                    // Refresh points balance
-                    loadPoints();
+                    alert(`Success! Your gift card code is: ${result.gift_card_code}\n\nValue: $${result.value}\nNew Balance: ${result.new_balance} points\n\nYour gift card code has been added to your transaction history below.`);
+
+                    // Refresh points balance and transaction history
+                    await loadPoints();
                     document.getElementById('pointsToRedeem').value = '';
                 } else {
                     const error = await response.json();
