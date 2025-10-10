@@ -1265,18 +1265,30 @@ def handle_points_history(event):
         method = event['requestContext']['http']['method']
     else:
         method = event.get('httpMethod', 'GET')
-    
+
     if method == 'GET':
         try:
-            response = points_history_table.scan()
+            # Get employee_id from query parameters
+            query_params = event.get('queryStringParameters', {}) or {}
+            employee_id = query_params.get('employee_id', '')
+
+            # Filter by employee_id if provided
+            if employee_id:
+                response = points_history_table.scan(
+                    FilterExpression='employee_id = :emp_id',
+                    ExpressionAttributeValues={':emp_id': employee_id}
+                )
+            else:
+                response = points_history_table.scan()
+
             items = response['Items']
-            
+
             # Convert Decimal to float for JSON serialization
             for item in items:
                 for key, value in item.items():
                     if isinstance(value, Decimal):
                         item[key] = float(value)
-            
+
             return {
                 'statusCode': 200,
                 'headers': get_cors_headers(),
