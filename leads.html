@@ -198,12 +198,12 @@
                 <img src="panda-logo.png" alt="Panda Exteriors">
             </div>
             <div class="nav-links">
-                <a href="./employee.html" class="nav-link">👥 Employees</a>
-                <a href="./points.html" class="nav-link">⭐ Points</a>
-                <a href="./leads.html" class="nav-link active">📊 Leads</a>
-                <a href="./referrals.html" class="nav-link">🤝 Referrals</a>
-                <a href="./assets.html" class="nav-link">📦 Assets</a>
-                <a href="./admin.html" class="nav-link">⚙️ Admin</a>
+                <a href="#" onclick="navigate('/employee')" class="nav-link">👥 Employees</a>
+                <a href="#" onclick="navigate('/points')" class="nav-link">⭐ Points</a>
+                <a href="#" onclick="navigate('/leads')" class="nav-link active">📊 Leads</a>
+                <a href="#" onclick="navigate('/referrals')" class="nav-link">🤝 Referrals</a>
+                <a href="#" onclick="navigate('/assets')" class="nav-link">📦 Assets</a>
+                <a href="#" onclick="navigate('/admin')" class="nav-link">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
@@ -978,10 +978,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
+        function navigate(path) {
+            window.location.href = `https://www.pandaadmin.com${path}`;
+        }
+        
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
             sessionStorage.removeItem('adminUser');
-            window.location.href = './login.html';
+            window.location.href = '/login.html';
         }
         // Initialize data and collections
         document.addEventListener('DOMContentLoaded', function() {
@@ -1841,11 +1845,7 @@
             try {
                 const response = await fetch(`${API_BASE}/campaigns`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stage, type, schedule })
-                });
-                
-                if (response.ok) {
+       they can access          if (response.ok) {
                     const campaign = await response.json();
                     if (type === 'email' || type === 'mixed') {
                         await launchEmailCampaign(campaign.id, stage);
@@ -1955,41 +1955,6 @@
                 const response = await fetch(`${RILEY_API}/riley/auth`, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': RILEY_API_KEY
-                    }
-                });
-                
-                const data = await response.json();
-                if (data.dashboard_url) {
-                    window.open(data.dashboard_url, '_blank');
-                } else {
-                    window.open('https://riley-dashboard.pandaexteriors.com', '_blank');
-                }
-            } catch (error) {
-                console.error('Riley dashboard error:', error);
-                window.open('https://riley-dashboard.pandaexteriors.com', '_blank');
-            }
-        }
-    </script>
-    <script src="auth-check.js"></script>
-    <script>
-        // Check authentication on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!sessionStorage.getItem('pandaAdmin')) {
-                window.location.href = './login.html';
-                return;
-            }
-        });
-        
-        function logout() {
-            sessionStorage.removeItem('pandaAdmin');
-            sessionStorage.removeItem('adminUser');
-            window.location.href = './login.html';
-        }
-    </script>
-</body>
-</html>ers: {
                         'x-api-key': RILEY_API_KEY
                     }
                 });
