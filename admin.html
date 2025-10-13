@@ -206,11 +206,23 @@
                 <div class="col-md-3">
                     <div class="card text-center">
                         <div class="card-body">
+                            <h3 class="text-danger" id="terminatedEmployees">0</h3>
+                            <p class="mb-0">Terminated Employees</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
                             <h3 class="text-warning" id="totalDepartments">0</h3>
                             <p class="mb-0">Departments</p>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Second Row Stats -->
+            <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="card text-center">
                         <div class="card-body">
@@ -225,7 +237,12 @@
             <ul class="nav nav-pills nav-fill mb-4" id="crmTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees" type="button" role="tab">
-                        <i class="fas fa-users me-2"></i>Employee Management
+                        <i class="fas fa-users me-2"></i>Active Employees
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="terminated-tab" data-bs-toggle="tab" data-bs-target="#terminated" type="button" role="tab">
+                        <i class="fas fa-user-slash me-2"></i>Terminated <span class="badge bg-danger ms-1" id="terminatedBadge">0</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -505,6 +522,39 @@
                                     <tbody id="adminUsersTable">
                                         <tr>
                                             <td colspan="6" class="text-center">Loading admin users...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terminated Employees Tab -->
+                <div class="tab-pane fade" id="terminated" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-user-slash"></i> Terminated Employees</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Department</th>
+                                            <th>Position</th>
+                                            <th>Hire Date</th>
+                                            <th>Termination Date</th>
+                                            <th>Days Employed</th>
+                                            <th>Merchandise</th>
+                                            <th>Points</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="terminatedEmployeesTable">
+                                        <tr>
+                                            <td colspan="9" class="text-center">Loading...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1192,12 +1242,18 @@
                 const terminated = e['Terminated'] || e.terminated || 'No';
                 return terminated === 'No';
             }).length;
+            const terminated = total - active;
             const depts = new Set(employees.map(e => e['Department'] || e.department).filter(Boolean)).size;
-            
+
             document.getElementById('totalEmployees').textContent = total;
             document.getElementById('activeEmployees').textContent = active;
+            document.getElementById('terminatedEmployees').textContent = terminated;
+            document.getElementById('terminatedBadge').textContent = terminated;
             document.getElementById('totalDepartments').textContent = depts;
-            
+
+            // Update terminated employees table
+            updateTerminatedEmployeesTable();
+
             // Load admin users count
             fetch(`${API_URL}/admin-users`)
                 .then(response => response.json())
@@ -1207,6 +1263,65 @@
                 .catch(() => {
                     document.getElementById('totalAdmins').textContent = '0';
                 });
+        }
+
+        function updateTerminatedEmployeesTable() {
+            const terminatedEmployees = employees.filter(e => {
+                const terminated = e['Terminated'] || e.terminated || 'No';
+                return terminated === 'Yes';
+            });
+
+            const tbody = document.getElementById('terminatedEmployeesTable');
+
+            if (terminatedEmployees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">No terminated employees found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = terminatedEmployees.map(emp => {
+                const firstName = emp['First Name'] || emp.first_name || '';
+                const lastName = emp['Last Name'] || emp.last_name || '';
+                const name = `${firstName} ${lastName}`.trim() || 'N/A';
+                const email = emp['Email'] || emp.email || 'N/A';
+                const dept = emp['Department'] || emp.department || 'N/A';
+                const position = emp['Position'] || emp.position || 'N/A';
+                const hireDate = emp['Employment Date'] || emp.employment_date || emp.hire_date || 'N/A';
+                const termDate = emp['Termination Date'] || emp.termination_date || 'N/A';
+                const merchValue = emp['merchandise_value'] || emp['Merchandise Value'] || 0;
+                const merchItems = emp['Merch Requested'] || emp.merch_requested || '';
+                const points = emp['Panda Points'] || emp.points || 0;
+
+                // Calculate days employed
+                let daysEmployed = 'N/A';
+                if (hireDate !== 'N/A' && termDate !== 'N/A') {
+                    const hire = new Date(hireDate);
+                    const term = new Date(termDate);
+                    daysEmployed = Math.floor((term - hire) / (1000 * 60 * 60 * 24));
+                }
+
+                // Format merchandise display
+                let merchDisplay = 'None';
+                if (merchValue > 0 || merchItems) {
+                    merchDisplay = merchValue > 0 ? `$${merchValue}` : merchItems;
+                    if (daysEmployed !== 'N/A' && daysEmployed <= 90 && merchValue > 0) {
+                        merchDisplay = `<span class="badge bg-warning text-dark">${merchDisplay} ⚠️</span>`;
+                    }
+                }
+
+                return `
+                    <tr>
+                        <td><strong>${name}</strong></td>
+                        <td>${email}</td>
+                        <td>${dept}</td>
+                        <td>${position}</td>
+                        <td>${hireDate !== 'N/A' ? new Date(hireDate).toLocaleDateString() : 'N/A'}</td>
+                        <td>${termDate !== 'N/A' ? new Date(termDate).toLocaleDateString() : 'N/A'}</td>
+                        <td>${daysEmployed !== 'N/A' ? daysEmployed + ' days' : 'N/A'}</td>
+                        <td>${merchDisplay}</td>
+                        <td><span class="badge bg-secondary">${points} pts</span></td>
+                    </tr>
+                `;
+            }).join('');
         }
         
         async function loadAdminUsers() {
