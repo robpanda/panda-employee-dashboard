@@ -225,8 +225,10 @@ def create_employee(event):
         # Don't clear existing data - we'll update/merge instead
         print(f'Processing {len(employees_data)} employees for bulk import/update')
         
-        # Insert new employees
+        # Insert new employees and track newly terminated ones
         success_count = 0
+        newly_terminated = []
+
         with employees_table.batch_writer() as batch:
             for emp_data in employees_data:
                 try:
@@ -234,7 +236,7 @@ def create_employee(event):
                     emp_id = emp_data.get('Employee Id', emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))))
                     if not emp_id:
                         emp_id = str(uuid.uuid4())
-                    
+
                     # Preserve existing employee data if updating
                     existing_employee = None
                     try:
@@ -248,6 +250,19 @@ def create_employee(event):
                             print(f'Found existing employee {emp_id}: {existing_employee.get("First Name", "NO_FIRST")} {existing_employee.get("Last Name", "NO_LAST")}')
                     except Exception as e:
                         print(f'Error finding existing employee {emp_id}: {e}')
+
+                    # Check if this is a new termination
+                    new_termination_date = emp_data.get('Termination Date', emp_data.get('termination_date', ''))
+                    existing_termination = existing_employee.get('Termination Date') if existing_employee else None
+
+                    if new_termination_date and not existing_termination:
+                        # This is a NEW termination - track it for email processing
+                        print(f'BULK IMPORT: NEW TERMINATION DETECTED for employee {emp_id}')
+                        newly_terminated.append({
+                            'employee_data': emp_data,
+                            'existing_employee': existing_employee,
+                            'termination_date': new_termination_date
+                        })
                     
                     print(f'Import data for {emp_id}: {emp_data}')
                     
@@ -334,11 +349,49 @@ def create_employee(event):
                 except Exception as e:
                     print(f'Error inserting employee {emp_data}: {e}')
                     continue
-        
+
+        # Process termination emails after batch write completes
+        print(f'BULK IMPORT: Processing {len(newly_terminated)} newly terminated employees for email notifications')
+        emails_sent = 0
+        for term_info in newly_terminated:
+            try:
+                emp_data = term_info['employee_data']
+                existing_emp = term_info['existing_employee']
+                term_date = term_info['termination_date']
+
+                # Build complete employee record for email function
+                employee_for_email = {
+                    'First Name': emp_data.get('First Name', existing_emp.get('First Name') if existing_emp else ''),
+                    'Last Name': emp_data.get('Last Name', existing_emp.get('Last Name') if existing_emp else ''),
+                    'Email': emp_data.get('Email', existing_emp.get('Email') if existing_emp else ''),
+                    'Employment Date': emp_data.get('Employment Date', existing_emp.get('Employment Date') if existing_emp else ''),
+                    'Termination Date': term_date,
+                    'merchandise_value': emp_data.get('merchandise_value', existing_emp.get('merchandise_value', 0) if existing_emp else 0),
+                    'Merchandise Value': emp_data.get('Merchandise Value', existing_emp.get('Merchandise Value', 0) if existing_emp else 0),
+                    'Merch Requested': emp_data.get('Merch Requested', existing_emp.get('Merch Requested', '') if existing_emp else ''),
+                    'id': emp_data.get('Employee Id', emp_data.get('id'))
+                }
+
+                emp_name = f"{employee_for_email.get('First Name')} {employee_for_email.get('Last Name')}"
+                print(f'BULK IMPORT: Sending termination email for {emp_name} (terminated {term_date})')
+
+                send_termination_refund_email_if_needed(employee_for_email, term_date)
+                emails_sent += 1
+                print(f'BULK IMPORT: ✅ Email sent for {emp_name}')
+            except Exception as e:
+                print(f'BULK IMPORT: ❌ Error sending termination email: {e}')
+                import traceback
+                print(f'BULK IMPORT: Error traceback: {traceback.format_exc()}')
+
+        print(f'BULK IMPORT: Sent {emails_sent} termination notification emails')
+
         return {
             'statusCode': 200,
             'headers': get_cors_headers(),
-            'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
+            'body': json.dumps({
+                'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)',
+                'termination_emails_sent': emails_sent
+            })
         }
     
     # Handle single employee from admin form
