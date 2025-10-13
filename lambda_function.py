@@ -1655,7 +1655,7 @@ def handle_employee_login(event):
                 'employment_date': employee.get('Employment Date', ''),
                 'last_login': employee.get('last_login'),
                 'points_manager': employee.get('points_manager', 'No'),
-                'points_budget': employee.get('points_budget', 0),
+                'points_budget': float(employee.get('points_budget', 0) or 0),
                 'total_points_received': lifetime_points,
                 'total_points_redeemed': redeemed_points
             }
