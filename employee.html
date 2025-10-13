@@ -552,6 +552,11 @@
                                 <th>Role & Department</th>
                                 <th>Office</th>
                                 <th>Hire Date</th>
+                                <th>Termination Date</th>
+                                <th>Days Employed</th>
+                                <th>Merchandise Items</th>
+                                <th>Merch Value</th>
+                                <th>Merch Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -1194,6 +1199,29 @@
                     </td>
                 `;
             } else {
+                // Terminated employee row with merchandise info
+                const termDate = employee['Termination Date'] || employee.termination_date || '';
+                const merchValue = employee['merchandise_value'] || employee['Merchandise Value'] || 0;
+                const merchItems = employee['Merch Requested'] || employee.merch_requested || '';
+
+                // Calculate days employed
+                let daysEmployed = 'N/A';
+                if (hireDate && termDate) {
+                    const hire = new Date(hireDate);
+                    const term = new Date(termDate);
+                    daysEmployed = Math.floor((term - hire) / (1000 * 60 * 60 * 24));
+                }
+
+                // Determine merchandise status
+                let merchStatus = '<span class="badge bg-secondary">No Merch</span>';
+                if (merchValue > 0 || merchItems) {
+                    if (daysEmployed !== 'N/A' && daysEmployed <= 90) {
+                        merchStatus = '<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Refund Due</span>';
+                    } else {
+                        merchStatus = '<span class="badge bg-success">No Action Needed</span>';
+                    }
+                }
+
                 row.innerHTML = `
                     <td>
                         <div class="d-flex align-items-center">
@@ -1211,13 +1239,22 @@
                         <br><small class="text-muted">${department}</small>
                     </td>
                     <td>${office}</td>
+                    <td>${formatDate(hireDate)}</td>
+                    <td>${termDate ? formatDate(termDate) : 'N/A'}</td>
                     <td>
-                        ${formatDate(hireDate)}
-                        ${employee['Termination Date'] || employee.termination_date ? 
-                            `<br><small class="text-danger"><i class="fas fa-calendar-times"></i> ${formatDate(employee['Termination Date'] || employee.termination_date)}</small>` : ''}
+                        ${daysEmployed !== 'N/A' ?
+                            (daysEmployed <= 90 ?
+                                `<span class="badge bg-warning text-dark">${daysEmployed} days</span>` :
+                                `${daysEmployed} days`)
+                            : 'N/A'}
                     </td>
+                    <td>${merchItems || 'None'}</td>
+                    <td>${merchValue > 0 ? `<strong>$${merchValue.toFixed(2)}</strong>` : 'N/A'}</td>
+                    <td>${merchStatus}</td>
                     <td>
-                        <span class="badge bg-secondary">Terminated</span>
+                        <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); editEmployee('${employeeEmail}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
                     </td>
                 `;
             }
