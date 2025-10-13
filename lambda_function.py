@@ -2377,12 +2377,18 @@ def sync_shopify_merchandise(event):
         employees = response['Items']
         print(f'SYNC: Found {len(employees)} employees')
 
-        # Create email to employee map
+        # Create email to employee map (include both personal and work emails)
         employee_map = {}
         for emp in employees:
+            # Map personal email
             email = (emp.get('Email') or emp.get('email') or '').lower().strip()
             if email:
                 employee_map[email] = emp
+
+            # Map work email
+            work_email = (emp.get('Work Email') or emp.get('work_email') or '').lower().strip()
+            if work_email:
+                employee_map[work_email] = emp
 
         synced_count = 0
         errors = []
