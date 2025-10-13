@@ -810,69 +810,145 @@
     
     <!-- Edit Employee Modal -->
     <div class="modal fade" id="editEmployeeModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Employee</h5>
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Employee Profile</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="editEmployeeForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">First Name</label>
-                                <input type="text" class="form-control" id="editFirstName" required>
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-3" id="editEmployeeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="employee-info-tab" data-bs-toggle="tab" data-bs-target="#employee-info" type="button" role="tab">
+                                <i class="fas fa-user me-2"></i>Employee Info
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="merchandise-history-tab" data-bs-toggle="tab" data-bs-target="#merchandise-history" type="button" role="tab">
+                                <i class="fas fa-shopping-bag me-2"></i>Merchandise History
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="editEmployeeTabContent">
+                        <!-- Employee Info Tab -->
+                        <div class="tab-pane fade show active" id="employee-info" role="tabpanel">
+                            <form id="editEmployeeForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="editFirstName" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="editLastName" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Personal Email</label>
+                                        <input type="email" class="form-control" id="editEmail" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Work Email</label>
+                                        <input type="email" class="form-control" id="editWorkEmail">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Employee ID</label>
+                                        <input type="text" class="form-control" id="editEmployeeId" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Role</label>
+                                        <input type="text" class="form-control" id="editRole">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Department</label>
+                                        <input type="text" class="form-control" id="editDepartment">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Office</label>
+                                        <input type="text" class="form-control" id="editOffice">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Supervisor</label>
+                                        <input type="text" class="form-control" id="editSupervisor">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Hire Date</label>
+                                        <input type="date" class="form-control" id="editHireDate">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" id="editPhone">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Termination Date</label>
+                                        <input type="date" class="form-control" id="editTerminationDate">
+                                        <small class="text-muted">Leave blank if employee is active</small>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Merchandise History Tab -->
+                        <div class="tab-pane fade" id="merchandise-history" role="tabpanel">
+                            <div class="merchandise-summary mb-4">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="text-primary" id="merchTotalValue">$0.00</h5>
+                                                <p class="mb-0">Total Value</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="text-success" id="merchOrderCount">0</h5>
+                                                <p class="mb-0">Orders</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="text-info" id="merchLastOrder">N/A</h5>
+                                                <p class="mb-0">Last Order</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" class="form-control" id="editLastName" required>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Items</th>
+                                            <th>Date</th>
+                                            <th>Value</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="merchandiseHistoryTable">
+                                        <tr>
+                                            <td colspan="5" class="text-center">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Personal Email</label>
-                                <input type="email" class="form-control" id="editEmail" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Work Email</label>
-                                <input type="email" class="form-control" id="editWorkEmail">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Employee ID</label>
-                                <input type="text" class="form-control" id="editEmployeeId" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Role</label>
-                                <input type="text" class="form-control" id="editRole">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Department</label>
-                                <input type="text" class="form-control" id="editDepartment">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Office</label>
-                                <input type="text" class="form-control" id="editOffice">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Supervisor</label>
-                                <input type="text" class="form-control" id="editSupervisor">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Hire Date</label>
-                                <input type="date" class="form-control" id="editHireDate">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="editPhone">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Termination Date</label>
-                                <input type="date" class="form-control" id="editTerminationDate">
-                                <small class="text-muted">Leave blank if employee is active</small>
+
+                            <div id="merchandiseWarning" class="alert alert-warning mt-3" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Refund Required:</strong> Employee terminated within 90 days with merchandise.
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-success" onclick="saveEmployee()">Save Changes</button>
                 </div>
             </div>
@@ -1325,8 +1401,116 @@
             document.getElementById('editPhone').value = employee['Phone'] || employee.phone || '';
             document.getElementById('editTerminationDate').value = employee['Termination Date'] || employee.termination_date || '';
             
+            // Load merchandise history
+            loadEmployeeMerchandiseHistory(employee);
+
             const modal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
             modal.show();
+        }
+
+        function parseMerchandiseOrders(merchRequested) {
+            if (!merchRequested || merchRequested.trim() === '') {
+                return [];
+            }
+
+            // Split by pipe delimiter to get individual orders
+            const orderStrings = merchRequested.split('|').map(s => s.trim()).filter(s => s);
+            const orders = [];
+
+            orderStrings.forEach(orderStr => {
+                // Extract order number using regex: [Shopify #1397]
+                const orderNumberMatch = orderStr.match(/\[Shopify #(\d+)\]/);
+                const orderNumber = orderNumberMatch ? orderNumberMatch[1] : 'N/A';
+
+                // Extract items (everything after the order number)
+                let itemsStr = orderStr;
+                if (orderNumberMatch) {
+                    itemsStr = orderStr.substring(orderStr.indexOf(']') + 1).trim();
+                }
+
+                orders.push({
+                    orderNumber: orderNumber,
+                    items: itemsStr || 'N/A'
+                });
+            });
+
+            return orders;
+        }
+
+        function loadEmployeeMerchandiseHistory(employee) {
+            // Get merchandise data
+            const merchRequested = employee['Merch Requested'] || employee.merch_requested || '';
+            const merchValue = parseFloat(employee['merchandise_value'] || employee['Merchandise Value'] || 0);
+            const merchSent = employee['Merch Sent'] || employee.merch_sent || 'No';
+            const orderDate = employee['shopify_order_date'] || employee.shopify_order_date || '';
+
+            // Parse orders
+            const orders = parseMerchandiseOrders(merchRequested);
+
+            // Update summary cards
+            document.getElementById('merchTotalValue').textContent = `$${merchValue.toFixed(2)}`;
+            document.getElementById('merchOrderCount').textContent = orders.length;
+
+            // Format last order date
+            let lastOrderDisplay = 'N/A';
+            if (orderDate) {
+                try {
+                    const date = new Date(orderDate);
+                    lastOrderDisplay = date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                } catch (e) {
+                    lastOrderDisplay = orderDate.split('T')[0];
+                }
+            }
+            document.getElementById('merchLastOrder').textContent = lastOrderDisplay;
+
+            // Populate table
+            const tbody = document.getElementById('merchandiseHistoryTable');
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No merchandise orders found</td></tr>';
+            } else {
+                tbody.innerHTML = orders.map(order => {
+                    const statusBadge = merchSent === 'Yes'
+                        ? '<span class="badge bg-success">Sent</span>'
+                        : '<span class="badge bg-warning">Pending</span>';
+
+                    return `
+                        <tr>
+                            <td><strong>#${order.orderNumber}</strong></td>
+                            <td>${order.items}</td>
+                            <td>${lastOrderDisplay}</td>
+                            <td><strong>$${merchValue.toFixed(2)}</strong></td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Show warning for terminated employees < 90 days with merchandise
+            const terminationDate = employee['Termination Date'] || employee.termination_date || '';
+            const hireDate = employee['Employment Date'] || employee.hire_date || employee.employment_date || '';
+
+            let showWarning = false;
+            if (terminationDate && hireDate && merchValue > 0) {
+                const hire = new Date(hireDate);
+                const term = new Date(terminationDate);
+                const daysEmployed = Math.floor((term - hire) / (1000 * 60 * 60 * 24));
+
+                if (daysEmployed <= 90) {
+                    showWarning = true;
+                }
+            }
+
+            const warningDiv = document.getElementById('merchandiseWarning');
+            if (showWarning) {
+                warningDiv.style.display = 'block';
+            } else {
+                warningDiv.style.display = 'none';
+            }
         }
         
         async function saveEmployee() {
