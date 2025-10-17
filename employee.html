@@ -8,6 +8,14 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
+
+    // Helper function to safely parse merchandise values with $ and commas
+    function parseMerchandiseValue(value) {
+        if (!value) return 0;
+        const cleaned = String(value).replace(/[$,]/g, '').trim();
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) ? 0 : parsed;
+    }
         // Immediate redirect to login if not authenticated
         if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
             window.location.replace('./login.html?v=' + Date.now());
@@ -1440,7 +1448,7 @@
         function loadEmployeeMerchandiseHistory(employee) {
             // Get merchandise data
             const merchRequested = employee['Merch Requested'] || employee.merch_requested || '';
-            const merchValue = parseFloat(employee['merchandise_value'] || employee['Merchandise Value'] || 0);
+            const merchValue = parseMerchandiseValue(employee['merchandise_value'] || employee['Merchandise Value']);
             const merchSent = employee['Merch Sent'] || employee.merch_sent || 'No';
             const orderDate = employee['shopify_order_date'] || employee.shopify_order_date || '';
 
@@ -2072,7 +2080,7 @@
                 if (status === 'pending') pendingOrders++;
                 else if (status === 'shipped') shippedOrders++;
                 
-                totalValue += parseFloat(merch.merchandise_value || 0);
+                totalValue += parseMerchandiseValue(merch.merchandise_value);
                 
                 row.innerHTML = `
                     <td>
@@ -2095,7 +2103,7 @@
                     <td>
                         <small>${merch.merch_requested || 'N/A'}</small>
                     </td>
-                    <td><strong>$${parseFloat(merch.merchandise_value || 0).toFixed(2)}</strong></td>
+                    <td><strong>$${parseMerchandiseValue(merch.merchandise_value).toFixed(2)}</strong></td>
                     <td>
                         <span class="badge bg-${status === 'shipped' ? 'success' : status === 'pending' ? 'warning' : 'secondary'}">
                             ${status.charAt(0).toUpperCase() + status.slice(1)}
@@ -2290,8 +2298,8 @@
                 let aVal, bVal;
                 
                 if (column === 'merchandise_value') {
-                    aVal = parseFloat(a.merchandise_value || 0);
-                    bVal = parseFloat(b.merchandise_value || 0);
+                    aVal = parseMerchandiseValue(a.merchandise_value);
+                    bVal = parseMerchandiseValue(b.merchandise_value);
                     return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
                 } else {
                     aVal = a[column] || '';
