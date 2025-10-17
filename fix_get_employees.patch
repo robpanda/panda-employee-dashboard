@@ -1,0 +1,20 @@
+--- lambda_function.py.orig
++++ lambda_function.py
+@@ -177,8 +177,17 @@
+         
+         # Convert Decimal to float for JSON serialization and ensure consistent field names
+         for item in items:
+             for key, value in item.items():
+                 if isinstance(value, Decimal):
+                     item[key] = float(value)
++                # Handle Merchandise Value strings with $ and commas
++                elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
++                    try:
++                        # Remove $ and commas, then convert to float
++                        cleaned = value.replace('$', '').replace(',', '').strip()
++                        item[key] = float(cleaned) if cleaned else 0.0
++                    except (ValueError, AttributeError):
++                        item[key] = 0.0
+             
+             # Ensure employee_id exists
+             if 'employee_id' not in item and 'id' in item:
