@@ -1,0 +1,104 @@
+<!-- Add this Edit button to each employee row in the merchandise table -->
+<button class="btn btn-sm btn-warning" onclick="editMerchandise('${employeeId}', '${firstName}', '${lastName}')">
+  <i class="fas fa-edit"></i> Edit
+</button>
+
+<!-- Add this Modal HTML near the end of the body, before closing </body> tag -->
+<div class="modal fade" id="editMerchandiseModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Merchandise - <span id="editEmployeeName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editEmployeeId">
+        
+        <div class="mb-3">
+          <label class="form-label">Merchandise Items</label>
+          <textarea class="form-control" id="editMerchItems" rows="5" 
+                    placeholder="[Shopify #1045] Item 1 (x2), Item 2 (x1) | [Shopify #1046] Item 3 (x1)"></textarea>
+          <small class="text-muted">Format: [Shopify #ORDER] Items | [Shopify #ORDER] Items</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Total Value</label>
+          <input type="text" class="form-control" id="editMerchValue" placeholder="$1663.20">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveMerchandiseEdit()">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add this JavaScript code to handle the manual editing -->
+<script>
+// Global variable to store current employees data
+let employeesData = [];
+
+async function editMerchandise(employeeId, firstName, lastName) {
+  // Find the employee data
+  const employee = employeesData.find(e => e.id === employeeId);
+  
+  // Populate the modal
+  document.getElementById('editEmployeeId').value = employeeId;
+  document.getElementById('editEmployeeName').textContent = `${firstName} ${lastName}`;
+  document.getElementById('editMerchItems').value = employee ? employee['Merch Requested'] || '' : '';
+  document.getElementById('editMerchValue').value = employee ? employee['Merchandise Value'] || '$0.00' : '$0.00';
+  
+  // Show the modal
+  const modal = new bootstrap.Modal(document.getElementById('editMerchandiseModal'));
+  modal.show();
+}
+
+async function saveMerchandiseEdit() {
+  const employeeId = document.getElementById('editEmployeeId').value;
+  const merchItems = document.getElementById('editMerchItems').value.trim();
+  const merchValue = document.getElementById('editMerchValue').value.trim();
+  
+  // Validate
+  if (!merchValue.startsWith('$')) {
+    alert('Merchandise value must start with $ (e.g., $1663.20)');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/update-employee-merchandise`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        employee_id: employeeId,
+        merch_requested: merchItems,
+        merchandise_value: merchValue
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok && result.success) {
+      // Close the modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editMerchandiseModal'));
+      modal.hide();
+      
+      // Show success message
+      alert('✅ Merchandise updated successfully!');
+      
+      // Reload the data
+      await loadEmployees(); // Or whatever your load function is called
+    } else {
+      alert(`❌ Error: ${result.error || 'Failed to update merchandise'}`);
+    }
+  } catch (error) {
+    alert(`❌ Error: ${error.message}`);
+  }
+}
+
+// Make sure to populate employeesData when loading employees
+// Example: In your loadEmployees() function, add:
+// employeesData = response.employees; // or however your data is structured
+</script>

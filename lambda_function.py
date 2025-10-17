@@ -77,8 +77,6 @@ def lambda_handler(event, context):
             return handle_config(event)
         elif path == '/admin-users':
             return handle_admin_users(event)
-        elif path.startswith('/admin-users/') and http_method in ['GET', 'PUT', 'DELETE']:
-            return handle_admin_user_by_email(event)
         elif path == '/' and 'action' in json.loads(event.get('body', '{}')):
             # Handle action-based requests to root path
             body = json.loads(event.get('body', '{}'))
@@ -102,15 +100,16 @@ def lambda_handler(event, context):
         elif path == '/gift-cards':
             print(f'LAMBDA DEBUG: Calling handle_gift_cards')
             return handle_gift_cards(event)
-        elif path == '/shopify-orders':
-            print(f'LAMBDA DEBUG: Calling handle_shopify_orders')
-            return handle_shopify_orders(event)
-        elif path == '/merchandise':
-            print(f'LAMBDA DEBUG: Calling handle_merchandise')
-            return handle_merchandise(event)
+        elif path == '/diagnose-shopify':
+            print('LAMBDA DEBUG: Calling diagnose_shopify')
+            return diagnose_shopify(event)
+
         elif path == '/sync-shopify-merchandise':
             print(f'LAMBDA DEBUG: Calling sync_shopify_merchandise')
             return sync_shopify_merchandise(event)
+        elif path == '/update-employee-merchandise':
+            print(f'LAMBDA DEBUG: Calling update_employee_merchandise')
+            return update_employee_merchandise(event)
         elif path.startswith('/login-history/'):
             print(f'LAMBDA DEBUG: Calling handle_login_history')
             return handle_login_history(event)
@@ -131,8 +130,7 @@ def lambda_handler(event, context):
                     'all_paths_checked': [
                         '/employees', '/contacts', '/collections', '/config',
                         '/admin-users', '/create-admin', '/points', '/points-history',
-                        '/referrals', '/employee-login', '/admin-login', '/gift-cards',
-                        '/shopify-orders', '/test'
+                        '/referrals', '/employee-login', '/admin-login', '/test'
                     ],
                     'cors_test': 'CORS headers should be present',
                     'timestamp': datetime.now().isoformat()
@@ -225,10 +223,8 @@ def create_employee(event):
         # Don't clear existing data - we'll update/merge instead
         print(f'Processing {len(employees_data)} employees for bulk import/update')
         
-        # Insert new employees and track newly terminated ones
+        # Insert new employees
         success_count = 0
-        newly_terminated = []
-
         with employees_table.batch_writer() as batch:
             for emp_data in employees_data:
                 try:
@@ -236,7 +232,7 @@ def create_employee(event):
                     emp_id = emp_data.get('Employee Id', emp_data.get('employee_id', emp_data.get('id', str(uuid.uuid4()))))
                     if not emp_id:
                         emp_id = str(uuid.uuid4())
-
+                    
                     # Preserve existing employee data if updating
                     existing_employee = None
                     try:
@@ -250,19 +246,6 @@ def create_employee(event):
                             print(f'Found existing employee {emp_id}: {existing_employee.get("First Name", "NO_FIRST")} {existing_employee.get("Last Name", "NO_LAST")}')
                     except Exception as e:
                         print(f'Error finding existing employee {emp_id}: {e}')
-
-                    # Check if this is a new termination
-                    new_termination_date = emp_data.get('Termination Date', emp_data.get('termination_date', ''))
-                    existing_termination = existing_employee.get('Termination Date') if existing_employee else None
-
-                    if new_termination_date and not existing_termination:
-                        # This is a NEW termination - track it for email processing
-                        print(f'BULK IMPORT: NEW TERMINATION DETECTED for employee {emp_id}')
-                        newly_terminated.append({
-                            'employee_data': emp_data,
-                            'existing_employee': existing_employee,
-                            'termination_date': new_termination_date
-                        })
                     
                     print(f'Import data for {emp_id}: {emp_data}')
                     
@@ -311,8 +294,6 @@ def create_employee(event):
                         'Employment Date': emp_data.get('Employment Date', emp_data.get('employment_date', '')),
                         'Years of Service': emp_data.get('Years of Service', emp_data.get('years_of_service', '')),
                         'Email': emp_data.get('Email', emp_data.get('email', '')),
-                        'Work Email': emp_data.get('Work Email', emp_data.get('work_email', '')),
-                        'work_email': emp_data.get('Work Email', emp_data.get('work_email', '')),
                         'Phone': emp_data.get('Phone', emp_data.get('phone', '')),
                         'office': emp_data.get('office', ''),
                         'supervisor': emp_data.get('supervisor', ''),
@@ -349,49 +330,11 @@ def create_employee(event):
                 except Exception as e:
                     print(f'Error inserting employee {emp_data}: {e}')
                     continue
-
-        # Process termination emails after batch write completes
-        print(f'BULK IMPORT: Processing {len(newly_terminated)} newly terminated employees for email notifications')
-        emails_sent = 0
-        for term_info in newly_terminated:
-            try:
-                emp_data = term_info['employee_data']
-                existing_emp = term_info['existing_employee']
-                term_date = term_info['termination_date']
-
-                # Build complete employee record for email function
-                employee_for_email = {
-                    'First Name': emp_data.get('First Name', existing_emp.get('First Name') if existing_emp else ''),
-                    'Last Name': emp_data.get('Last Name', existing_emp.get('Last Name') if existing_emp else ''),
-                    'Email': emp_data.get('Email', existing_emp.get('Email') if existing_emp else ''),
-                    'Employment Date': emp_data.get('Employment Date', existing_emp.get('Employment Date') if existing_emp else ''),
-                    'Termination Date': term_date,
-                    'merchandise_value': emp_data.get('merchandise_value', existing_emp.get('merchandise_value', 0) if existing_emp else 0),
-                    'Merchandise Value': emp_data.get('Merchandise Value', existing_emp.get('Merchandise Value', 0) if existing_emp else 0),
-                    'Merch Requested': emp_data.get('Merch Requested', existing_emp.get('Merch Requested', '') if existing_emp else ''),
-                    'id': emp_data.get('Employee Id', emp_data.get('id'))
-                }
-
-                emp_name = f"{employee_for_email.get('First Name')} {employee_for_email.get('Last Name')}"
-                print(f'BULK IMPORT: Sending termination email for {emp_name} (terminated {term_date})')
-
-                send_termination_refund_email_if_needed(employee_for_email, term_date)
-                emails_sent += 1
-                print(f'BULK IMPORT: ✅ Email sent for {emp_name}')
-            except Exception as e:
-                print(f'BULK IMPORT: ❌ Error sending termination email: {e}')
-                import traceback
-                print(f'BULK IMPORT: Error traceback: {traceback.format_exc()}')
-
-        print(f'BULK IMPORT: Sent {emails_sent} termination notification emails')
-
+        
         return {
             'statusCode': 200,
             'headers': get_cors_headers(),
-            'body': json.dumps({
-                'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)',
-                'termination_emails_sent': emails_sent
-            })
+            'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
         }
     
     # Handle single employee from admin form
@@ -405,8 +348,6 @@ def create_employee(event):
         'First Name': body.get('first_name', ''),
         'Last Name': body.get('last_name', ''),
         'Email': body.get('email', ''),
-        'Work Email': body.get('work_email', ''),
-        'work_email': body.get('work_email', ''),
         'Phone': body.get('phone', ''),
         'Department': body.get('department', ''),
         'Position': body.get('position', ''),
@@ -473,38 +414,10 @@ def update_employee(event):
                 'body': json.dumps({'error': f'Database error: {str(e)}'})
             }
         
-        # Check if termination date is being set and employee has < 90 days employment
-        termination_date = body.get('termination_date') or body.get('Termination Date')
-        existing_termination = employee.get('Termination Date') or employee.get('termination_date')
-        
-        if termination_date and not existing_termination:
-            # This is a new termination - check if we need to send refund email
-            emp_name = f"{employee.get('First Name')} {employee.get('Last Name')}"
-            print(f'NEW TERMINATION DETECTED for employee: {emp_name}')
-            print(f'Termination Date: {termination_date}')
-            try:
-                send_termination_refund_email_if_needed(employee, termination_date)
-                print(f'Termination email processing completed for: {emp_name}')
-            except Exception as e:
-                print(f'ERROR sending termination refund email: {str(e)}')
-                import traceback
-                print(f'ERROR TRACEBACK: {traceback.format_exc()}')
-        
         # Update fields
         for key, value in body.items():
             if key not in ['id']:
                 employee[key] = value
-        
-        # Auto-set Terminated field when termination date is provided or clear when removed
-        if termination_date:
-            employee['Terminated'] = 'Yes'
-            employee['terminated'] = 'Yes'
-            print(f'Set terminated status for employee {employee.get("id")}')
-        elif 'termination_date' in body or 'Termination Date' in body:
-            # Termination date field exists but is empty - clear terminated status
-            employee['Terminated'] = 'No'
-            employee['terminated'] = 'No'
-            print(f'Cleared terminated status for employee {employee.get("id")}')
         
         employee['updated_at'] = datetime.now().isoformat()
         
@@ -935,14 +848,6 @@ def handle_points(event):
                 )
                 if response['Items']:
                     emp = response['Items'][0]
-                    current_points = float(emp.get('points', emp.get('Panda Points', 0)) or 0)
-                    redeemed_points = float(emp.get('redeemed_points', 0) or 0)
-                    lifetime_points = float(emp.get('points_lifetime', 0) or 0)
-
-                    # If lifetime_points is 0, calculate it from current + redeemed
-                    if lifetime_points == 0:
-                        lifetime_points = current_points + redeemed_points
-
                     return {
                         'statusCode': 200,
                         'headers': {
@@ -951,10 +856,8 @@ def handle_points(event):
                         'body': json.dumps({
                             'employee_id': emp_id,
                             'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
-                            'points': current_points,
-                            'points_redeemed': redeemed_points,
-                            'points_lifetime': lifetime_points,
-                            'total_received': lifetime_points,
+                            'points': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
+                            'total_received': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
                             'department': emp.get('Department', ''),
                             'supervisor': emp.get('supervisor', '')
                         })
@@ -1050,16 +953,12 @@ def handle_gift_cards(event):
             gift_card_code = create_shopify_gift_card(points_to_redeem, employee)
             
             if gift_card_code:
-                # Deduct points from employee and update redeemed total
+                # Deduct points from employee
                 new_balance = current_points - points_to_redeem
-                current_redeemed = float(employee.get('redeemed_points', 0) or 0)
-                new_redeemed_total = current_redeemed + points_to_redeem
-
                 employees_table.put_item(Item={
                     **employee,
                     'points': Decimal(str(new_balance)),
                     'Panda Points': Decimal(str(new_balance)),
-                    'redeemed_points': Decimal(str(new_redeemed_total)),
                     'updated_at': datetime.now().isoformat()
                 })
                 
@@ -1122,155 +1021,508 @@ def handle_gift_cards(event):
         'body': json.dumps({'error': 'Method not allowed'})
     }
 
-def get_shopify_credentials():
-    """Get Shopify credentials from AWS Secrets Manager"""
-    # Use working credentials directly
-    return 'e0a6e2', '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'
-
-def handle_shopify_orders(event):
-    if 'requestContext' in event and 'http' in event['requestContext']:
-        method = event['requestContext']['http']['method']
-    else:
-        method = event.get('httpMethod', 'GET')
-    
-    if method == 'GET':
-        try:
-            print('SHOPIFY_ORDERS: Starting to fetch orders')
-            orders = get_shopify_orders()
-            print(f'SHOPIFY_ORDERS: Retrieved {len(orders)} orders')
-            return {
-                'statusCode': 200,
-                'headers': get_cors_headers(),
-                'body': json.dumps({'orders': orders})
-            }
-        except Exception as e:
-            print(f'SHOPIFY_ORDERS ERROR: {e}')
-            import traceback
-            print(f'SHOPIFY_ORDERS TRACEBACK: {traceback.format_exc()}')
-            return {
-                'statusCode': 500,
-                'headers': get_cors_headers(),
-                'body': json.dumps({'error': f'Shopify orders error: {str(e)}'})
-            }
-    
-    return {
-        'statusCode': 405,
-        'headers': get_cors_headers(),
-        'body': json.dumps({'error': 'Method not allowed'})
-    }
-
-def get_shopify_orders():
+def diagnose_shopify(event):
+    """Diagnostic endpoint to understand Shopify data structure"""
     try:
         import urllib.request
-        import urllib.parse
-        print('SHOPIFY: Using GraphQL API with urllib')
-        
-        # Get Shopify credentials from AWS Secrets Manager
-        SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
-        print(f'SHOPIFY: Got credentials - Store: {SHOPIFY_STORE}, Token: {SHOPIFY_ACCESS_TOKEN[:10] if SHOPIFY_ACCESS_TOKEN else "None"}...')
-        
-        if not SHOPIFY_ACCESS_TOKEN:
-            print('SHOPIFY: Access token not available')
-            return []
-        
-        # Use GraphQL API for better data retrieval
-        url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/graphql.json'
-        
-        # GraphQL query to get orders with line items
-        query = """
-        {
-            orders(first: 50) {
-                edges {
-                    node {
-                        id
-                        name
-                        email
-                        totalPriceSet {
-                            shopMoney {
-                                amount
-                            }
-                        }
-                        displayFulfillmentStatus
-                        displayFinancialStatus
-                        createdAt
-                        lineItems(first: 10) {
-                            edges {
-                                node {
-                                    title
-                                    quantity
-                                    originalUnitPriceSet {
-                                        shopMoney {
-                                            amount
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """
-        
-        data = json.dumps({'query': query}).encode('utf-8')
-        
-        req = urllib.request.Request(url, data=data)
-        req.add_header('X-Shopify-Access-Token', SHOPIFY_ACCESS_TOKEN)
+        from collections import Counter
+
+        # Get credentials
+        try:
+            secrets_client = boto3.client('secretsmanager', region_name='us-east-2')
+            response = secrets_client.get_secret_value(SecretId='shopify/my-cred')
+            secret = json.loads(response['SecretString'])
+            access_token = secret.get('access_token')
+        except:
+            access_token = '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'
+
+        store = 'pandaexteriors'
+        url = f"https://{store}.myshopify.com/admin/api/2024-01/orders.json?limit=250&status=any"
+
+        req = urllib.request.Request(url)
+        req.add_header('X-Shopify-Access-Token', access_token)
         req.add_header('Content-Type', 'application/json')
-        
-        print(f'SHOPIFY: Making GraphQL request to {url}')
-        
-        with urllib.request.urlopen(req, timeout=30) as response:
-            response_data = json.loads(response.read().decode('utf-8'))
-            print(f'SHOPIFY: Response received')
-            
-            if 'errors' in response_data:
-                print(f'SHOPIFY: GraphQL errors: {response_data["errors"]}')
-                return []
-            
-            orders = response_data.get('data', {}).get('orders', {}).get('edges', [])
-            print(f'SHOPIFY: Found {len(orders)} orders')
-            
-            # Format orders for employee merchandise
-            formatted_orders = []
-            for edge in orders:
-                order = edge['node']
-                
-                # Extract line items
-                line_items = []
-                for item_edge in order.get('lineItems', {}).get('edges', []):
-                    item = item_edge['node']
-                    line_items.append({
-                        'title': item.get('title', ''),
-                        'quantity': item.get('quantity', 1),
-                        'price': item.get('originalUnitPriceSet', {}).get('shopMoney', {}).get('amount', '0')
-                    })
-                
-                formatted_order = {
-                    'id': order.get('id', '').replace('gid://shopify/Order/', ''),
-                    'order_number': order.get('name', '').replace('#', ''),
-                    'customer_name': '',  # Not available in this query
-                    'customer_email': order.get('email', ''),
-                    'total_price': order.get('totalPriceSet', {}).get('shopMoney', {}).get('amount', '0'),
-                    'fulfillment_status': (order.get('displayFulfillmentStatus') or '').lower(),
-                    'financial_status': (order.get('displayFinancialStatus') or '').lower(),
-                    'created_at': order.get('createdAt', ''),
-                    'line_items': line_items
-                }
-                formatted_orders.append(formatted_order)
-            
-            print(f'SHOPIFY: Successfully formatted {len(formatted_orders)} orders')
-            return formatted_orders
-        
+
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            orders = data.get('orders', [])
+
+        # Analyze
+        ids = [str(o.get('id')) for o in orders]
+        order_numbers = [str(o.get('order_number')) for o in orders]
+        names = [o.get('name', '') for o in orders]
+
+        # Find Blair's orders
+        blair_orders = [o for o in orders if o.get('customer', {}).get('email', '').lower() == 'blairashepherd@gmail.com']
+
+        blair_data = []
+        for order in blair_orders:
+            blair_data.append({
+                'id': order.get('id'),
+                'name': order.get('name'),
+                'order_number': order.get('order_number'),
+                'total_price': order.get('total_price'),
+                'created_at': order.get('created_at'),
+                'line_items': len(order.get('line_items', []))
+            })
+
+        result = {
+            'total_orders': len(orders),
+            'unique_ids': len(set(ids)),
+            'unique_order_numbers': len(set(order_numbers)),
+            'unique_names': len(set(names)),
+            'order_number_duplicates': {k: v for k, v in Counter(order_numbers).items() if v > 1},
+            'name_duplicates': {k: v for k, v in Counter(names).items() if v > 1},
+            'blair_orders': blair_data,
+            'blair_order_count': len(blair_orders)
+        }
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps(result, indent=2)
+        }
+
     except Exception as e:
-        print(f'SHOPIFY API REQUEST FAILED: {e}')
         import traceback
-        print(f'SHOPIFY TRACEBACK: {traceback.format_exc()}')
-        return []
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            })
+        }
+
+def sync_shopify_merchandise(event):
+    """
+    Shopify sync with CORRECT deduplication strategy:
+    1. Use order_number for deduplication (since one logical order may have multiple Shopify IDs)
+    2. Keep only the FIRST occurrence of each order_number
+    3. Ignore subsequent orders with the same order_number (they're likely edits/updates)
+    """
+    try:
+        import urllib.request
+
+        print('='*80)
+        print('SYNC: Starting sync_shopify_merchandise')
+        print('='*80)
+
+        # Get Shopify credentials
+        try:
+            secrets_client = boto3.client('secretsmanager', region_name='us-east-2')
+            response = secrets_client.get_secret_value(SecretId='shopify/my-cred')
+            secret = json.loads(response['SecretString'])
+            access_token = secret.get('access_token', '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')
+            print('SYNC: Using credentials from Secrets Manager')
+        except Exception as e:
+            print(f'SYNC: Using fallback credentials: {e}')
+            access_token = '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'
+
+        store = 'pandaexteriors'
+
+        # Fetch all orders from Shopify
+        url = f"https://{store}.myshopify.com/admin/api/2024-01/orders.json?limit=250&status=any"
+        req = urllib.request.Request(url)
+        req.add_header('X-Shopify-Access-Token', access_token)
+        req.add_header('Content-Type', 'application/json')
+
+        with urllib.request.urlopen(req) as response:
+            shopify_data = json.loads(response.read().decode('utf-8'))
+            shopify_orders = shopify_data.get('orders', [])
+
+        print(f'SYNC: Fetched {len(shopify_orders)} orders from Shopify')
+
+        # Get all employees
+        employees_response = employees_table.scan()
+        all_employees = employees_response['Items']
+
+        # Build email to employee_id mapping AND load existing orders from DB
+        email_map = {}
+        existing_orders = {}  # {employee_id: set of order_numbers already in DB}
+
+        for emp in all_employees:
+            email = emp.get('Email', emp.get('email', '')).lower().strip()
+            emp_id = emp.get('id', emp.get('employee_id'))
+            if email:
+                email_map[email] = emp_id
+
+                # Parse existing orders from DB to prevent re-adding them
+                existing_merch = emp.get('Merch Requested', '')
+                if existing_merch:
+                    existing_order_nums = set()
+                    for order_text in existing_merch.split('|'):
+                        order_text = order_text.strip()
+                        if '[Shopify #' in order_text:
+                            try:
+                                order_num = order_text.split('[Shopify #')[1].split(']')[0].strip()
+                                existing_order_nums.add(order_num)
+                            except:
+                                pass
+                    existing_orders[emp_id] = existing_order_nums
+                    if existing_order_nums:
+                        print(f'SYNC: Employee {emp_id} ({email}) has {len(existing_order_nums)} existing orders: {existing_order_nums}')
+                else:
+                    existing_orders[emp_id] = set()
+
+        print(f'SYNC: Processing {len(email_map)} employees with email addresses')
+
+        # Build complete order list per employee
+        # KEY CHANGE: Use order_number for deduplication (one logical order may have multiple Shopify IDs)
+        # Keep only the FIRST occurrence of each order_number
+        employee_data = {}  # {employee_id: {'orders': {order_number: {...}}, 'email': str}}
+
+        errors = []
+
+        # Process each Shopify order
+        for idx, shopify_order in enumerate(shopify_orders):
+            try:
+                # Get customer email
+                customer = shopify_order.get('customer')
+                if not customer:
+                    continue
+
+                customer_email = customer.get('email', '').lower().strip()
+                if not customer_email:
+                    continue
+
+                # Match to employee
+                employee_id = email_map.get(customer_email)
+                if not employee_id:
+                    errors.append(f"No employee found for {customer_email}")
+                    continue
+
+                # Get order number and date - use BOTH as unique identifier
+                shopify_id = str(shopify_order.get('id'))
+                order_number = str(shopify_order.get('order_number', ''))
+                order_name = shopify_order.get('name', '')
+                created_at = shopify_order.get('created_at', '')  # e.g., "2024-01-15T10:30:00-05:00"
+
+                # Extract just the date part (YYYY-MM-DD)
+                order_date = created_at.split('T')[0] if created_at else ''
+
+                if not order_number:
+                    order_number = order_name.replace('#', '').strip()
+
+                # Create unique key: date + order_number (e.g., "2024-01-15:1045")
+                unique_key = f"{order_date}:{order_number}" if order_date else order_number
+
+                # ENHANCED LOGGING for Blair
+                if customer_email == 'blairashepherd@gmail.com':
+                    print(f'BLAIR DEBUG: Shopify ID={shopify_id}, order_number={repr(order_number)}, date={order_date}, unique_key={repr(unique_key)}')
+
+                if not order_number:
+                    print(f'SYNC WARNING: Order at index {idx} has no order number')
+                    continue
+
+                # Initialize employee data if needed
+                if employee_id not in employee_data:
+                    employee_data[employee_id] = {'orders': {}, 'email': customer_email}
+                    print(f'SYNC: Initialized data for employee {employee_id} ({customer_email})')
+
+                # Check if we already have this order (DEDUP by date+order_number)
+                # First check: already processed in THIS sync run
+                if unique_key in employee_data[employee_id]['orders']:
+                    if customer_email == 'blairashepherd@gmail.com':
+                        print(f'BLAIR DEBUG: DEDUP (in-memory) unique_key={repr(unique_key)}')
+                    print(f'SYNC DEDUP: Already processed in this run: {unique_key} (Shopify ID {shopify_id}) for {customer_email}')
+                    continue
+
+                # Second check: already exists in DB (don't re-add existing orders!)
+                if order_number in existing_orders.get(employee_id, set()):
+                    if customer_email == 'blairashepherd@gmail.com':
+                        print(f'BLAIR DEBUG: DEDUP (from DB) order_number={repr(order_number)}, DB has: {existing_orders.get(employee_id, set())}')
+                    print(f'SYNC DEDUP: Already exists in DB: order #{order_number} for {customer_email}')
+                    continue
+
+                # Build item description
+                line_items = shopify_order.get('line_items', [])
+                items_text = ', '.join([
+                    f"{item.get('title', 'Item')} (x{item.get('quantity', 1)})"
+                    for item in line_items
+                ])
+
+                # Store order data using unique_key (date:order_number) as key
+                total_price = float(shopify_order.get('total_price', '0') or '0')
+                employee_data[employee_id]['orders'][unique_key] = {
+                    'order_number': order_number,
+                    'order_date': order_date,
+                    'unique_key': unique_key,
+                    'text': f"[Shopify #{order_number}] {items_text}",
+                    'total': total_price,
+                    'status': shopify_order.get('fulfillment_status', 'pending')
+                }
+
+                if customer_email == 'blairashepherd@gmail.com':
+                    print(f'BLAIR DEBUG: ADDED unique_key={repr(unique_key)}, dict keys now={list(employee_data[employee_id]["orders"].keys())}')
+                print(f'SYNC: Added order {unique_key} (Shopify ID {shopify_id}) for {customer_email} (${total_price:.2f})')
+
+            except Exception as e:
+                print(f'SYNC ERROR processing order at index {idx}: {e}')
+                errors.append(f"Order processing error: {str(e)}")
+
+        print(f'\nSYNC: Finished processing orders. Found {len(employee_data)} employees with orders')
+
+        # Update all employees
+        synced_count = 0
+
+        # Also process employees who only have existing orders (to keep their data)
+        for emp in all_employees:
+            emp_id = emp.get('id', emp.get('employee_id'))
+            if emp_id in existing_orders and existing_orders[emp_id] and emp_id not in employee_data:
+                # This employee has existing orders but no new ones from Shopify
+                # Keep their existing data (don't zero it out)
+                print(f'SYNC: Employee {emp_id} has existing orders but no new ones - preserving data')
+
+        for employee_id, data in employee_data.items():
+            try:
+                # Get existing orders from DB for THIS employee
+                emp_existing_orders = existing_orders.get(employee_id, set())
+
+                # MERGE: Combine new orders (from Shopify) with existing orders (from DB)
+                # The new orders are in data['orders'], the existing ones need to be preserved
+                new_order_texts = [order_data['text'] for order_data in data['orders'].values()]
+                new_total = sum(order_data['total'] for order_data in data['orders'].values())
+
+                # Get the employee's current DB record to extract existing orders text
+                emp_record = next((e for e in all_employees if e.get('id') == employee_id), None)
+                if emp_record:
+                    existing_merch = emp_record.get('Merch Requested', '')
+                    existing_value_str = emp_record.get('Merchandise Value', '$0.00')
+                    try:
+                        existing_value = float(existing_value_str.replace('$', '').replace(',', ''))
+                    except:
+                        existing_value = 0.0
+
+                    # Preserve existing order texts
+                    if existing_merch:
+                        existing_order_texts = [o.strip() for o in existing_merch.split('|') if o.strip()]
+                    else:
+                        existing_order_texts = []
+
+                    # Combine: existing + new
+                    all_order_texts = existing_order_texts + new_order_texts
+                    merch_text = ' | '.join(all_order_texts)
+                    total_value = existing_value + new_total
+                else:
+                    # No existing record (shouldn't happen, but handle it)
+                    merch_text = ' | '.join(new_order_texts)
+                    total_value = new_total
+
+                print(f'\nSYNC: Updating employee {employee_id}:')
+                print(f'  Email: {data["email"]}')
+                print(f'  NEW orders from Shopify: {len(data["orders"])}')
+                print(f'  New order numbers: {list(data["orders"].keys())}')
+                print(f'  TOTAL orders after merge: {len(all_order_texts) if emp_record else len(new_order_texts)}')
+                print(f'  Value: ${total_value:.2f}')
+
+                # Update employee record - now with MERGED data
+                employees_table.update_item(
+                    Key={'id': employee_id},
+                    UpdateExpression='SET #merch = :merch, #value = :value, updated_at = :timestamp',
+                    ExpressionAttributeNames={
+                        '#merch': 'Merch Requested',
+                        '#value': 'Merchandise Value'
+                    },
+                    ExpressionAttributeValues={
+                        ':merch': merch_text,
+                        ':value': f'${total_value:.2f}',
+                        ':timestamp': datetime.now().isoformat()
+                    }
+                )
+
+                synced_count += 1
+                print(f'SYNC: ✓ Successfully updated {data["email"]}')
+
+            except Exception as e:
+                print(f'SYNC ERROR updating {employee_id}: {e}')
+                import traceback
+                traceback.print_exc()
+                errors.append(f"Update error for {employee_id}: {str(e)}")
+
+        print(f'\n{"="*80}')
+        print(f'SYNC: Completed - synced {synced_count} employees')
+        print(f'SYNC: Errors: {len(errors)}')
+        print(f'{"="*80}')
+
+        # CLEANUP: Remove any duplicate orders that may have slipped through
+        print(f'\n{"="*80}')
+        print('CLEANUP: Starting automatic duplicate removal...')
+        print(f'{"="*80}')
+
+        cleanup_count = 0
+        employees_response = employees_table.scan()
+        all_employees_after = employees_response['Items']
+
+        for emp in all_employees_after:
+            emp_id = emp.get('id', emp.get('employee_id'))
+            merch_requested = emp.get('Merch Requested', '')
+
+            if not merch_requested or '|' not in merch_requested:
+                continue  # No orders or only one order
+
+            # Parse orders
+            orders = [o.strip() for o in merch_requested.split('|') if o.strip()]
+
+            # Deduplicate by order number
+            seen_order_numbers = set()
+            unique_orders = []
+            removed_count = 0
+
+            for order in orders:
+                if '[Shopify #' in order:
+                    try:
+                        order_num = order.split('[Shopify #')[1].split(']')[0].strip()
+                        if order_num not in seen_order_numbers:
+                            seen_order_numbers.add(order_num)
+                            unique_orders.append(order)
+                        else:
+                            removed_count += 1
+                    except:
+                        unique_orders.append(order)  # Keep if we can't parse
+                else:
+                    unique_orders.append(order)  # Keep non-Shopify orders
+
+            # If duplicates were found, update the record
+            if removed_count > 0:
+                new_merch = ' | '.join(unique_orders)
+
+                # Recalculate value (divide by the ratio of duplicates)
+                old_value_str = emp.get('Merchandise Value', '$0.00')
+                try:
+                    old_value = float(old_value_str.replace('$', '').replace(',', ''))
+                    new_value = old_value * len(unique_orders) / len(orders)
+                except:
+                    new_value = 0.0
+
+                employees_table.update_item(
+                    Key={'id': emp_id},
+                    UpdateExpression='SET #merch = :merch, #value = :value',
+                    ExpressionAttributeNames={
+                        '#merch': 'Merch Requested',
+                        '#value': 'Merchandise Value'
+                    },
+                    ExpressionAttributeValues={
+                        ':merch': new_merch,
+                        ':value': f'${new_value:.2f}'
+                    }
+                )
+
+                emp_name = f"{emp.get('First Name', '')} {emp.get('Last Name', '')}"
+                print(f'CLEANUP: ✓ Cleaned {emp_name}: {len(orders)} → {len(unique_orders)} orders')
+                cleanup_count += 1
+
+        print(f'\nCLEANUP: Cleaned {cleanup_count} employee records')
+        print(f'{"="*80}')
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'synced': synced_count,
+                'cleaned': cleanup_count,
+                'message': f'Successfully synced {synced_count} employees and cleaned {cleanup_count} duplicates',
+                'total_orders': len(shopify_orders),
+                'matched_employees': len(employee_data),
+                'errors': errors[:10]
+            })
+        }
+
+    except Exception as e:
+        print(f'SYNC CRITICAL ERROR: {e}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': False,
+                'error': str(e)
+            })
+        }
+
+def update_employee_merchandise(event):
+    """
+    Manually update an employee's merchandise orders and value
+    POST /update-employee-merchandise
+    Body: {
+        "employee_id": "10701",
+        "merch_requested": "[Shopify #1045] Items...",
+        "merchandise_value": "$1663.20"
+    }
+    """
+    try:
+        body = json.loads(event.get('body', '{}'))
+        employee_id = body.get('employee_id')
+        merch_requested = body.get('merch_requested', '')
+        merchandise_value = body.get('merchandise_value', '$0.00')
+
+        if not employee_id:
+            return {
+                'statusCode': 400,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'success': False, 'error': 'employee_id is required'})
+            }
+
+        print(f'UPDATE MERCH: Updating employee {employee_id}')
+        print(f'  Merch: {merch_requested[:100]}...')
+        print(f'  Value: {merchandise_value}')
+
+        # Update the employee record
+        employees_table.update_item(
+            Key={'id': employee_id},
+            UpdateExpression='SET #merch = :merch, #value = :value, updated_at = :timestamp',
+            ExpressionAttributeNames={
+                '#merch': 'Merch Requested',
+                '#value': 'Merchandise Value'
+            },
+            ExpressionAttributeValues={
+                ':merch': merch_requested,
+                ':value': merchandise_value,
+                ':timestamp': datetime.now().isoformat()
+            }
+        )
+
+        print(f'UPDATE MERCH: ✓ Successfully updated employee {employee_id}')
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'message': 'Employee merchandise updated successfully',
+                'employee_id': employee_id
+            })
+        }
+
+    except Exception as e:
+        print(f'ERROR updating merchandise: {e}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'success': False, 'error': str(e)})
+        }
+
+def get_shopify_credentials():
+    """Get Shopify credentials from AWS Secrets Manager"""
+    import json
+    
+    secrets_client = boto3.client('secretsmanager', region_name='us-east-2')
+    
+    try:
+        response = secrets_client.get_secret_value(SecretId='shopify/my-cred')
+        secret = json.loads(response['SecretString'])
+        return 'pandaexteriors', secret.get('access_token', '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')
+    except Exception as e:
+        print(f'Error retrieving Shopify credentials: {e}')
+        # Fallback with working credentials for testing
+        return 'pandaexteriors', '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'
 
 def create_shopify_gift_card(value, employee):
-    import urllib.request
-    import urllib.parse
+    import requests
     
     # Get Shopify credentials from AWS Secrets Manager
     SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
@@ -1298,17 +1550,16 @@ def create_shopify_gift_card(value, employee):
     print(f'DEBUG: Gift card data: {gift_card_data}')
     
     try:
-        data = json.dumps(gift_card_data).encode('utf-8')
-        req = urllib.request.Request(url, data=data)
-        req.add_header('X-Shopify-Access-Token', SHOPIFY_ACCESS_TOKEN)
-        req.add_header('Content-Type', 'application/json')
+        response = requests.post(url, headers=headers, json=gift_card_data, timeout=30)
+        print(f'DEBUG: Response status: {response.status_code}')
+        print(f'DEBUG: Response text: {response.text}')
         
-        with urllib.request.urlopen(req, timeout=30) as response:
-            response_data = json.loads(response.read().decode('utf-8'))
-            print(f'DEBUG: Gift card created successfully')
-            
-            gift_card = response_data['gift_card']
+        if response.status_code == 201:
+            gift_card = response.json()['gift_card']
             return gift_card['code']
+        else:
+            print(f'Shopify API error: {response.status_code} - {response.text}')
+            return None
     except Exception as e:
         print(f'Shopify API request failed: {e}')
         return None
@@ -1318,39 +1569,31 @@ def handle_points_history(event):
         method = event['requestContext']['http']['method']
     else:
         method = event.get('httpMethod', 'GET')
-
+    
     if method == 'GET':
         try:
-            # Get employee_id from query parameters
-            query_params = event.get('queryStringParameters', {}) or {}
-            employee_id = query_params.get('employee_id', '')
-
-            # Filter by employee_id if provided
-            if employee_id:
-                response = points_history_table.scan(
-                    FilterExpression='employee_id = :emp_id',
-                    ExpressionAttributeValues={':emp_id': employee_id}
-                )
-            else:
-                response = points_history_table.scan()
-
+            response = points_history_table.scan()
             items = response['Items']
-
+            
             # Convert Decimal to float for JSON serialization
             for item in items:
                 for key, value in item.items():
                     if isinstance(value, Decimal):
                         item[key] = float(value)
-
+            
             return {
                 'statusCode': 200,
-                'headers': get_cors_headers(),
+                'headers': {
+                'Content-Type': 'application/json',
+                },
                 'body': json.dumps({'history': items})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': get_cors_headers(),
+                'headers': {
+                'Content-Type': 'application/json',
+                },
                 'body': json.dumps({'error': str(e), 'history': []})
             }
     
@@ -1367,37 +1610,24 @@ def handle_points_history(event):
                 'awarded_by': body.get('awarded_by', ''),
                 'awarded_by_name': body.get('awarded_by_name', ''),
                 'date': body.get('date', datetime.now().isoformat()),
-                'created_at': datetime.now().isoformat(),
-                'counts_against_budget': body.get('counts_against_budget', True)
+                'created_at': datetime.now().isoformat()
             }
             
             points_history_table.put_item(Item=history_item)
             
-            # Send email notification to employee if points > 0 (award, not deduction)
-            if int(body.get('points', 0)) > 0:
-                try:
-                    # Get employee data for email
-                    emp_id = body.get('employee_id', '')
-                    response = employees_table.scan(
-                        FilterExpression='id = :emp_id OR employee_id = :emp_id',
-                        ExpressionAttributeValues={':emp_id': emp_id}
-                    )
-                    
-                    if response['Items']:
-                        employee = response['Items'][0]
-                        send_points_notification(employee, history_item)
-                except Exception as e:
-                    print(f'Failed to send points notification email: {e}')
-            
             return {
                 'statusCode': 201,
-                'headers': get_cors_headers(),
+                'headers': {
+                'Content-Type': 'application/json',
+                },
                 'body': json.dumps({'message': 'Points history recorded successfully'})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': get_cors_headers(),
+                'headers': {
+                'Content-Type': 'application/json',
+                },
                 'body': json.dumps({'error': str(e)})
             }
 
@@ -1627,14 +1857,6 @@ def handle_employee_login(event):
                 print(f'Failed to update last login: {e}')
             
             # Successful login - return employee data
-            current_points = float(employee.get('points', employee.get('Panda Points', 0)) or 0)
-            redeemed_points = float(employee.get('redeemed_points', 0) or 0)
-            lifetime_points = float(employee.get('points_lifetime', 0) or 0)
-
-            # Calculate lifetime if not set
-            if lifetime_points == 0:
-                lifetime_points = current_points + redeemed_points
-
             employee_data = {
                 'id': employee.get('id', employee.get('employee_id', '')),
                 'employee_id': employee.get('id', employee.get('employee_id', '')),
@@ -1644,10 +1866,7 @@ def handle_employee_login(event):
                 'email': employee.get('Email', ''),
                 'department': employee.get('Department', ''),
                 'position': employee.get('Position', ''),
-                'points': current_points,
-                'points_balance': current_points,
-                'points_lifetime': lifetime_points,
-                'points_redeemed': redeemed_points,
+                'points': float(employee.get('points', employee.get('Panda Points', 0)) or 0),
                 'supervisor': employee.get('supervisor', ''),
                 'manager': employee.get('supervisor', ''),
                 'office': employee.get('office', ''),
@@ -1655,9 +1874,9 @@ def handle_employee_login(event):
                 'employment_date': employee.get('Employment Date', ''),
                 'last_login': employee.get('last_login'),
                 'points_manager': employee.get('points_manager', 'No'),
-                'points_budget': float(employee.get('points_budget', 0) or 0),
-                'total_points_received': lifetime_points,
-                'total_points_redeemed': redeemed_points
+                'points_budget': employee.get('points_budget', 0),
+                'total_points_received': float(employee.get('total_points_received', 0) or 0),
+                'total_points_redeemed': float(employee.get('total_points_redeemed', 0) or 0)
             }
             
             return {
@@ -1685,71 +1904,6 @@ def handle_employee_login(event):
             'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Server error'})
         }
-
-def send_points_notification(employee_data, points_data):
-    try:
-        first_name = employee_data.get('First Name', employee_data.get('first_name', 'Team Member'))
-        employee_email = employee_data.get('Email', employee_data.get('email', ''))
-        
-        if not employee_email:
-            print('No email address found for employee')
-            return
-        
-        subject = "🎉 You've been awarded Panda Points!"
-        
-        body_html = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #2c5aa0;">🎉 You've been awarded Panda Points!</h2>
-                
-                <p>Hey {first_name},</p>
-                
-                <p>You've been awarded <strong>{points_data['points']} Panda Points</strong>!</p>
-                
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p><strong>Points:</strong> {points_data['points']}</p>
-                    <p><strong>From:</strong> {points_data['awarded_by_name']}</p>
-                    {f'<p><strong>Reason:</strong> {points_data["reason"]}</p>' if points_data.get('reason') else ''}
-                </div>
-                
-                <p>Keep up the great work! 🐼✨</p>
-                
-                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                <p style="font-size: 12px; color: #666;">This is an automated message from the Panda Points system.</p>
-            </div>
-        </body>
-        </html>
-        """
-        
-        body_text = f"""
-        🎉 You've been awarded Panda Points!
-        
-        Hey {first_name},
-        
-        You've been awarded Panda Points!
-        
-        Points: {points_data['points']}
-        From: {points_data['awarded_by_name']}
-        {f'Reason: {points_data["reason"]}' if points_data.get('reason') else ''}
-        
-        Keep up the great work! 🐼✨
-        """
-        
-        ses.send_email(
-            Source='noreply@pandaexteriors.com',
-            Destination={'ToAddresses': [employee_email]},
-            Message={
-                'Subject': {'Data': subject},
-                'Body': {
-                    'Html': {'Data': body_html},
-                    'Text': {'Data': body_text}
-                }
-            }
-        )
-        print(f'Points notification email sent to: {employee_email}')
-    except Exception as e:
-        print(f'Failed to send points notification email: {e}')
 
 def send_referral_notification(referral_data):
     try:
@@ -1786,16 +1940,9 @@ def send_referral_notification(referral_data):
         {f'Notes: {referral_data["notes"]}' if referral_data.get('notes') else ''}
         """
         
-        # Send to multiple recipients
-        recipients = [
-            'robwinters@pandaexteriors.com',
-            'camilaarango@pandaexteriors.com',
-            'nickgessler@pandaexteriors.com'
-        ]
-
         ses.send_email(
             Source='noreply@pandaexteriors.com',
-            Destination={'ToAddresses': recipients},
+            Destination={'ToAddresses': ['robwinters@pandaexteriors.com']},
             Message={
                 'Subject': {'Data': subject},
                 'Body': {
@@ -1804,185 +1951,10 @@ def send_referral_notification(referral_data):
                 }
             }
         )
-        print(f'Email notification sent for referral: {referral_data["name"]} to {", ".join(recipients)}')
+        print(f'Email notification sent for referral: {referral_data["name"]}')
     except Exception as e:
         print(f'Failed to send email notification: {e}')
         raise e
-
-def send_termination_refund_email_if_needed(employee, termination_date):
-    try:
-        print('EMAIL: Starting termination email check')
-
-        # Calculate days employed
-        hire_date_str = employee.get('Employment Date') or employee.get('hire_date') or employee.get('employment_date')
-        print(f'EMAIL: Hire date string: {hire_date_str}')
-
-        if not hire_date_str:
-            print('EMAIL: No hire date found, cannot calculate employment duration - SKIPPING EMAIL')
-            return
-
-        hire_date = datetime.strptime(hire_date_str, '%Y-%m-%d')
-        term_date = datetime.strptime(termination_date, '%Y-%m-%d')
-        days_employed = (term_date - hire_date).days
-
-        print(f'EMAIL: Employee employed for {days_employed} days (hire: {hire_date_str}, term: {termination_date})')
-
-        # Only send email if employed for 90 days or less
-        if days_employed > 90:
-            print(f'EMAIL: Employee employed for {days_employed} days (> 90), no refund email needed - SKIPPING EMAIL')
-            return
-
-        print(f'EMAIL: Employee employed <= 90 days ({days_employed}), checking merchandise...')
-        
-        # Get employee name and email
-        first_name = employee.get('First Name', employee.get('first_name', ''))
-        last_name = employee.get('Last Name', employee.get('last_name', ''))
-        employee_name = f"{first_name} {last_name}".strip() or 'Unknown Employee'
-        employee_email = employee.get('Email', employee.get('email', ''))
-        
-        # Get Shopify purchase information
-        shopify_orders = get_shopify_orders()
-        employee_orders = []
-        total_value = 0
-        
-        # Check both personal and work email
-        emails_to_check = [employee_email.lower().strip()]
-        work_email = employee.get('Work Email', employee.get('work_email', ''))
-        if work_email:
-            emails_to_check.append(work_email.lower().strip())
-        
-        for order in shopify_orders:
-            order_email = order.get('customer_email', '').lower().strip()
-            if order_email in emails_to_check:
-                employee_orders.append(order)
-                total_value += float(order.get('total_price', 0))
-        
-        # Get merchandise info from employee record if no Shopify orders
-        merch_requested = employee.get('Merch Requested', employee.get('merch_requested', ''))
-        merch_value = float(employee.get('merchandise_value', employee.get('Merchandise Value', 0)) or 0)
-        
-        print(f'EMAIL: Shopify orders found: {len(employee_orders)}, Merch requested: {merch_requested}, Merch value: {merch_value}')
-
-        if not employee_orders and not merch_requested and merch_value == 0:
-            print('EMAIL: No merchandise purchases found, no refund email needed - SKIPPING EMAIL')
-            return
-
-        print('EMAIL: Merchandise found, preparing email...')
-
-        # Prepare purchase details
-        if employee_orders:
-            purchase_items = []
-            for order in employee_orders:
-                items = ', '.join([f"{item.get('quantity', 1)}x {item.get('title', 'Item')}" 
-                                 for item in order.get('line_items', [])])
-                purchase_items.append(f"Order #{order.get('order_number', 'N/A')}: {items}")
-            purchase_details = '; '.join(purchase_items)
-            amount_to_collect = total_value
-        else:
-            purchase_details = merch_requested or 'Merchandise items'
-            amount_to_collect = merch_value
-        
-        if amount_to_collect == 0:
-            print('No merchandise value to collect, no refund email needed')
-            return
-        
-        # Format employment duration
-        if days_employed < 30:
-            duration_text = f"{days_employed} days"
-        else:
-            years = days_employed // 365
-            remaining_days = days_employed % 365
-            if years > 0:
-                duration_text = f"{years} year{'s' if years > 1 else ''} and {remaining_days} days"
-            else:
-                duration_text = f"{days_employed} days"
-        
-        subject = f"Merch Refund Collection Required for Terminated Employee: {employee_name}"
-        
-        body_html = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #d32f2f;">Merchandise Refund Collection Required</h2>
-                
-                <p>Dear Team,</p>
-                
-                <p>Employee <strong>{employee_name}</strong> has been terminated with <strong>{duration_text}</strong> employed, which is less than 90 days.</p>
-                
-                <p>Please initiate the process to collect a refund for their store credit usage, covering the following:</p>
-                
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #d32f2f;">
-                    <p><strong>Amount to Be Collected:</strong> ${amount_to_collect:.2f} USD</p>
-                    <p><strong>Purchased Items:</strong> {purchase_details}</p>
-                </div>
-                
-                <h3 style="color: #333; margin-top: 30px;">Employee Details:</h3>
-                <ul>
-                    <li><strong>Name:</strong> {employee_name}</li>
-                    <li><strong>Email:</strong> {employee_email}</li>
-                    <li><strong>Days Employed:</strong> {days_employed}</li>
-                    <li><strong>Termination Status:</strong> Yes</li>
-                </ul>
-                
-                <p style="margin-top: 30px;">Thank you,<br>HR Team</p>
-                
-                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                <p style="font-size: 12px; color: #666;">This is an automated message from the Panda Employee Management system.</p>
-            </div>
-        </body>
-        </html>
-        """
-        
-        body_text = f"""
-        Merchandise Refund Collection Required
-        
-        Dear Team,
-        
-        Employee {employee_name} has been terminated with {duration_text} employed, which is less than 90 days.
-        
-        Please initiate the process to collect a refund for their store credit usage, covering the following:
-        
-        Amount to Be Collected: ${amount_to_collect:.2f} USD
-        Purchased Items: {purchase_details}
-        
-        Details:
-        - Name: {employee_name}
-        - Email: {employee_email}
-        - Days Employed: {days_employed}
-        - Termination Status: Yes
-        
-        Thank you,
-        HR Team
-        """
-        
-        # Send to multiple recipients
-        recipients = [
-            'robwinters@pandaexteriors.com',
-            'valerieliebno@pandaexteriors.com',
-            'madeleineferrerosa@pandaexteriors.com',
-            'sheenakurian@pandaexteriors.com'
-        ]
-
-        print(f'EMAIL: Sending email to: {", ".join(recipients)}')
-        print(f'EMAIL: Subject: {subject}')
-        print(f'EMAIL: Amount to collect: ${amount_to_collect:.2f}')
-
-        ses.send_email(
-            Source='noreply@pandaexteriors.com',
-            Destination={'ToAddresses': recipients},
-            Message={
-                'Subject': {'Data': subject},
-                'Body': {
-                    'Html': {'Data': body_html},
-                    'Text': {'Data': body_text}
-                }
-            }
-        )
-        print(f'EMAIL: ✅ SUCCESS - Termination refund email sent for: {employee_name} (${amount_to_collect:.2f})')
-    except Exception as e:
-        print(f'Failed to send termination refund email: {e}')
-        import traceback
-        print(f'Termination email traceback: {traceback.format_exc()}')
 
 def handle_admin_login(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
@@ -1995,7 +1967,7 @@ def handle_admin_login(event):
     if method != 'POST':
         return {
             'statusCode': 405,
-            'headers': get_cors_headers(),
+            'headers': {'Content-Type': 'application/json', },
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
@@ -2007,7 +1979,7 @@ def handle_admin_login(event):
         if not email or not password:
             return {
                 'statusCode': 400,
-                'headers': get_cors_headers(),
+                'headers': {'Content-Type': 'application/json', },
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
@@ -2020,7 +1992,9 @@ def handle_admin_login(event):
                     if admin.get('password') == password and admin.get('active', True):
                         return {
                             'statusCode': 200,
-                            'headers': get_cors_headers(),
+                            'headers': {
+                                'Content-Type': 'application/json',
+                                },
                             'body': json.dumps({
                                 'success': True,
                                 'admin': {
@@ -2101,7 +2075,7 @@ def handle_admin_login(event):
         print(f'ADMIN_LOGIN: All checks failed, returning 401')
         return {
             'statusCode': 401,
-            'headers': get_cors_headers(),
+            'headers': {'Content-Type': 'application/json', },
             'body': json.dumps({'error': 'Invalid email or password'})
         }
         
@@ -2109,7 +2083,7 @@ def handle_admin_login(event):
         print(f'Admin login error: {e}')
         return {
             'statusCode': 500,
-            'headers': get_cors_headers(),
+            'headers': {'Content-Type': 'application/json', },
             'body': json.dumps({'error': 'Server error'})
         }
 
@@ -2165,324 +2139,6 @@ def handle_login_history(event):
             'statusCode': 500,
             'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Failed to load login history'})
-        }
-
-def handle_admin_user_by_email(event):
-    if 'requestContext' in event and 'http' in event['requestContext']:
-        method = event['requestContext']['http']['method']
-        path = event['requestContext']['http']['path']
-    else:
-        method = event.get('httpMethod', 'GET')
-        path = event.get('path', '/')
-    
-    email = path.split('/')[-1]
-    
-    if method == 'GET':
-        try:
-            if admin_users_table:
-                response = admin_users_table.get_item(Key={'email': email})
-                if 'Item' in response:
-                    user = response['Item']
-                    # Convert Decimal to float for JSON serialization
-                    for key, value in user.items():
-                        if isinstance(value, Decimal):
-                            user[key] = float(value)
-                    return {
-                        'statusCode': 200,
-                        'headers': get_cors_headers(),
-                        'body': json.dumps(user)
-                    }
-                else:
-                    return {
-                        'statusCode': 404,
-                        'headers': get_cors_headers(),
-                        'body': json.dumps({'error': 'Admin user not found'})
-                    }
-            else:
-                return {
-                    'statusCode': 404,
-                    'headers': get_cors_headers(),
-                    'body': json.dumps({'error': 'Admin users table not available'})
-                }
-        except Exception as e:
-            return {
-                'statusCode': 500,
-                'headers': get_cors_headers(),
-                'body': json.dumps({'error': str(e)})
-            }
-    
-    elif method == 'PUT':
-        try:
-            body = json.loads(event.get('body', '{}'))
-            
-            if admin_users_table:
-                # Get existing user
-                response = admin_users_table.get_item(Key={'email': email})
-                if 'Item' not in response:
-                    return {
-                        'statusCode': 404,
-                        'headers': get_cors_headers(),
-                        'body': json.dumps({'error': 'Admin user not found'})
-                    }
-                
-                user = response['Item']
-                
-                # Update fields
-                if 'role' in body:
-                    user['role'] = body['role']
-                if 'active' in body:
-                    user['active'] = body['active']
-                if 'permissions' in body:
-                    user['permissions'] = body['permissions']
-                
-                user['updated_at'] = datetime.now().isoformat()
-                
-                admin_users_table.put_item(Item=user)
-                
-                return {
-                    'statusCode': 200,
-                    'headers': get_cors_headers(),
-                    'body': json.dumps({'message': 'Admin user updated successfully'})
-                }
-            else:
-                return {
-                    'statusCode': 500,
-                    'headers': get_cors_headers(),
-                    'body': json.dumps({'error': 'Admin users table not available'})
-                }
-        except Exception as e:
-            return {
-                'statusCode': 500,
-                'headers': get_cors_headers(),
-                'body': json.dumps({'error': str(e)})
-            }
-    
-    elif method == 'DELETE':
-        try:
-            if admin_users_table:
-                admin_users_table.delete_item(Key={'email': email})
-                return {
-                    'statusCode': 200,
-                    'headers': get_cors_headers(),
-                    'body': json.dumps({'message': 'Admin user deleted successfully'})
-                }
-            else:
-                return {
-                    'statusCode': 500,
-                    'headers': get_cors_headers(),
-                    'body': json.dumps({'error': 'Admin users table not available'})
-                }
-        except Exception as e:
-            return {
-                'statusCode': 500,
-                'headers': get_cors_headers(),
-                'body': json.dumps({'error': str(e)})
-            }
-    
-    return {
-        'statusCode': 405,
-        'headers': get_cors_headers(),
-        'body': json.dumps({'error': 'Method not allowed'})
-    }
-
-def handle_merchandise(event):
-    if 'requestContext' in event and 'http' in event['requestContext']:
-        method = event['requestContext']['http']['method']
-    else:
-        method = event.get('httpMethod', 'GET')
-    
-    if method == 'GET':
-        try:
-            print('MERCHANDISE: Loading employee merchandise data')
-            
-            # Get employees
-            response = employees_table.scan()
-            employees = response['Items']
-            
-            merchandise_data = []
-            
-            # Process employees with merchandise data
-            for employee in employees:
-                merch_requested = employee.get('Merch Requested', employee.get('merch_requested', '')) or ''
-                merch_value = employee.get('merchandise_value', employee.get('Merchandise Value', 0)) or 0
-                
-                if merch_requested or float(merch_value) > 0:
-                    first_name = employee.get('First Name', employee.get('first_name', '')) or ''
-                    last_name = employee.get('Last Name', employee.get('last_name', '')) or ''
-                    employee_name = f"{first_name} {last_name}".strip() or 'Unknown'
-                    
-                    merch_sent_status = employee.get('Merch Sent', employee.get('merch_sent', 'No')) or 'No'
-                    emp_email = employee.get('Email', employee.get('email', '')) or ''
-                    
-                    merchandise_data.append({
-                        'id': employee.get('id', ''),
-                        'employee_id': employee.get('id', employee.get('employee_id', '')),
-                        'employee_name': employee_name,
-                        'email': emp_email,
-                        'department': employee.get('Department', employee.get('department', '')) or '',
-                        'merch_requested': merch_requested,
-                        'merch_sent': merch_sent_status,
-                        'merch_sent_date': employee.get('Merch Sent Date', employee.get('merch_sent_date', '')) or '',
-                        'merchandise_value': float(merch_value),
-                        'status': 'shipped' if merch_sent_status == 'Yes' else 'pending',
-                        'shopify_order': False
-                    })
-            
-            print(f'MERCHANDISE: Found {len(merchandise_data)} merchandise records')
-            
-            return {
-                'statusCode': 200,
-                'headers': get_cors_headers(),
-                'body': json.dumps({'merchandise': merchandise_data})
-            }
-        except Exception as e:
-            print(f'MERCHANDISE ERROR: {e}')
-            import traceback
-            print(f'MERCHANDISE TRACEBACK: {traceback.format_exc()}')
-            return {
-                'statusCode': 500,
-                'headers': get_cors_headers(),
-                'body': json.dumps({'error': f'Merchandise data error: {str(e)}'})
-            }
-    
-    return {
-        'statusCode': 405,
-        'headers': get_cors_headers(),
-        'body': json.dumps({'error': 'Method not allowed'})
-    }
-
-def sync_shopify_merchandise(event):
-    """Sync Shopify orders to employee merchandise records"""
-    try:
-        print('SYNC: Starting Shopify merchandise sync')
-
-        # Get Shopify orders
-        shopify_orders = get_shopify_orders()
-        print(f'SYNC: Retrieved {len(shopify_orders)} Shopify orders')
-
-        if not shopify_orders:
-            return {
-                'statusCode': 200,
-                'headers': get_cors_headers(),
-                'body': json.dumps({
-                    'success': True,
-                    'message': 'No Shopify orders found to sync',
-                    'synced': 0,
-                    'errors': []
-                })
-            }
-
-        # Get all employees
-        response = employees_table.scan()
-        employees = response['Items']
-        print(f'SYNC: Found {len(employees)} employees')
-
-        # Create email to employee map (include both personal and work emails)
-        employee_map = {}
-        for emp in employees:
-            # Map personal email
-            email = (emp.get('Email') or emp.get('email') or '').lower().strip()
-            if email:
-                employee_map[email] = emp
-
-            # Map work email
-            work_email = (emp.get('Work Email') or emp.get('work_email') or '').lower().strip()
-            if work_email:
-                employee_map[work_email] = emp
-
-        synced_count = 0
-        errors = []
-
-        # Match orders to employees and update
-        for order in shopify_orders:
-            try:
-                customer_email = (order.get('customer_email') or '').lower().strip()
-
-                if not customer_email:
-                    print(f'SYNC: Order {order.get("order_number")} has no email, skipping')
-                    continue
-
-                if customer_email not in employee_map:
-                    print(f'SYNC: No employee found for email {customer_email}')
-                    errors.append(f'No employee found for {customer_email}')
-                    continue
-
-                employee = employee_map[customer_email]
-                employee_id = employee.get('id') or employee.get('employee_id')
-
-                # Build merchandise description from line items
-                merch_items = []
-                for item in order.get('line_items', []):
-                    quantity = item.get('quantity', 1)
-                    title = item.get('title', 'Unknown Item')
-                    merch_items.append(f"{title} (x{quantity})")
-
-                merch_description = ', '.join(merch_items) if merch_items else 'Shopify Order'
-
-                # Get values
-                total_price = float(order.get('total_price', 0))
-                order_number = order.get('order_number', '')
-                created_at = order.get('created_at', '')
-                fulfillment_status = order.get('fulfillment_status', 'unfulfilled')
-
-                # Update employee record
-                current_merch = employee.get('Merch Requested') or employee.get('merch_requested') or ''
-                current_value = float(employee.get('merchandise_value') or employee.get('Merchandise Value') or 0)
-
-                # Append new order info
-                if current_merch:
-                    new_merch = f"{current_merch} | [Shopify #{order_number}] {merch_description}"
-                else:
-                    new_merch = f"[Shopify #{order_number}] {merch_description}"
-
-                new_value = current_value + total_price
-
-                # Update the employee
-                employees_table.put_item(Item={
-                    **employee,
-                    'merch_requested': new_merch,
-                    'Merch Requested': new_merch,
-                    'merchandise_value': Decimal(str(new_value)),
-                    'Merchandise Value': Decimal(str(new_value)),
-                    'Merch Sent': 'Yes' if fulfillment_status in ['fulfilled', 'partial'] else 'No',
-                    'merch_sent': 'Yes' if fulfillment_status in ['fulfilled', 'partial'] else 'No',
-                    'Merch Sent Date': created_at if fulfillment_status in ['fulfilled', 'partial'] else '',
-                    'merch_sent_date': created_at if fulfillment_status in ['fulfilled', 'partial'] else '',
-                    'shopify_order_number': order_number,
-                    'shopify_order_date': created_at,
-                    'updated_at': datetime.now().isoformat()
-                })
-
-                synced_count += 1
-                print(f'SYNC: Updated employee {employee_id} with order #{order_number}')
-
-            except Exception as e:
-                error_msg = f'Error syncing order {order.get("order_number")}: {str(e)}'
-                print(f'SYNC ERROR: {error_msg}')
-                errors.append(error_msg)
-
-        print(f'SYNC: Completed - {synced_count} orders synced, {len(errors)} errors')
-
-        return {
-            'statusCode': 200,
-            'headers': get_cors_headers(),
-            'body': json.dumps({
-                'success': True,
-                'message': f'Successfully synced {synced_count} Shopify orders',
-                'synced': synced_count,
-                'total_orders': len(shopify_orders),
-                'errors': errors
-            })
-        }
-
-    except Exception as e:
-        print(f'SYNC CRITICAL ERROR: {e}')
-        import traceback
-        print(f'SYNC TRACEBACK: {traceback.format_exc()}')
-        return {
-            'statusCode': 500,
-            'headers': get_cors_headers(),
-            'body': json.dumps({'error': f'Sync failed: {str(e)}'})
         }
 
 def create_super_admin(event):
