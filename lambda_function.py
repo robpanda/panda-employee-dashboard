@@ -180,6 +180,14 @@ def get_employees(event):
             for key, value in item.items():
                 if isinstance(value, Decimal):
                     item[key] = float(value)
+                # Handle Merchandise Value strings with $ and commas
+                elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
+                    try:
+                        # Remove $ and commas, then convert to float
+                        cleaned = value.replace('$', '').replace(',', '').strip()
+                        item[key] = float(cleaned) if cleaned else 0.0
+                    except (ValueError, AttributeError):
+                        item[key] = 0.0
             
             # Ensure employee_id exists
             if 'employee_id' not in item and 'id' in item:
@@ -513,6 +521,14 @@ def handle_contacts(event):
             for key, value in item.items():
                 if isinstance(value, Decimal):
                     item[key] = float(value)
+                # Handle Merchandise Value strings with $ and commas
+                elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
+                    try:
+                        # Remove $ and commas, then convert to float
+                        cleaned = value.replace('$', '').replace(',', '').strip()
+                        item[key] = float(cleaned) if cleaned else 0.0
+                    except (ValueError, AttributeError):
+                        item[key] = 0.0
         
         return {
             'statusCode': 200,
@@ -616,6 +632,14 @@ def handle_collections(event):
                 for key, value in item.items():
                     if isinstance(value, Decimal):
                         item[key] = float(value)
+                # Handle Merchandise Value strings with $ and commas
+                elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
+                    try:
+                        # Remove $ and commas, then convert to float
+                        cleaned = value.replace('$', '').replace(',', '').strip()
+                        item[key] = float(cleaned) if cleaned else 0.0
+                    except (ValueError, AttributeError):
+                        item[key] = 0.0
             
             return {
                 'statusCode': 200,
@@ -1580,6 +1604,14 @@ def handle_points_history(event):
                 for key, value in item.items():
                     if isinstance(value, Decimal):
                         item[key] = float(value)
+                # Handle Merchandise Value strings with $ and commas
+                elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
+                    try:
+                        # Remove $ and commas, then convert to float
+                        cleaned = value.replace('$', '').replace(',', '').strip()
+                        item[key] = float(cleaned) if cleaned else 0.0
+                    except (ValueError, AttributeError):
+                        item[key] = 0.0
             
             return {
                 'statusCode': 200,
