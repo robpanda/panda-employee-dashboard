@@ -473,6 +473,17 @@
                 </div>
                 <div class="modal-body">
                     <form id="newRequestForm">
+                        <!-- Employee Lookup Field -->
+                        <div class="mb-3">
+                            <label class="form-label">Search Employee</label>
+                            <input type="text" class="form-control" id="employeeSearch"
+                                   placeholder="Start typing employee name or email..."
+                                   autocomplete="off">
+                            <div id="employeeSearchResults" class="list-group position-absolute w-100 shadow-lg"
+                                 style="max-height: 300px; overflow-y: auto; z-index: 1050; display: none;"></div>
+                            <small class="text-muted">Select an existing employee or enter new employee details below</small>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label">Employee Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="employeeName" required>
@@ -636,10 +647,16 @@
             window.location.href = './login.html';
         }
 
+        // Employee search variables
+        let allEmployees = [];
+        let employeeSearchTimeout = null;
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadAllRequests();
             loadInventory();
+            loadEmployeeList();
+            setupEmployeeSearch();
 
             // Check for actions from points.html
             const urlParams = new URLSearchParams(window.location.search);
@@ -929,9 +946,127 @@
             }
         }
 
+        // Load employee list from API
+        async function loadEmployeeList() {
+            try {
+                const EMPLOYEE_API = 'https://4ytrdf6rpklojh5c52gxpf5iei0winqx.lambda-url.us-east-2.on.aws/employees';
+                const response = await fetch(EMPLOYEE_API);
+                const data = await response.json();
+
+                if (data.success && data.employees) {
+                    allEmployees = data.employees.filter(emp => {
+                        const terminated = emp['Terminated'] || emp.terminated || 'No';
+                        return terminated === 'No';
+                    });
+                    console.log(`Loaded ${allEmployees.length} active employees`);
+                }
+            } catch (error) {
+                console.error('Error loading employees:', error);
+            }
+        }
+
+        // Setup employee search autocomplete
+        function setupEmployeeSearch() {
+            const searchInput = document.getElementById('employeeSearch');
+            const resultsDiv = document.getElementById('employeeSearchResults');
+
+            if (!searchInput) return;
+
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim().toLowerCase();
+
+                clearTimeout(employeeSearchTimeout);
+
+                if (query.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+
+                employeeSearchTimeout = setTimeout(() => {
+                    const matches = allEmployees.filter(emp => {
+                        const firstName = (emp['First Name'] || emp.first_name || '').toLowerCase();
+                        const lastName = (emp['Last Name'] || emp.last_name || '').toLowerCase();
+                        const fullName = `${firstName} ${lastName}`;
+                        const email = (emp.email || emp.Email || '').toLowerCase();
+
+                        return fullName.includes(query) || email.includes(query);
+                    }).slice(0, 10);
+
+                    displaySearchResults(matches);
+                }, 300);
+            });
+
+            // Close results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        // Display employee search results
+        function displaySearchResults(matches) {
+            const resultsDiv = document.getElementById('employeeSearchResults');
+
+            if (matches.length === 0) {
+                resultsDiv.innerHTML = '<div class="list-group-item text-muted">No employees found</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+
+            const resultsHTML = matches.map(emp => {
+                const firstName = emp['First Name'] || emp.first_name || '';
+                const lastName = emp['Last Name'] || emp.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim();
+                const email = emp.email || emp.Email || '';
+                const office = emp['Office Location'] || emp.office_location || emp.location || '';
+                const empId = emp.employee_id || emp.id;
+
+                return `
+                    <a href="javascript:void(0)" class="list-group-item list-group-item-action"
+                       onclick="selectEmployee('${empId}')">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>${fullName}</strong><br>
+                                <small class="text-muted">${email}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="badge bg-secondary">${office}</small>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+
+            resultsDiv.innerHTML = resultsHTML;
+            resultsDiv.style.display = 'block';
+        }
+
+        // Select employee from search results
+        function selectEmployee(empId) {
+            const employee = allEmployees.find(emp => (emp.employee_id || emp.id) === empId);
+
+            if (employee) {
+                const firstName = employee['First Name'] || employee.first_name || '';
+                const lastName = employee['Last Name'] || employee.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim();
+                const email = employee.email || employee.Email || '';
+                const office = employee['Office Location'] || employee.office_location || employee.location || '';
+
+                document.getElementById('employeeName').value = fullName;
+                document.getElementById('employeeEmail').value = email;
+                document.getElementById('officeLocation').value = office;
+                document.getElementById('employeeSearch').value = fullName;
+                document.getElementById('employeeSearchResults').style.display = 'none';
+            }
+        }
+
         function showNewRequestForm() {
             const modal = new bootstrap.Modal(document.getElementById('newRequestModal'));
             document.getElementById('newRequestForm').reset();
+            // Clear search results
+            document.getElementById('employeeSearchResults').style.display = 'none';
+            document.getElementById('employeeSearch').value = '';
             updateTotalValue();
             modal.show();
         }

@@ -474,7 +474,7 @@ def create_request(event):
         # Calculate total value
         total_value = sum(EQUIPMENT_OPTIONS[item]['value'] for item in equipment)
 
-        # Get employee_id from employees table if exists
+        # Get or create employee record
         employee_id = 'unknown'  # Default value (GSI doesn't allow null)
         try:
             employee_response = employees_table.scan(
@@ -483,7 +483,23 @@ def create_request(event):
             )
             if employee_response['Items']:
                 employee_id = employee_response['Items'][0].get('id', 'unknown')
-        except:
+            else:
+                # Employee doesn't exist - create new employee record
+                employee_id = str(uuid.uuid4())
+                new_employee = {
+                    'id': employee_id,
+                    'email': body['employee_email'].lower().strip(),
+                    'name': body['employee_name'],
+                    'office_location': body['office_location'],
+                    'created_at': datetime.utcnow().isoformat(),
+                    'source': 'asset_request',  # Track where this employee was created
+                    'status': 'active'
+                }
+                employees_table.put_item(Item=new_employee)
+                print(f"Created new employee record: {employee_id} - {body['employee_name']}")
+        except Exception as e:
+            print(f"Error handling employee record: {str(e)}")
+            # Continue with 'unknown' if there's an error
             pass
 
         # Create request record
