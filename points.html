@@ -731,9 +731,20 @@
                         <td>${supervisor}</td>
                         <td><span class="badge bg-warning text-dark">${currentPoints} pts</span></td>
                         <td>
-                            <button class="btn btn-sm btn-success" onclick="showAwardModal('${empId}', '${name}', 0, false)">
-                                <i class="fas fa-plus"></i> Award
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-success" onclick="showAwardModal('${empId}', '${name}', 0, false)" title="Award Points">
+                                    <i class="fas fa-plus"></i> Award
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="viewEmployeeProfile('${empId}')" title="View Profile">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                                <button class="btn btn-sm btn-info" onclick="requestAssetsForEmployee('${empId}', '${name}')" title="Request Assets">
+                                    <i class="fas fa-box"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning" onclick="returnAssetsForEmployee('${empId}', '${name}')" title="Return Assets">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1005,6 +1016,69 @@
                 window.location.href = './login.html';
             }
         });
+
+        // Asset Management Functions
+        function viewEmployeeProfile(empId) {
+            // Navigate to employee page with employee ID
+            window.location.href = `./employee.html?id=${empId}`;
+        }
+
+        function requestAssetsForEmployee(empId, empName) {
+            // Get employee details
+            const employee = allEmployees.find(emp => (emp.id || emp.employee_id) === empId);
+            if (!employee) {
+                alert('Employee not found');
+                return;
+            }
+
+            const email = employee.email || employee.Email || '';
+            const firstName = employee['First Name'] || employee.first_name || '';
+            const lastName = employee['Last Name'] || employee.last_name || '';
+            const fullName = `${firstName} ${lastName}`.trim() || empName;
+            const office = employee['Office Location'] || employee.office_location || employee.location || '';
+
+            // Store in sessionStorage and navigate to assets page
+            sessionStorage.setItem('assetRequestEmployee', JSON.stringify({
+                id: empId,
+                name: fullName,
+                email: email,
+                office: office
+            }));
+
+            window.location.href = './assets.html?action=request';
+        }
+
+        async function returnAssetsForEmployee(empId, empName) {
+            try {
+                // Fetch checked out assets for this employee
+                const API_URL = 'https://ygrbdqrxm2pavmkuik262l5bry0qtkdx.lambda-url.us-east-2.on.aws/';
+                const response = await fetch(API_URL + `requests?employee_id=${empId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const checkedOutAssets = data.requests.filter(r => r.status === 'checked_out');
+
+                    if (checkedOutAssets.length === 0) {
+                        alert(`${empName} has no assets currently checked out.`);
+                        return;
+                    }
+
+                    // Store in sessionStorage and navigate to assets page
+                    sessionStorage.setItem('assetReturnEmployee', JSON.stringify({
+                        id: empId,
+                        name: empName,
+                        assets: checkedOutAssets
+                    }));
+
+                    window.location.href = './assets.html?action=return';
+                } else {
+                    alert('Error loading assets: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error fetching assets:', error);
+                alert('Error loading employee assets');
+            }
+        }
     </script>
 </body>
 </html>
