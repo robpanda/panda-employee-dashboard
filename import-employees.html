@@ -207,11 +207,12 @@
                             'Employee Id': employeeId,
                             'First Name': row['First Name'] || '',
                             'Last Name': row['Last Name'] || '',
-                            'Email': row['Current Home Email'] || '',
+                            'Email': row['Email'] || row['Current Home Email'] || '',  // FIXED: Use 'Email' column
+                            'Work Email': row['Work Email'] || '',  // ADDED: Work Email support
                             'Department': row['Department Description'] || '',
                             'Position': row['Position Description'] || '',
                             'Employment Date': formatDate(row['Hire Date']) || '',
-                            'Phone': '',
+                            'Phone': row['Phone'] || '',  // FIXED: Read Phone from CSV
                             'Terminated': row['Employee Status Code'] === 'A' ? 'No' : 'Yes',
                             'office': row['Current Work Location Name'] || '',
                             'supervisor': row['Supervisor'] || '',
@@ -219,7 +220,7 @@
                             'Merch Requested': '',
                             'Merch Sent': 'No',
                             'Merch Sent Date': '',
-                            'Termination Date': ''
+                            'Termination Date': row['Employee Status Code'] !== 'A' ? (row['Termination Date'] || '') : ''
                         };
                         
                         employees.push(employee);
