@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -70,7 +70,7 @@
             font-weight: 400;
             transition: all 0.15s ease;
         }
-        .logout-btn:hover { 
+        .logout-btn:hover {
             background: #ef4444;
             color: white;
         }
@@ -81,13 +81,13 @@
             border-bottom: 1px solid #f3f4f6;
         }
         .logo img { height: 40px; }
-        .header h1 { 
-            margin: 16px 0 8px 0; 
-            font-size: 28px; 
+        .header h1 {
+            margin: 16px 0 8px 0;
+            font-size: 28px;
             font-weight: 600;
             color: #111827;
         }
-        .header p { 
+        .header p {
             color: #6b7280;
             margin-bottom: 0;
             font-size: 16px;
@@ -150,13 +150,25 @@
             font-weight: 400;
             font-size: 12px;
         }
-        .sortable { 
-            cursor: pointer; 
-            user-select: none; 
+        .sortable {
+            cursor: pointer;
+            user-select: none;
             transition: all 0.15s ease;
         }
-        .sortable:hover { 
-            background-color: #f9fafb; 
+        .sortable:hover {
+            background-color: #f9fafb;
+        }
+        .equipment-checkbox {
+            margin-bottom: 10px;
+        }
+        .equipment-checkbox label {
+            cursor: pointer;
+            user-select: none;
+        }
+        .signature-pad {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: crosshair;
         }
     </style>
 </head>
@@ -176,249 +188,239 @@
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
-        
+
         <div class="header">
             <h1>📦 Asset Management</h1>
             <p>Track company assets, inventory, and equipment</p>
         </div>
-        
+
         <div class="content-area">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div class="d-flex gap-2">
-                    <div class="badge bg-warning fs-6 px-3 py-2">New: <span id="newCount">3</span></div>
-                    <div class="badge bg-info fs-6 px-3 py-2">Approved: <span id="approvedCount">2</span></div>
-                    <div class="badge bg-danger fs-6 px-3 py-2">Rejected: <span id="rejectedCount">1</span></div>
-                    <div class="badge bg-success fs-6 px-3 py-2">Checked Out: <span id="checkedOutCount">5</span></div>
+                    <div class="badge bg-warning fs-6 px-3 py-2">Pending: <span id="pendingCount">0</span></div>
+                    <div class="badge bg-info fs-6 px-3 py-2">Approved: <span id="approvedCount">0</span></div>
+                    <div class="badge bg-danger fs-6 px-3 py-2">Rejected: <span id="rejectedCount">0</span></div>
+                    <div class="badge bg-success fs-6 px-3 py-2">Checked Out: <span id="checkedOutCount">0</span></div>
                 </div>
             </div>
-                
-                <ul class="nav nav-pills nav-fill mb-4" id="assetTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="new-requests-tab" data-bs-toggle="tab" data-bs-target="#new-requests" type="button" role="tab">
-                            <i class="fas fa-clock me-2"></i>New Requests <span class="badge bg-warning ms-2">3</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
-                            <i class="fas fa-check me-2"></i>Approved <span class="badge bg-info ms-2">2</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
-                            <i class="fas fa-times me-2"></i>Rejected <span class="badge bg-danger ms-2">1</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="checked-out-tab" data-bs-toggle="tab" data-bs-target="#checked-out" type="button" role="tab">
-                            <i class="fas fa-user-check me-2"></i>Checked Out <span class="badge bg-success ms-2">5</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab">
-                            <i class="fas fa-warehouse me-2"></i>Inventory
-                        </button>
-                    </li>
-                </ul>
 
-                <div class="tab-content" id="assetTabContent">
-                    <!-- New Requests Tab -->
-                    <div class="tab-pane fade show active" id="new-requests" role="tabpanel">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>New Requests</h5>
-                                <button class="btn btn-dark btn-sm" onclick="addRequest()">
-                                    <i class="fas fa-plus"></i> New Request
-                                </button>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Request ID</th>
-                                                <th>Asset Name</th>
-                                                <th>Requested By</th>
-                                                <th>Location</th>
-                                                <th>Quantity</th>
-                                                <th>Request Date</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="newRequestsTable">
-                                            <tr>
-                                                <td>REQ001</td>
-                                                <td>Dell Laptop</td>
-                                                <td>John Smith</td>
-                                                <td>Maryland Office</td>
-                                                <td>1</td>
-                                                <td>2025-09-25</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-success me-1" onclick="approveRequest('REQ001')">Approve</button>
-                                                    <button class="btn btn-sm btn-danger" onclick="rejectRequest('REQ001')">Reject</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+            <ul class="nav nav-pills nav-fill mb-4" id="assetTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="new-requests-tab" data-bs-toggle="tab" data-bs-target="#new-requests" type="button" role="tab">
+                        <i class="fas fa-clock me-2"></i>New Requests <span class="badge bg-warning ms-2" id="pendingBadge">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
+                        <i class="fas fa-check me-2"></i>Approved <span class="badge bg-info ms-2" id="approvedBadge">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+                        <i class="fas fa-times me-2"></i>Rejected <span class="badge bg-danger ms-2" id="rejectedBadge">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="checked-out-tab" data-bs-toggle="tab" data-bs-target="#checked-out" type="button" role="tab">
+                        <i class="fas fa-user-check me-2"></i>Checked Out <span class="badge bg-success ms-2" id="checkedOutBadge">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab">
+                        <i class="fas fa-warehouse me-2"></i>Inventory
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <i class="fas fa-chart-bar me-2"></i>Reports
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="assetTabContent">
+                <!-- New Requests Tab -->
+                <div class="tab-pane fade show active" id="new-requests" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-clock me-2"></i>New Requests</h5>
+                            <button class="btn btn-dark btn-sm" onclick="showNewRequestForm()">
+                                <i class="fas fa-plus"></i> New Request
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Request ID</th>
+                                            <th>Employee</th>
+                                            <th>Office Location</th>
+                                            <th>Equipment</th>
+                                            <th>Total Value</th>
+                                            <th>Request Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pendingRequestsTable">
+                                        <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Approved Tab -->
-                    <div class="tab-pane fade" id="approved" role="tabpanel">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-info text-white">
-                                <h5 class="mb-0"><i class="fas fa-check me-2"></i>Approved - Pending Checkout</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Request ID</th>
-                                                <th>Asset Name</th>
-                                                <th>Approved For</th>
-                                                <th>Location</th>
-                                                <th>Quantity</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="approvedTable">
-                                            <tr>
-                                                <td>REQ002</td>
-                                                <td>Safety Helmet</td>
-                                                <td>Sarah Wilson</td>
-                                                <td>Virginia Office</td>
-                                                <td>2</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary" onclick="checkoutAsset('REQ002')">Checkout</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                </div>
+
+                <!-- Approved Tab -->
+                <div class="tab-pane fade" id="approved" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-check me-2"></i>Approved - Pending Checkout</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Request ID</th>
+                                            <th>Employee</th>
+                                            <th>Office Location</th>
+                                            <th>Equipment</th>
+                                            <th>Total Value</th>
+                                            <th>Approved By</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="approvedRequestsTable">
+                                        <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Checked Out Tab -->
-                    <div class="tab-pane fade" id="checked-out" role="tabpanel">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Checked Out Assets</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Asset ID</th>
-                                                <th>Asset Name</th>
-                                                <th>Serial Number</th>
-                                                <th>Assigned To</th>
-                                                <th>Location</th>
-                                                <th>Checkout Date</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="checkedOutTable">
-                                            <tr>
-                                                <td>AST001</td>
-                                                <td>Ford Transit Van</td>
-                                                <td>VIN123456</td>
-                                                <td>Bob Davis</td>
-                                                <td>Maryland Office</td>
-                                                <td>2025-09-20</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-warning" onclick="returnAsset('AST001')">Return</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                </div>
+
+                <!-- Checked Out Tab -->
+                <div class="tab-pane fade" id="checked-out" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Checked Out Assets</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Request ID</th>
+                                            <th>Employee</th>
+                                            <th>Office Location</th>
+                                            <th>Equipment</th>
+                                            <th>Total Value</th>
+                                            <th>Checkout Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="checkedOutTable">
+                                        <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Rejected Tab -->
-                    <div class="tab-pane fade" id="rejected" role="tabpanel">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-danger text-white">
-                                <h5 class="mb-0"><i class="fas fa-times me-2"></i>Rejected Requests</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Request ID</th>
-                                                <th>Asset Name</th>
-                                                <th>Requested By</th>
-                                                <th>Reason</th>
-                                                <th>Rejected Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="rejectedTable">
-                                            <tr>
-                                                <td>REQ003</td>
-                                                <td>Expensive Equipment</td>
-                                                <td>Mike Johnson</td>
-                                                <td>Budget constraints</td>
-                                                <td>2025-09-24</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                </div>
+
+                <!-- Rejected Tab -->
+                <div class="tab-pane fade" id="rejected" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0"><i class="fas fa-times me-2"></i>Rejected Requests</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Request ID</th>
+                                            <th>Employee</th>
+                                            <th>Equipment</th>
+                                            <th>Rejected By</th>
+                                            <th>Reason</th>
+                                            <th>Rejected Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rejectedTable">
+                                        <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Inventory Tab -->
-                    <div class="tab-pane fade" id="inventory" role="tabpanel">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-secondary text-white">
-                                <h5 class="mb-0"><i class="fas fa-warehouse me-2"></i>Inventory Levels</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Asset Name</th>
-                                                <th>Category</th>
-                                                <th>Total Stock</th>
-                                                <th>Available</th>
-                                                <th>Checked Out</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="inventoryTable">
-                                            <tr>
-                                                <td>Dell Laptops</td>
-                                                <td>Technology</td>
-                                                <td>10</td>
-                                                <td>7</td>
-                                                <td>3</td>
-                                                <td><span class="badge bg-success">In Stock</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td>Safety Helmets</td>
-                                                <td>Safety</td>
-                                                <td>25</td>
-                                                <td>20</td>
-                                                <td>5</td>
-                                                <td><span class="badge bg-success">In Stock</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td>Ford Transit Vans</td>
-                                                <td>Vehicle</td>
-                                                <td>5</td>
-                                                <td>2</td>
-                                                <td>3</td>
-                                                <td><span class="badge bg-warning">Low Stock</span></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                </div>
+
+                <!-- Inventory Tab -->
+                <div class="tab-pane fade" id="inventory" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-warehouse me-2"></i>Inventory Summary</h5>
+                        </div>
+                        <div class="card-body" id="inventoryContent">
+                            <p class="text-center text-muted">Loading inventory...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div class="tab-pane fade" id="reports" role="tabpanel">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Reports & Analytics</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs" id="reportTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="summary-report-tab" data-bs-toggle="tab" data-bs-target="#summary-report" type="button" role="tab">
+                                                Summary
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="employee-report-tab" data-bs-toggle="tab" data-bs-target="#employee-report" type="button" role="tab">
+                                                By Employee
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="equipment-report-tab" data-bs-toggle="tab" data-bs-target="#equipment-report" type="button" role="tab">
+                                                By Equipment
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="office-report-tab" data-bs-toggle="tab" data-bs-target="#office-report" type="button" role="tab">
+                                                By Office
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content mt-3" id="reportTabContent">
+                                        <div class="tab-pane fade show active" id="summary-report" role="tabpanel">
+                                            <div id="summaryReportContent">
+                                                <p class="text-center text-muted">Loading report...</p>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="employee-report" role="tabpanel">
+                                            <div id="employeeReportContent">
+                                                <p class="text-center text-muted">Loading report...</p>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="equipment-report" role="tabpanel">
+                                            <div id="equipmentReportContent">
+                                                <p class="text-center text-muted">Loading report...</p>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="office-report" role="tabpanel">
+                                            <div id="officeReportContent">
+                                                <p class="text-center text-muted">Loading report...</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -426,42 +428,918 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Return Asset Modal -->
+    <div class="modal fade" id="returnAssetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Return Asset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="returnRequestId">
+                    <div class="mb-3">
+                        <label class="form-label">Condition <span class="text-danger">*</span></label>
+                        <select class="form-select" id="returnCondition" required>
+                            <option value="good">Good - Excellent working condition</option>
+                            <option value="fair">Fair - Minor wear and tear</option>
+                            <option value="damaged">Damaged - Requires repair</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="returnNotes" rows="3" placeholder="Any issues or observations..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="submitReturn()">
+                        <i class="fas fa-undo"></i> Process Return
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Request Modal -->
+    <div class="modal fade" id="newRequestModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Asset Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newRequestForm">
+                        <div class="mb-3">
+                            <label class="form-label">Employee Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="employeeName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Employee Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="employeeEmail" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Office Location <span class="text-danger">*</span></label>
+                            <select class="form-select" id="officeLocation" required>
+                                <option value="">Select Office...</option>
+                                <option value="Delaware">Delaware</option>
+                                <option value="King of Prussia">King of Prussia</option>
+                                <option value="Maryland">Maryland</option>
+                                <option value="New Jersey">New Jersey</option>
+                                <option value="North Carolina">North Carolina</option>
+                                <option value="Tampa">Tampa</option>
+                                <option value="Virginia">Virginia</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Equipment Requested <span class="text-danger">* (Select at least one)</span></label>
+                            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_desktop_setup" value="desktop_setup">
+                                    <label class="form-check-label ms-2" for="eq_desktop_setup">Complete Desktop Setup - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_new_hire_kit" value="new_hire_kit">
+                                    <label class="form-check-label ms-2" for="eq_new_hire_kit">Complete New Hire Kit for Sales Rep - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_desktop_computer" value="desktop_computer">
+                                    <label class="form-check-label ms-2" for="eq_desktop_computer">Desktop Computer - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_desktop_screens" value="desktop_screens">
+                                    <label class="form-check-label ms-2" for="eq_desktop_screens">Desktop Screens - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_laptop" value="laptop">
+                                    <label class="form-check-label ms-2" for="eq_laptop">Laptop - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_ipad" value="ipad">
+                                    <label class="form-check-label ms-2" for="eq_ipad">iPad w/case and charger - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_ladder_32ft" value="ladder_32ft">
+                                    <label class="form-check-label ms-2" for="eq_ladder_32ft">32 ft Ladder - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_ladder_18ft" value="ladder_18ft">
+                                    <label class="form-check-label ms-2" for="eq_ladder_18ft">18 ft Little Giant ladder - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_gaf_sales_kit" value="gaf_sales_kit">
+                                    <label class="form-check-label ms-2" for="eq_gaf_sales_kit">GAF Sales Kit - $100.00</label>
+                                </div>
+                                <div class="equipment-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="eq_goat_steep_roof" value="goat_steep_roof">
+                                    <label class="form-check-label ms-2" for="eq_goat_steep_roof">GOAT Steep Roof Assist - $100.00</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="requestNotes" rows="3" placeholder="Any additional information..."></textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Total Value:</strong> $<span id="totalValue">0.00</span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitRequest()">
+                        <i class="fas fa-paper-plane"></i> Submit Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signature Modal -->
+    <div class="modal fade" id="signatureModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sign Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="signRequestId">
+                    <div id="pdfPreview" class="mb-3"></div>
+
+                    <label class="form-label">Employee Signature</label>
+                    <div class="text-center">
+                        <canvas id="signatureCanvas" class="signature-pad" width="600" height="200"></canvas>
+                    </div>
+                    <div class="text-end mt-2">
+                        <button class="btn btn-sm btn-secondary" onclick="clearSignature()">Clear</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="submitSignature()">
+                        <i class="fas fa-check"></i> Complete Checkout
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const API_URL = 'https://ygrbdqrxm2pavmkuik262l5bry0qtkdx.lambda-url.us-east-2.on.aws/';
+
+        let signatureCanvas, signatureCtx, isDrawing = false;
+
         function logout() {
             sessionStorage.removeItem('pandaAdmin');
             sessionStorage.removeItem('adminUser');
             window.location.href = './login.html';
         }
-        function addRequest() {
-            alert('Add New Asset Request - Integration with asset management system');
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllRequests();
+            loadInventory();
+
+            // Set up equipment checkboxes to update total
+            document.querySelectorAll('.equipment-checkbox input').forEach(checkbox => {
+                checkbox.addEventListener('change', updateTotalValue);
+            });
+
+            // Initialize signature canvas
+            signatureCanvas = document.getElementById('signatureCanvas');
+            if (signatureCanvas) {
+                signatureCtx = signatureCanvas.getContext('2d');
+                setupSignaturePad();
+            }
+        });
+
+        function updateTotalValue() {
+            const checkboxes = document.querySelectorAll('.equipment-checkbox input:checked');
+            const total = checkboxes.length * 100;
+            document.getElementById('totalValue').textContent = total.toFixed(2);
         }
 
-        function approveRequest(id) {
-            if (confirm(`Approve request ${id}?`)) {
-                alert(`Request ${id} approved`);
+        async function loadAllRequests() {
+            try {
+                const response = await fetch(API_URL + 'requests');
+                const data = await response.json();
+
+                if (data.success) {
+                    const requests = data.requests;
+
+                    // Group by status
+                    const pending = requests.filter(r => r.status === 'pending');
+                    const approved = requests.filter(r => r.status === 'approved');
+                    const rejected = requests.filter(r => r.status === 'rejected');
+                    const checkedOut = requests.filter(r => r.status === 'checked_out');
+
+                    // Update counts
+                    document.getElementById('pendingCount').textContent = pending.length;
+                    document.getElementById('approvedCount').textContent = approved.length;
+                    document.getElementById('rejectedCount').textContent = rejected.length;
+                    document.getElementById('checkedOutCount').textContent = checkedOut.length;
+
+                    document.getElementById('pendingBadge').textContent = pending.length;
+                    document.getElementById('approvedBadge').textContent = approved.length;
+                    document.getElementById('rejectedBadge').textContent = rejected.length;
+                    document.getElementById('checkedOutBadge').textContent = checkedOut.length;
+
+                    // Render tables
+                    renderPendingRequests(pending);
+                    renderApprovedRequests(approved);
+                    renderRejectedRequests(rejected);
+                    renderCheckedOutRequests(checkedOut);
+                }
+            } catch (error) {
+                console.error('Error loading requests:', error);
             }
         }
 
-        function rejectRequest(id) {
-            const reason = prompt(`Reject request ${id}. Enter reason:`);
-            if (reason) {
-                alert(`Request ${id} rejected: ${reason}`);
+        function renderPendingRequests(requests) {
+            const tbody = document.getElementById('pendingRequestsTable');
+            if (requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No pending requests</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = requests.map(req => `
+                <tr>
+                    <td><code>${req.id.substring(0, 8)}</code></td>
+                    <td>
+                        <div><strong>${req.employee_name}</strong></div>
+                        <small class="text-muted">${req.employee_email}</small>
+                    </td>
+                    <td>${req.office_location}</td>
+                    <td>
+                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
+                    </td>
+                    <td><strong>$${parseFloat(req.total_value).toFixed(2)}</strong></td>
+                    <td>${new Date(req.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success me-1" onclick="approveRequest('${req.id}')">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="rejectRequest('${req.id}')">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderApprovedRequests(requests) {
+            const tbody = document.getElementById('approvedRequestsTable');
+            if (requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No approved requests</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = requests.map(req => `
+                <tr>
+                    <td><code>${req.id.substring(0, 8)}</code></td>
+                    <td>
+                        <div><strong>${req.employee_name}</strong></div>
+                        <small class="text-muted">${req.employee_email}</small>
+                    </td>
+                    <td>${req.office_location}</td>
+                    <td>
+                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
+                    </td>
+                    <td><strong>$${parseFloat(req.total_value).toFixed(2)}</strong></td>
+                    <td><small>${req.approved_by}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="generatePDF('${req.id}')">
+                            <i class="fas fa-file-pdf"></i> Generate PDF
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderRejectedRequests(requests) {
+            const tbody = document.getElementById('rejectedTable');
+            if (requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No rejected requests</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = requests.map(req => `
+                <tr>
+                    <td><code>${req.id.substring(0, 8)}</code></td>
+                    <td>
+                        <div><strong>${req.employee_name}</strong></div>
+                        <small class="text-muted">${req.employee_email}</small>
+                    </td>
+                    <td>
+                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
+                    </td>
+                    <td><small>${req.rejected_by}</small></td>
+                    <td>${req.rejection_reason || 'N/A'}</td>
+                    <td>${new Date(req.rejected_at).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderCheckedOutRequests(requests) {
+            const tbody = document.getElementById('checkedOutTable');
+            if (requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No checked out assets</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = requests.map(req => `
+                <tr>
+                    <td><code>${req.id.substring(0, 8)}</code></td>
+                    <td>
+                        <div><strong>${req.employee_name}</strong></div>
+                        <small class="text-muted">${req.employee_email}</small>
+                    </td>
+                    <td>${req.office_location}</td>
+                    <td>
+                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
+                    </td>
+                    <td><strong>$${parseFloat(req.total_value).toFixed(2)}</strong></td>
+                    <td>${new Date(req.checked_out_at).toLocaleDateString()}</td>
+                    <td>
+                        ${req.pdf_url ? `<a href="${req.pdf_url}" class="btn btn-sm btn-info me-1" target="_blank"><i class="fas fa-file-pdf"></i> PDF</a>` : ''}
+                        <button class="btn btn-sm btn-warning" onclick="showReturnModal('${req.id}')">
+                            <i class="fas fa-undo"></i> Return
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadInventory() {
+            try {
+                const response = await fetch(API_URL + 'inventory');
+                const data = await response.json();
+
+                if (data.success) {
+                    const summary = data.summary;
+                    const inventoryHtml = `
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h3>${summary.total_requests}</h3>
+                                        <p class="mb-0">Total Requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-success">${summary.status_counts.checked_out}</h3>
+                                        <p class="mb-0">Checked Out</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-primary">$${summary.total_value_checked_out.toFixed(2)}</h3>
+                                        <p class="mb-0">Total Value Out</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="mb-3">Equipment Checked Out</h6>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Equipment</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(summary.equipment_checked_out).map(([name, count]) => `
+                                    <tr>
+                                        <td>${name}</td>
+                                        <td><span class="badge bg-primary">${count}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+
+                    document.getElementById('inventoryContent').innerHTML = inventoryHtml;
+                }
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+                document.getElementById('inventoryContent').innerHTML = '<p class="text-danger">Error loading inventory</p>';
             }
         }
 
-        function checkoutAsset(id) {
-            if (confirm(`Checkout asset for request ${id}?`)) {
-                alert(`Asset checked out for request ${id}`);
+        function showNewRequestForm() {
+            const modal = new bootstrap.Modal(document.getElementById('newRequestModal'));
+            document.getElementById('newRequestForm').reset();
+            updateTotalValue();
+            modal.show();
+        }
+
+        async function submitRequest() {
+            const name = document.getElementById('employeeName').value.trim();
+            const email = document.getElementById('employeeEmail').value.trim();
+            const location = document.getElementById('officeLocation').value;
+            const notes = document.getElementById('requestNotes').value.trim();
+
+            // Get selected equipment
+            const equipment = [];
+            document.querySelectorAll('.equipment-checkbox input:checked').forEach(checkbox => {
+                equipment.push(checkbox.value);
+            });
+
+            // Validate
+            if (!name || !email || !location) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (equipment.length === 0) {
+                alert('Please select at least one equipment item');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL + 'requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employee_name: name,
+                        employee_email: email,
+                        office_location: location,
+                        equipment: equipment,
+                        notes: notes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Request submitted successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('newRequestModal')).hide();
+                    loadAllRequests();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                alert('Error submitting request');
             }
         }
 
-        function returnAsset(id) {
-            if (confirm(`Return asset ${id}?`)) {
-                alert(`Asset ${id} returned to inventory`);
+        async function approveRequest(requestId) {
+            const adminUser = sessionStorage.getItem('adminUser');
+            if (!adminUser) {
+                alert('Admin user not found');
+                return;
+            }
+
+            const admin = JSON.parse(adminUser);
+
+            if (!confirm('Approve this request?')) return;
+
+            try {
+                const response = await fetch(API_URL + `requests/${requestId}/approve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        approved_by: admin.email
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Request approved!');
+                    loadAllRequests();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error approving request:', error);
+                alert('Error approving request');
+            }
+        }
+
+        async function rejectRequest(requestId) {
+            const adminUser = sessionStorage.getItem('adminUser');
+            if (!adminUser) {
+                alert('Admin user not found');
+                return;
+            }
+
+            const admin = JSON.parse(adminUser);
+            const reason = prompt('Enter rejection reason:');
+
+            if (!reason) return;
+
+            try {
+                const response = await fetch(API_URL + `requests/${requestId}/reject`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rejected_by: admin.email,
+                        reason: reason
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Request rejected');
+                    loadAllRequests();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error rejecting request:', error);
+                alert('Error rejecting request');
+            }
+        }
+
+        async function generatePDF(requestId) {
+            try {
+                const response = await fetch(API_URL + `requests/${requestId}/pdf`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show signature modal
+                    document.getElementById('signRequestId').value = requestId;
+                    document.getElementById('pdfPreview').innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            PDF generated successfully. Please have the employee sign below to complete checkout.
+                            <br>
+                            <a href="${data.pdf_url}" target="_blank" class="btn btn-sm btn-primary mt-2">
+                                <i class="fas fa-eye"></i> Preview Document
+                            </a>
+                        </div>
+                    `;
+                    const modal = new bootstrap.Modal(document.getElementById('signatureModal'));
+                    modal.show();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF');
+            }
+        }
+
+        function setupSignaturePad() {
+            signatureCanvas.addEventListener('mousedown', startDrawing);
+            signatureCanvas.addEventListener('mousemove', draw);
+            signatureCanvas.addEventListener('mouseup', stopDrawing);
+            signatureCanvas.addEventListener('mouseout', stopDrawing);
+
+            // Touch events for mobile
+            signatureCanvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                signatureCanvas.dispatchEvent(mouseEvent);
+            });
+
+            signatureCanvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                signatureCanvas.dispatchEvent(mouseEvent);
+            });
+
+            signatureCanvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                signatureCanvas.dispatchEvent(mouseEvent);
+            });
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = signatureCanvas.getBoundingClientRect();
+            signatureCtx.beginPath();
+            signatureCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = signatureCanvas.getBoundingClientRect();
+            signatureCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            signatureCtx.strokeStyle = '#000';
+            signatureCtx.lineWidth = 2;
+            signatureCtx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function clearSignature() {
+            signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+        }
+
+        async function submitSignature() {
+            const requestId = document.getElementById('signRequestId').value;
+            const signatureData = signatureCanvas.toDataURL();
+
+            try {
+                const response = await fetch(API_URL + `requests/${requestId}/sign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        signature_data: signatureData
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Checkout complete!');
+                    bootstrap.Modal.getInstance(document.getElementById('signatureModal')).hide();
+                    clearSignature();
+                    loadAllRequests();
+                    loadInventory();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error signing document:', error);
+                alert('Error completing checkout');
+            }
+        }
+
+        // Return Asset Functions
+        function showReturnModal(requestId) {
+            document.getElementById('returnRequestId').value = requestId;
+            document.getElementById('returnCondition').value = 'good';
+            document.getElementById('returnNotes').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('returnAssetModal'));
+            modal.show();
+        }
+
+        async function submitReturn() {
+            const requestId = document.getElementById('returnRequestId').value;
+            const condition = document.getElementById('returnCondition').value;
+            const notes = document.getElementById('returnNotes').value;
+
+            try {
+                const response = await fetch(API_URL + `requests/${requestId}/return`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        return_condition: condition,
+                        return_notes: notes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Asset returned successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('returnAssetModal')).hide();
+                    loadAllRequests();
+                    loadInventory();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error returning asset:', error);
+                alert('Error processing return');
+            }
+        }
+
+        // Reports Functions
+        document.getElementById('reports-tab')?.addEventListener('shown.bs.tab', function() {
+            loadAllReports();
+        });
+
+        document.getElementById('summary-report-tab')?.addEventListener('shown.bs.tab', loadSummaryReport);
+        document.getElementById('employee-report-tab')?.addEventListener('shown.bs.tab', loadEmployeeReport);
+        document.getElementById('equipment-report-tab')?.addEventListener('shown.bs.tab', loadEquipmentReport);
+        document.getElementById('office-report-tab')?.addEventListener('shown.bs.tab', loadOfficeReport);
+
+        function loadAllReports() {
+            loadSummaryReport();
+        }
+
+        async function loadSummaryReport() {
+            try {
+                const response = await fetch(API_URL + 'reports/summary');
+                const data = await response.json();
+
+                if (data.success) {
+                    const report = data.report;
+                    const html = `
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-primary">${report.metrics.total_requests}</h3>
+                                        <p class="mb-0">Total Requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-success">$${report.metrics.total_value.toFixed(2)}</h3>
+                                        <p class="mb-0">Total Value</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-info">${report.metrics.average_processing_time_hours.toFixed(1)}h</h3>
+                                        <p class="mb-0">Avg Processing Time</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-warning">${report.metrics.status_breakdown.checked_out || 0}</h3>
+                                        <p class="mb-0">Currently Out</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5>Status Breakdown</h5>
+                                <table class="table table-sm">
+                                    ${Object.entries(report.metrics.status_breakdown).map(([status, count]) => `
+                                        <tr>
+                                            <td>${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                                            <td class="text-end"><strong>${count}</strong></td>
+                                        </tr>
+                                    `).join('')}
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Top Equipment</h5>
+                                <table class="table table-sm">
+                                    ${report.metrics.top_equipment.map(item => `
+                                        <tr>
+                                            <td>${item.name}</td>
+                                            <td class="text-end"><strong>${item.count}</strong></td>
+                                        </tr>
+                                    `).join('')}
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('summaryReportContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading summary report:', error);
+                document.getElementById('summaryReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
+            }
+        }
+
+        async function loadEmployeeReport() {
+            try {
+                const response = await fetch(API_URL + 'reports/by-employee');
+                const data = await response.json();
+
+                if (data.success) {
+                    const html = `
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th class="text-end">Total Requests</th>
+                                    <th class="text-end">Total Value</th>
+                                    <th class="text-end">Checked Out</th>
+                                    <th class="text-end">Returned</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.employees.map(emp => `
+                                    <tr>
+                                        <td>
+                                            <strong>${emp.name}</strong><br>
+                                            <small class="text-muted">${emp.email}</small>
+                                        </td>
+                                        <td class="text-end">${emp.total_requests}</td>
+                                        <td class="text-end"><strong>$${emp.total_value.toFixed(2)}</strong></td>
+                                        <td class="text-end"><span class="badge bg-success">${emp.checked_out_count}</span></td>
+                                        <td class="text-end"><span class="badge bg-secondary">${emp.returned_count}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    document.getElementById('employeeReportContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading employee report:', error);
+                document.getElementById('employeeReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
+            }
+        }
+
+        async function loadEquipmentReport() {
+            try {
+                const response = await fetch(API_URL + 'reports/by-equipment');
+                const data = await response.json();
+
+                if (data.success) {
+                    const html = `
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Equipment</th>
+                                    <th class="text-end">Total Requested</th>
+                                    <th class="text-end">Currently Out</th>
+                                    <th class="text-end">Returned</th>
+                                    <th class="text-end">Total Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.equipment.map(equip => `
+                                    <tr>
+                                        <td><strong>${equip.name}</strong></td>
+                                        <td class="text-end">${equip.total_requested}</td>
+                                        <td class="text-end"><span class="badge bg-warning">${equip.currently_checked_out}</span></td>
+                                        <td class="text-end"><span class="badge bg-secondary">${equip.returned}</span></td>
+                                        <td class="text-end"><strong>$${equip.total_value.toFixed(2)}</strong></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    document.getElementById('equipmentReportContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading equipment report:', error);
+                document.getElementById('equipmentReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
+            }
+        }
+
+        async function loadOfficeReport() {
+            try {
+                const response = await fetch(API_URL + 'reports/by-office');
+                const data = await response.json();
+
+                if (data.success) {
+                    const html = `
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Office</th>
+                                    <th class="text-end">Total Requests</th>
+                                    <th class="text-end">Total Value</th>
+                                    <th class="text-end">Currently Out</th>
+                                    <th>Top Equipment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.offices.map(office => `
+                                    <tr>
+                                        <td><strong>${office.office}</strong></td>
+                                        <td class="text-end">${office.total_requests}</td>
+                                        <td class="text-end"><strong>$${office.total_value.toFixed(2)}</strong></td>
+                                        <td class="text-end"><span class="badge bg-success">${office.checked_out_count}</span></td>
+                                        <td>
+                                            <small>${Object.entries(office.equipment_breakdown)
+                                                .sort((a, b) => b[1] - a[1])
+                                                .slice(0, 3)
+                                                .map(([name, count]) => `${name} (${count})`)
+                                                .join(', ')}</small>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    document.getElementById('officeReportContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading office report:', error);
+                document.getElementById('officeReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
             }
         }
     </script>

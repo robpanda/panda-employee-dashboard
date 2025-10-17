@@ -36,7 +36,7 @@ assets_table = dynamodb.Table('panda-assets')
 employees_table = dynamodb.Table('panda-employees')
 
 # Configuration
-SES_SENDER_EMAIL = 'noreply@pandaexteriors.com'  # Must be verified in SES
+SES_SENDER_EMAIL = 'pandanews@pandaexteriors.com'  # Must be verified in SES
 COMPANY_NAME = 'Panda Exteriors'
 COMPANY_ADDRESS = '123 Main Street, Delaware'
 COMPANY_PHONE = '(555) 123-4567'
