@@ -641,6 +641,42 @@
             loadAllRequests();
             loadInventory();
 
+            // Check for actions from points.html
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+
+            if (action === 'request') {
+                // Pre-fill request form from sessionStorage
+                const employeeData = sessionStorage.getItem('assetRequestEmployee');
+                if (employeeData) {
+                    const employee = JSON.parse(employeeData);
+                    sessionStorage.removeItem('assetRequestEmployee');
+
+                    // Show the new request modal with pre-filled data
+                    setTimeout(() => {
+                        document.getElementById('employeeName').value = employee.name || '';
+                        document.getElementById('employeeEmail').value = employee.email || '';
+                        document.getElementById('officeLocation').value = employee.office || '';
+                        showNewRequestForm();
+                    }, 500);
+                }
+            } else if (action === 'return') {
+                // Show checked out tab and highlight employee's assets
+                const employeeData = sessionStorage.getItem('assetReturnEmployee');
+                if (employeeData) {
+                    const employee = JSON.parse(employeeData);
+                    sessionStorage.removeItem('assetReturnEmployee');
+
+                    // Switch to checked out tab
+                    setTimeout(() => {
+                        const checkedOutTab = document.getElementById('checked-out-tab');
+                        if (checkedOutTab) {
+                            checkedOutTab.click();
+                        }
+                    }, 500);
+                }
+            }
+
             // Set up equipment checkboxes to show/hide quantity fields
             document.querySelectorAll('.equipment-check').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
@@ -906,10 +942,21 @@
             const location = document.getElementById('officeLocation').value;
             const notes = document.getElementById('requestNotes').value.trim();
 
-            // Get selected equipment
+            // Get selected equipment with quantities
             const equipment = [];
-            document.querySelectorAll('.equipment-checkbox input:checked').forEach(checkbox => {
-                equipment.push(checkbox.value);
+            const equipmentWithQuantities = {};
+            document.querySelectorAll('.equipment-check:checked').forEach(checkbox => {
+                const equipmentCode = checkbox.value;
+                const quantityInput = document.getElementById('qty_' + equipmentCode);
+                const quantity = parseInt(quantityInput.value) || 1;
+
+                // Add to equipment array (repeat based on quantity for backend compatibility)
+                for (let i = 0; i < quantity; i++) {
+                    equipment.push(equipmentCode);
+                }
+
+                // Store quantity info
+                equipmentWithQuantities[equipmentCode] = quantity;
             });
 
             // Validate
@@ -932,6 +979,7 @@
                         employee_email: email,
                         office_location: location,
                         equipment: equipment,
+                        equipment_quantities: equipmentWithQuantities,
                         notes: notes
                     })
                 });
