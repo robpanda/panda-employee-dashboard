@@ -1052,8 +1052,8 @@
                 const firstName = employee['First Name'] || employee.first_name || '';
                 const lastName = employee['Last Name'] || employee.last_name || '';
                 const fullName = `${firstName} ${lastName}`.trim();
-                const email = employee.email || employee.Email || '';
-                const office = employee['Office Location'] || employee.office_location || employee.location || '';
+                const email = employee.email || employee.Email || employee['Work Email'] || employee.work_email || '';
+                const office = employee['Office Location'] || employee.office_location || employee.office || employee.location || '';
 
                 document.getElementById('employeeName').value = fullName;
                 document.getElementById('employeeEmail').value = email;
