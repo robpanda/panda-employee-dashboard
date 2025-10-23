@@ -230,7 +230,10 @@ def create_employee(event):
         
         # Don't clear existing data - we'll update/merge instead
         print(f'Processing {len(employees_data)} employees for bulk import/update')
-        
+
+        # Track employee IDs from CSV to identify terminated employees
+        active_employee_ids = set()
+
         # Insert new employees
         success_count = 0
         with employees_table.batch_writer() as batch:
@@ -289,6 +292,9 @@ def create_employee(event):
                     
                     print(f'Extracted names for {emp_id}: First="{first_name}", Last="{last_name}"')
                     
+                    # Track this employee as active (in the CSV)
+                    active_employee_ids.add(str(emp_id))
+
                     employee = {
                         'id': str(emp_id),
                         'employee_id': str(emp_id),
@@ -309,8 +315,8 @@ def create_employee(event):
                         'Merch Requested': emp_data.get('Merch Requested', emp_data.get('merch_requested', '')),
                         'Merch Sent': emp_data.get('Merch Sent', emp_data.get('merch_sent', 'No')),
                         'Merch Sent Date': emp_data.get('Merch Sent Date', emp_data.get('merch_sent_date', '')),
-                        'Terminated': emp_data.get('Terminated', emp_data.get('terminated', 'No')),
-                        'Termination Date': emp_data.get('Termination Date', emp_data.get('termination_date', '')),
+                        'Terminated': 'No',  # CSV contains active employees only
+                        'Termination Date': '',  # Clear any previous termination
                         'points_manager': is_points_manager,
                         'points_budget': 500 if is_points_manager == 'Yes' else 0,
                         'updated_at': datetime.now().isoformat()
@@ -338,11 +344,69 @@ def create_employee(event):
                 except Exception as e:
                     print(f'Error inserting employee {emp_data}: {e}')
                     continue
-        
+
+        # Mark employees not in CSV as terminated
+        print(f'Checking for employees to mark as terminated (not in CSV of {len(active_employee_ids)} active employees)')
+        try:
+            # Scan all employees in database
+            all_employees_response = employees_table.scan()
+            all_employees = all_employees_response['Items']
+
+            terminated_count = 0
+            emails_sent = 0
+            newly_terminated = []
+
+            with employees_table.batch_writer() as batch:
+                for emp in all_employees:
+                    emp_id = emp.get('id', emp.get('employee_id', ''))
+                    if str(emp_id) not in active_employee_ids:
+                        # This employee is not in the active CSV - mark as terminated
+                        current_terminated = emp.get('Terminated', 'No')
+                        current_term_date = emp.get('Termination Date', '')
+
+                        # Only update if not already terminated
+                        if current_terminated != 'Yes' or not current_term_date:
+                            print(f'Marking employee {emp_id} as terminated: {emp.get("First Name", "")} {emp.get("Last Name", "")}')
+
+                            # Track for termination email
+                            if current_terminated != 'Yes':
+                                newly_terminated.append({
+                                    'employee': emp,
+                                    'termination_date': datetime.now().strftime('%Y-%m-%d')
+                                })
+
+                            emp['Terminated'] = 'Yes'
+                            emp['Termination Date'] = datetime.now().strftime('%Y-%m-%d')
+                            emp['updated_at'] = datetime.now().isoformat()
+                            batch.put_item(Item=emp)
+                            terminated_count += 1
+
+            print(f'Marked {terminated_count} employees as terminated')
+
+            # Send termination emails for newly terminated employees
+            for term_info in newly_terminated:
+                employee_for_email = term_info['employee']
+                term_date = term_info['termination_date']
+                try:
+                    send_termination_refund_email_if_needed(employee_for_email, term_date)
+                    emails_sent += 1
+                except Exception as email_err:
+                    print(f'Error sending termination email for {employee_for_email.get("id")}: {email_err}')
+
+            print(f'Sent {emails_sent} termination notification emails')
+
+            message = f'{success_count} employees saved successfully (out of {len(employees_data)} processed). {terminated_count} employees marked as terminated.'
+            if emails_sent > 0:
+                message += f' {emails_sent} termination notification emails sent.'
+
+        except Exception as e:
+            print(f'Error marking terminated employees: {e}')
+            message = f'{success_count} employees saved successfully (out of {len(employees_data)} processed). Error checking for terminated employees: {str(e)}'
+
         return {
             'statusCode': 200,
             'headers': get_cors_headers(),
-            'body': json.dumps({'message': f'{success_count} employees saved successfully (out of {len(employees_data)} processed)'})
+            'body': json.dumps({'message': message})
         }
     
     # Handle single employee from admin form
