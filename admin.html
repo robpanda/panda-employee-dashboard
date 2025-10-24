@@ -1048,8 +1048,14 @@
                     const officeB = (b.office || '').toLowerCase();
                     return sortDirection === 'asc' ? officeA.localeCompare(officeB) : officeB.localeCompare(officeA);
                 } else if (sortColumn === 'status') {
-                    const statusA = ((a['Terminated'] || a.terminated || 'No') === 'Yes' ? 'terminated' : 'active');
-                    const statusB = ((b['Terminated'] || b.terminated || 'No') === 'Yes' ? 'terminated' : 'active');
+                    const isTerminatedA = a.Terminated === 'Yes' || a.terminated === 'Yes' || a.status === 'terminated' ||
+                                        a.status === 'inactive' || a['Employee Status Code'] === 'T' ||
+                                        a['Termination Date'] || a.termination_date;
+                    const isTerminatedB = b.Terminated === 'Yes' || b.terminated === 'Yes' || b.status === 'terminated' ||
+                                        b.status === 'inactive' || b['Employee Status Code'] === 'T' ||
+                                        b['Termination Date'] || b.termination_date;
+                    const statusA = isTerminatedA ? 'terminated' : 'active';
+                    const statusB = isTerminatedB ? 'terminated' : 'active';
                     return sortDirection === 'asc' ? statusA.localeCompare(statusB) : statusB.localeCompare(statusA);
                 } else if (sortColumn === 'points') {
                     const pointsA = parseInt(a.points || a['Panda Points'] || 0);
@@ -1080,8 +1086,17 @@
                 const department = emp['Department'] || emp.department || '-';
                 const manager = emp.manager || emp.supervisor || '-';
                 const office = emp.office || '-';
-                const terminated = emp['Terminated'] || emp.terminated || 'No';
-                const status = terminated === 'Yes' ? 'terminated' : 'active';
+
+                // Check termination status properly (matching employee.html logic)
+                const isTerminated = emp.Terminated === 'Yes' ||
+                                   emp.terminated === 'Yes' ||
+                                   emp.status === 'terminated' ||
+                                   emp.status === 'inactive' ||
+                                   emp['Employee Status Code'] === 'T' ||
+                                   emp['Termination Date'] ||
+                                   emp.termination_date;
+
+                const status = isTerminated ? 'terminated' : 'active';
                 const lastLogin = emp.last_login ? new Date(emp.last_login).toLocaleDateString() : 'Never';
                 
                 return `
@@ -1175,8 +1190,17 @@
                 const empId = (emp.employee_id || emp.id || '').toLowerCase();
                 const department = emp['Department'] || emp.department || '';
                 const empOffice = emp.office || '';
-                const terminated = emp['Terminated'] || emp.terminated || 'No';
-                const empStatus = terminated === 'Yes' ? 'terminated' : 'active';
+
+                // Check termination status properly (matching employee.html logic)
+                const isTerminated = emp.Terminated === 'Yes' ||
+                                   emp.terminated === 'Yes' ||
+                                   emp.status === 'terminated' ||
+                                   emp.status === 'inactive' ||
+                                   emp['Employee Status Code'] === 'T' ||
+                                   emp['Termination Date'] ||
+                                   emp.termination_date;
+
+                const empStatus = isTerminated ? 'terminated' : 'active';
 
                 const matchesSearch = !search || name.includes(search) || email.includes(search) || empId.includes(search);
                 const matchesDept = !dept || department === dept;
@@ -1244,8 +1268,15 @@
         function updateStats() {
             const total = employees.length;
             const active = employees.filter(e => {
-                const terminated = e['Terminated'] || e.terminated || 'No';
-                return terminated === 'No';
+                // Check termination status properly (matching employee.html logic)
+                const isTerminated = e.Terminated === 'Yes' ||
+                                   e.terminated === 'Yes' ||
+                                   e.status === 'terminated' ||
+                                   e.status === 'inactive' ||
+                                   e['Employee Status Code'] === 'T' ||
+                                   e['Termination Date'] ||
+                                   e.termination_date;
+                return !isTerminated;
             }).length;
             const terminated = total - active;
             const depts = new Set(employees.map(e => e['Department'] || e.department).filter(Boolean)).size;
