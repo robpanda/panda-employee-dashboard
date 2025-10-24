@@ -67,11 +67,8 @@ OFFICE_LOCATIONS = [
 
 
 def get_cors_headers():
-    """Return CORS headers for all responses"""
+    """Return headers for all responses - CORS handled by Lambda Function URL config"""
     return {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
         'Content-Type': 'application/json'
     }
 
