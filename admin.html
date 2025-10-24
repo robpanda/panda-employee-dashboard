@@ -368,7 +368,7 @@
                                 <div class="col-md-2">
                                     <select class="form-select" id="statusFilter" onchange="filterEmployees()">
                                         <option value="">All Status</option>
-                                        <option value="active">Active</option>
+                                        <option value="active" selected>Active</option>
                                         <option value="inactive">Inactive</option>
                                         <option value="terminated">Terminated</option>
                                     </select>
@@ -994,14 +994,19 @@
 
         async function loadEmployees() {
             try {
-                const response = await fetch(`${API_URL}/employees`);
+                // Add cache buster to force fresh data
+                const cacheBuster = `?t=${new Date().getTime()}`;
+                const response = await fetch(`${API_URL}/employees${cacheBuster}`);
                 const data = await response.json();
                 employees = data.employees || data || [];
+                console.log(`Loaded ${employees.length} employees from API`);
                 displayEmployees();
                 populateFilters();
                 updateStats();
                 loadDepartments();
                 loadManagers();
+                // Apply active filter by default
+                filterEmployees();
             } catch (error) {
                 console.error('Error loading employees:', error);
                 displayEmployees([]);
