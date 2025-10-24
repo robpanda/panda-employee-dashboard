@@ -34,6 +34,7 @@ s3 = boto3.client('s3', region_name='us-east-2')
 ses = boto3.client('ses', region_name='us-east-2')
 assets_table = dynamodb.Table('panda-assets')
 employees_table = dynamodb.Table('panda-employees')
+inventory_items_table = dynamodb.Table('panda-inventory-items')
 
 # Configuration
 SES_SENDER_EMAIL = 'pandanews@pandaexteriors.com'  # Must be verified in SES
@@ -415,6 +416,19 @@ def lambda_handler(event, context):
             return get_reports_by_equipment(event)
         elif path == '/reports/by-office' and method == 'GET':
             return get_reports_by_office(event)
+        elif path == '/inventory-items' and method == 'GET':
+            return list_inventory_items(event)
+        elif path == '/inventory-items' and method == 'POST':
+            return create_inventory_item(event)
+        elif path.startswith('/inventory-items/') and method == 'GET':
+            item_id = path.split('/')[-1]
+            return get_inventory_item(item_id)
+        elif path.startswith('/inventory-items/') and method == 'PUT':
+            item_id = path.split('/')[-1]
+            return update_inventory_item(item_id, event)
+        elif path.startswith('/inventory-items/') and method == 'DELETE':
+            item_id = path.split('/')[-1]
+            return delete_inventory_item(item_id)
         else:
             return {
                 'statusCode': 404,
@@ -1465,6 +1479,220 @@ def get_reports_by_office(event):
 
     except Exception as e:
         print(f"Error generating office report: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
+        }
+
+
+# ============================================================================
+# INVENTORY ITEMS MANAGEMENT
+# ============================================================================
+
+def list_inventory_items(event):
+    """List all inventory items"""
+    try:
+        response = inventory_items_table.scan()
+        items = response.get('Items', [])
+
+        # Convert Decimal to float for JSON serialization
+        items_clean = []
+        for item in items:
+            items_clean.append({
+                'id': item.get('id'),
+                'name': item.get('name'),
+                'quantity': int(item.get('quantity', 0)),
+                'price': float(item.get('price', 0)),
+                'created_at': item.get('created_at'),
+                'updated_at': item.get('updated_at')
+            })
+
+        # Sort by name
+        items_clean.sort(key=lambda x: x['name'].lower())
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'items': items_clean
+            })
+        }
+    except Exception as e:
+        print(f"Error listing inventory items: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
+        }
+
+
+def get_inventory_item(item_id):
+    """Get a single inventory item by ID"""
+    try:
+        response = inventory_items_table.get_item(Key={'id': item_id})
+
+        if 'Item' not in response:
+            return {
+                'statusCode': 404,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Item not found'})
+            }
+
+        item = response['Item']
+        item_clean = {
+            'id': item.get('id'),
+            'name': item.get('name'),
+            'quantity': int(item.get('quantity', 0)),
+            'price': float(item.get('price', 0)),
+            'created_at': item.get('created_at'),
+            'updated_at': item.get('updated_at')
+        }
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'item': item_clean
+            })
+        }
+    except Exception as e:
+        print(f"Error getting inventory item: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
+        }
+
+
+def create_inventory_item(event):
+    """Create a new inventory item"""
+    try:
+        body = json.loads(event.get('body', '{}'))
+
+        # Validate required fields
+        if 'name' not in body or not body['name']:
+            return {
+                'statusCode': 400,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Item name is required'})
+            }
+
+        item_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+
+        item = {
+            'id': item_id,
+            'name': body['name'],
+            'quantity': Decimal(str(body.get('quantity', 0))),
+            'price': Decimal(str(body.get('price', 0))),
+            'created_at': timestamp,
+            'updated_at': timestamp
+        }
+
+        inventory_items_table.put_item(Item=item)
+
+        return {
+            'statusCode': 201,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'item_id': item_id,
+                'message': 'Item created successfully'
+            })
+        }
+    except Exception as e:
+        print(f"Error creating inventory item: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
+        }
+
+
+def update_inventory_item(item_id, event):
+    """Update an existing inventory item"""
+    try:
+        # Check if item exists
+        response = inventory_items_table.get_item(Key={'id': item_id})
+        if 'Item' not in response:
+            return {
+                'statusCode': 404,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Item not found'})
+            }
+
+        body = json.loads(event.get('body', '{}'))
+
+        # Validate required fields
+        if 'name' not in body or not body['name']:
+            return {
+                'statusCode': 400,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Item name is required'})
+            }
+
+        timestamp = datetime.now().isoformat()
+
+        # Update item
+        inventory_items_table.update_item(
+            Key={'id': item_id},
+            UpdateExpression='SET #name = :name, quantity = :quantity, price = :price, updated_at = :updated_at',
+            ExpressionAttributeNames={
+                '#name': 'name'
+            },
+            ExpressionAttributeValues={
+                ':name': body['name'],
+                ':quantity': Decimal(str(body.get('quantity', 0))),
+                ':price': Decimal(str(body.get('price', 0))),
+                ':updated_at': timestamp
+            }
+        )
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'message': 'Item updated successfully'
+            })
+        }
+    except Exception as e:
+        print(f"Error updating inventory item: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
+        }
+
+
+def delete_inventory_item(item_id):
+    """Delete an inventory item"""
+    try:
+        # Check if item exists
+        response = inventory_items_table.get_item(Key={'id': item_id})
+        if 'Item' not in response:
+            return {
+                'statusCode': 404,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Item not found'})
+            }
+
+        # Delete the item
+        inventory_items_table.delete_item(Key={'id': item_id})
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'message': 'Item deleted successfully'
+            })
+        }
+    except Exception as e:
+        print(f"Error deleting inventory item: {str(e)}")
         return {
             'statusCode': 500,
             'headers': get_cors_headers(),
