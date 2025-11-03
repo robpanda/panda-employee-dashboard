@@ -685,7 +685,7 @@ def perform_regular_import(new_employees):
     try:
         imported_count = 0
         updated_count = 0
-        
+
         for employee in new_employees:
             try:
                 existing = table.get_item(Key={'last_name': employee['last_name']})
@@ -695,12 +695,23 @@ def perform_regular_import(new_employees):
                     employee['points_lifetime'] = existing_item.get('points_lifetime', Decimal('0'))
                     employee['points_balance'] = existing_item.get('points_balance', Decimal('0'))
                     employee['points_redeemed'] = existing_item.get('points_redeemed', Decimal('0'))
+
+                    # PRESERVE EXISTING EMAILS IF NEW VALUES ARE BLANK
+                    if not employee.get('Email', '').strip():
+                        employee['Email'] = existing_item.get('Email', '')
+                    if not employee.get('email', '').strip():
+                        employee['email'] = existing_item.get('email', '')
+                    if not employee.get('Work Email', '').strip():
+                        employee['Work Email'] = existing_item.get('Work Email', '')
+                    if not employee.get('work_email', '').strip():
+                        employee['work_email'] = existing_item.get('work_email', '')
+
                     updated_count += 1
                 else:
                     imported_count += 1
             except:
                 imported_count += 1
-            
+
             table.put_item(Item=employee)
         
         return {

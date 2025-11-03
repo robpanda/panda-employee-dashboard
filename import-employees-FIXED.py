@@ -49,6 +49,10 @@ def import_employees():
                 pass
 
             # Create employee record with ACTUAL emails from CSV
+            # PRESERVE existing emails if CSV has blank values
+            email_to_use = email if email else (existing.get('Email', '') if existing else '')
+            work_email_to_use = work_email if work_email else (existing.get('Work Email', '') if existing else '')
+
             employee_data = {
                 'employee_id': employee_id,
                 'id': employee_id,  # Duplicate for compatibility
@@ -58,11 +62,11 @@ def import_employees():
                 'Last Name': last_name,     # Capitalized version
                 'name': f"{first_name} {last_name}",  # IMPORTANT: Build full name
 
-                # ACTUAL EMAILS FROM CSV
-                'Email': email,              # Capitalized version (primary)
-                'email': email.lower() if email else '',  # Lowercase version
-                'Work Email': work_email,    # Capitalized version
-                'work_email': work_email.lower() if work_email else '',  # Lowercase version
+                # EMAILS: Use CSV value if present, otherwise preserve existing
+                'Email': email_to_use,              # Capitalized version (primary)
+                'email': email_to_use.lower() if email_to_use else '',  # Lowercase version
+                'Work Email': work_email_to_use,    # Capitalized version
+                'work_email': work_email_to_use.lower() if work_email_to_use else '',  # Lowercase version
 
                 # Other fields from CSV
                 'Department': row.get('Department Description', '').strip(),
