@@ -1,0 +1,626 @@
+<!-- ADD THIS SECTION RIGHT BEFORE THE CLOSING </div> BEFORE SCRIPT TAG -->
+
+    <!-- Vehicle Modal -->
+    <div class="modal fade" id="vehicleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add/Edit Vehicle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="vehicleForm">
+                        <input type="hidden" id="vehicleId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Asset Name *</label>
+                                <input type="text" class="form-control" id="vehicleAssetName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status *</label>
+                                <select class="form-select" id="vehicleStatus" required>
+                                    <option value="floater">Floater</option>
+                                    <option value="assigned">Assigned</option>
+                                    <option value="downed">Downed</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Year</label>
+                                <input type="text" class="form-control" id="vehicleYear">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Make</label>
+                                <input type="text" class="form-control" id="vehicleMake">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-control" id="vehicleModel">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">VIN</label>
+                                <input type="text" class="form-control" id="vehicleVin">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">License Plate</label>
+                                <input type="text" class="form-control" id="vehiclePlate">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Current Driver</label>
+                                <input type="text" class="form-control" id="vehicleDriver">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Territory</label>
+                                <select class="form-select" id="vehicleTerritory">
+                                    <option value="">Select...</option>
+                                    <option>MD</option>
+                                    <option>VA</option>
+                                    <option>DC</option>
+                                    <option>NJ</option>
+                                    <option>NC</option>
+                                    <option>KOP</option>
+                                    <option>DE</option>
+                                    <option>MA</option>
+                                    <option>Tampa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveVehicle()">Save Vehicle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accident Modal -->
+    <div class="modal fade" id="accidentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Report Accident</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accidentForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Vehicle *</label>
+                                <select class="form-select" id="accidentVehicle" required></select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Accident Date *</label>
+                                <input type="date" class="form-control" id="accidentDate" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Driver</label>
+                                <input type="text" class="form-control" id="accidentDriver">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Claim Number</label>
+                                <input type="text" class="form-control" id="accidentClaim">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Estimate ($)</label>
+                                <input type="number" class="form-control" id="accidentEstimate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Actual Cost ($)</label>
+                                <input type="number" class="form-control" id="accidentCost">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="accidentDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="saveAccident()">Save Accident</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EZ Pass Modal -->
+    <div class="modal fade" id="ezpassModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add EZ Pass</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="ezpassForm">
+                        <div class="mb-3">
+                            <label class="form-label">EZ Pass ID *</label>
+                            <input type="text" class="form-control" id="ezpassId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle</label>
+                            <select class="form-select" id="ezpassVehicle"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Driver</label>
+                            <input type="text" class="form-control" id="ezpassDriver">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Plate Number</label>
+                            <input type="text" class="form-control" id="ezpassPlate">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Territory</label>
+                            <select class="form-select" id="ezpassTerritory">
+                                <option value="">Select...</option>
+                                <option>MD</option>
+                                <option>VA</option>
+                                <option>NJ</option>
+                                <option>NC</option>
+                                <option>KOP</option>
+                                <option>DE</option>
+                                <option>MA</option>
+                                <option>Tampa</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-info" onclick="saveEZPass()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Modal -->
+    <div class="modal fade" id="maintenanceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Schedule Maintenance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="maintenanceForm">
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle *</label>
+                            <select class="form-select" id="maintenanceVehicle" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Type *</label>
+                            <select class="form-select" id="maintenanceType" required>
+                                <option value="">Select...</option>
+                                <option value="emissions">Emissions</option>
+                                <option value="registration">Registration</option>
+                                <option value="insurance">Insurance</option>
+                                <option value="inspection">Inspection</option>
+                                <option value="oil_change">Oil Change</option>
+                                <option value="repair">Repair</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Due Date *</label>
+                            <input type="date" class="form-control" id="maintenanceDueDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Estimated Cost ($)</label>
+                            <input type="number" class="form-control" id="maintenanceCost" value="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" id="maintenanceNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveMaintenance()">Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- ADD THIS JAVASCRIPT CODE AT THE END OF THE SCRIPT SECTION (before </script> tag) -->
+
+<script>
+// FLEET MANAGEMENT CODE - Add this to the existing script section
+
+const FLEET_API_URL = 'https://z6q74akq5f.execute-api.us-east-2.amazonaws.com/prod';
+let allVehicles = [];
+let currentVehicleFilter = 'all';
+
+// Load fleet data when vehicles tab is shown
+document.getElementById('vehicles-tab')?.addEventListener('shown.bs.tab', function() {
+    loadFleetVehicles();
+});
+
+document.getElementById('accidents-tab')?.addEventListener('shown.bs.tab', loadAccidents);
+document.getElementById('ezpass-tab')?.addEventListener('shown.bs.tab', loadEZPass);
+document.getElementById('maintenance-tab')?.addEventListener('shown.bs.tab', loadMaintenance);
+
+async function loadFleetVehicles() {
+    try {
+        const response = await fetch(FLEET_API_URL + '/vehicles');
+        const vehicles = await response.json();
+        allVehicles = vehicles;
+
+        // Update counts
+        document.getElementById('totalVehicles').textContent = vehicles.length;
+        document.getElementById('assignedVehicles').textContent = vehicles.filter(v => v.status === 'assigned').length;
+        document.getElementById('floaterVehicles').textContent = vehicles.filter(v => v.status === 'floater').length;
+        document.getElementById('downedVehicles').textContent = vehicles.filter(v => v.status === 'downed').length;
+        document.getElementById('vehicleCount').textContent = vehicles.length;
+
+        displayVehicles(vehicles);
+    } catch (error) {
+        console.error('Error loading vehicles:', error);
+        document.getElementById('vehiclesTableBody').innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading vehicles</td></tr>';
+    }
+}
+
+function displayVehicles(vehicles) {
+    const tbody = document.getElementById('vehiclesTableBody');
+    if (vehicles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No vehicles found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = vehicles.map(v => `
+        <tr>
+            <td><strong>${v.vehicle_id || v.asset_name}</strong></td>
+            <td>${v.year} ${v.make} ${v.model}</td>
+            <td><small>${v.vin || '-'}</small></td>
+            <td>${v.license_plate || '-'}</td>
+            <td><span class="badge bg-${v.status === 'assigned' ? 'success' : v.status === 'floater' ? 'primary' : 'danger'}">${v.status}</span></td>
+            <td>${v.current_driver || '-'}</td>
+            <td>${v.territory || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="editVehicle('${v.vehicle_id}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function filterVehicleStatus(status) {
+    currentVehicleFilter = status;
+    let filtered = allVehicles;
+
+    if (status !== 'all') {
+        filtered = allVehicles.filter(v => v.status === status);
+    }
+
+    const searchTerm = document.getElementById('vehicleSearch').value.toLowerCase();
+    if (searchTerm) {
+        filtered = filtered.filter(v =>
+            (v.asset_name || '').toLowerCase().includes(searchTerm) ||
+            (v.current_driver || '').toLowerCase().includes(searchTerm) ||
+            (v.vin || '').toLowerCase().includes(searchTerm) ||
+            (v.license_plate || '').toLowerCase().includes(searchTerm)
+        );
+    }
+
+    displayVehicles(filtered);
+
+    // Update button states
+    document.querySelectorAll('.btn-group button').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function filterVehicles() {
+    filterVehicleStatus(currentVehicleFilter);
+}
+
+function showAddVehicleModal() {
+    document.getElementById('vehicleForm').reset();
+    document.getElementById('vehicleId').value = '';
+    new bootstrap.Modal(document.getElementById('vehicleModal')).show();
+}
+
+async function saveVehicle() {
+    const vehicleData = {
+        vehicle_id: document.getElementById('vehicleId').value,
+        asset_name: document.getElementById('vehicleAssetName').value,
+        year: document.getElementById('vehicleYear').value,
+        make: document.getElementById('vehicleMake').value,
+        model: document.getElementById('vehicleModel').value,
+        vin: document.getElementById('vehicleVin').value,
+        license_plate: document.getElementById('vehiclePlate').value,
+        status: document.getElementById('vehicleStatus').value,
+        current_driver: document.getElementById('vehicleDriver').value,
+        territory: document.getElementById('vehicleTerritory').value
+    };
+
+    try {
+        const method = vehicleData.vehicle_id ? 'PUT' : 'POST';
+        const response = await fetch(FLEET_API_URL + '/vehicles', {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vehicleData)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('vehicleModal')).hide();
+            loadFleetVehicles();
+            alert('Vehicle saved successfully!');
+        }
+    } catch (error) {
+        console.error('Error saving vehicle:', error);
+        alert('Error saving vehicle');
+    }
+}
+
+async function loadAccidents() {
+    try {
+        const response = await fetch(FLEET_API_URL + '/accidents');
+        const accidents = await response.json();
+
+        const tbody = document.getElementById('accidentsTableBody');
+        if (accidents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No accidents reported</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = accidents.map(acc => `
+            <tr>
+                <td>${new Date(acc.accident_date).toLocaleDateString()}</td>
+                <td>${acc.asset_name}</td>
+                <td>${acc.driver || '-'}</td>
+                <td>${acc.claim_number || '-'}</td>
+                <td>$${acc.panda_repair_estimate || 0}</td>
+                <td>$${acc.actual_repair_cost || 0}</td>
+                <td><span class="badge bg-${acc.status === 'completed' ? 'success' : 'warning'}">${acc.status}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewAccident('${acc.accident_id}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading accidents:', error);
+    }
+}
+
+function showAddAccidentModal() {
+    // Populate vehicle dropdown
+    const select = document.getElementById('accidentVehicle');
+    select.innerHTML = '<option value="">Select vehicle...</option>';
+    allVehicles.forEach(v => {
+        select.innerHTML += `<option value="${v.vehicle_id}">${v.asset_name} - ${v.year} ${v.make}</option>`;
+    });
+
+    document.getElementById('accidentForm').reset();
+    new bootstrap.Modal(document.getElementById('accidentModal')).show();
+}
+
+async function saveAccident() {
+    const accidentData = {
+        vehicle_id: document.getElementById('accidentVehicle').value,
+        accident_date: document.getElementById('accidentDate').value,
+        driver: document.getElementById('accidentDriver').value,
+        claim_number: document.getElementById('accidentClaim').value,
+        panda_repair_estimate: parseFloat(document.getElementById('accidentEstimate').value) || 0,
+        actual_repair_cost: parseFloat(document.getElementById('accidentCost').value) || 0,
+        video_description: document.getElementById('accidentDescription').value,
+        status: 'pending'
+    };
+
+    try {
+        const response = await fetch(FLEET_API_URL + '/accidents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(accidentData)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('accidentModal')).hide();
+            loadAccidents();
+            alert('Accident reported successfully!');
+        }
+    } catch (error) {
+        console.error('Error saving accident:', error);
+        alert('Error saving accident');
+    }
+}
+
+async function loadEZPass() {
+    try {
+        const response = await fetch(FLEET_API_URL + '/ezpass');
+        const ezpass = await response.json();
+
+        const tbody = document.getElementById('ezpassTableBody');
+        if (ezpass.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No EZ Pass records</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = ezpass.map(ez => `
+            <tr>
+                <td><strong>${ez.ezpass_id}</strong></td>
+                <td>${ez.asset_name || '-'}</td>
+                <td>${ez.driver || '-'}</td>
+                <td>${ez.plate_number || '-'}</td>
+                <td>${ez.territory || '-'}</td>
+                <td><span class="badge bg-${ez.status === 'active' ? 'success' : 'secondary'}">${ez.status}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editEZPass('${ez.ezpass_id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading EZ Pass:', error);
+    }
+}
+
+function showAddEZPassModal() {
+    const select = document.getElementById('ezpassVehicle');
+    select.innerHTML = '<option value="">Select vehicle...</option>';
+    allVehicles.forEach(v => {
+        select.innerHTML += `<option value="${v.vehicle_id}">${v.asset_name}</option>`;
+    });
+
+    document.getElementById('ezpassForm').reset();
+    new bootstrap.Modal(document.getElementById('ezpassModal')).show();
+}
+
+async function saveEZPass() {
+    const ezpassData = {
+        ezpass_id: document.getElementById('ezpassId').value,
+        vehicle_id: document.getElementById('ezpassVehicle').value,
+        driver: document.getElementById('ezpassDriver').value,
+        plate_number: document.getElementById('ezpassPlate').value,
+        territory: document.getElementById('ezpassTerritory').value,
+        status: 'active'
+    };
+
+    try {
+        const response = await fetch(FLEET_API_URL + '/ezpass', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ezpassData)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('ezpassModal')).hide();
+            loadEZPass();
+            alert('EZ Pass added successfully!');
+        }
+    } catch (error) {
+        console.error('Error saving EZ Pass:', error);
+        alert('Error saving EZ Pass');
+    }
+}
+
+async function loadMaintenance() {
+    try {
+        const [maintenanceResp, overdueResp] = await Promise.all([
+            fetch(FLEET_API_URL + '/maintenance'),
+            fetch(FLEET_API_URL + '/overdue-maintenance')
+        ]);
+
+        const maintenance = await maintenanceResp.json();
+        const overdue = await overdueResp.json();
+
+        if (overdue.length > 0) {
+            document.getElementById('overdueAlert').style.display = 'block';
+            document.getElementById('overdueCount').textContent = overdue.length;
+        }
+
+        const tbody = document.getElementById('maintenanceTableBody');
+        if (maintenance.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No maintenance scheduled</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = maintenance.map(m => `
+            <tr>
+                <td>${m.asset_name}</td>
+                <td>${m.type}</td>
+                <td>${new Date(m.due_date).toLocaleDateString()}</td>
+                <td><span class="badge bg-${m.status === 'completed' ? 'success' : m.status === 'overdue' ? 'danger' : 'warning'}">${m.status}</span></td>
+                <td>$${m.cost || 0}</td>
+                <td>
+                    <button class="btn btn-sm btn-success" onclick="completeMaintenance('${m.maintenance_id}')">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading maintenance:', error);
+    }
+}
+
+function showAddMaintenanceModal() {
+    const select = document.getElementById('maintenanceVehicle');
+    select.innerHTML = '<option value="">Select vehicle...</option>';
+    allVehicles.forEach(v => {
+        select.innerHTML += `<option value="${v.vehicle_id}">${v.asset_name}</option>`;
+    });
+
+    document.getElementById('maintenanceForm').reset();
+    new bootstrap.Modal(document.getElementById('maintenanceModal')).show();
+}
+
+async function saveMaintenance() {
+    const maintenanceData = {
+        vehicle_id: document.getElementById('maintenanceVehicle').value,
+        type: document.getElementById('maintenanceType').value,
+        due_date: document.getElementById('maintenanceDueDate').value,
+        cost: parseFloat(document.getElementById('maintenanceCost').value) || 0,
+        notes: document.getElementById('maintenanceNotes').value,
+        status: 'pending'
+    };
+
+    try {
+        const response = await fetch(FLEET_API_URL + '/maintenance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(maintenanceData)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('maintenanceModal')).hide();
+            loadMaintenance();
+            alert('Maintenance scheduled successfully!');
+        }
+    } catch (error) {
+        console.error('Error scheduling maintenance:', error);
+        alert('Error scheduling maintenance');
+    }
+}
+
+function editVehicle(vehicleId) {
+    // TODO: Load vehicle data and show modal
+    alert('Edit vehicle: ' + vehicleId);
+}
+
+function viewAccident(accidentId) {
+    alert('View accident: ' + accidentId);
+}
+
+function editEZPass(ezpassId) {
+    alert('Edit EZ Pass: ' + ezpassId);
+}
+
+async function completeMaintenance(maintenanceId) {
+    if (!confirm('Mark this maintenance as completed?')) return;
+
+    try {
+        const response = await fetch(FLEET_API_URL + '/maintenance', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                maintenance_id: maintenanceId,
+                status: 'completed',
+                completed_date: new Date().toISOString().split('T')[0]
+            })
+        });
+
+        if (response.ok) {
+            loadMaintenance();
+            alert('Maintenance marked as completed!');
+        }
+    } catch (error) {
+        console.error('Error completing maintenance:', error);
+        alert('Error completing maintenance');
+    }
+}
+</script>

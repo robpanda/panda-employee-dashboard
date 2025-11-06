@@ -2205,7 +2205,7 @@
 
 // FLEET MANAGEMENT CODE - Add this to the existing script section
 
-const FLEET_API_URL = 'https://fzvmganebjklnse547t4rh3siu0cfaei.lambda-url.us-east-2.on.aws';
+const FLEET_API_URL = 'https://z6q74akq5f.execute-api.us-east-2.amazonaws.com/prod';
 let allVehicles = [];
 let currentVehicleFilter = 'all';
 

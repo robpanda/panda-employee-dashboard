@@ -6,7 +6,7 @@ echo "🚗 Deploying Fleet Management Lambda Function..."
 
 # Variables
 FUNCTION_NAME="panda-fleet-management"
-LAMBDA_ROLE="arn:aws:iam::679128292059:role/lambda-dynamodb-role"
+LAMBDA_ROLE="arn:aws:iam::679128292059:role/amplify-login-lambda-13667d26"
 REGION="us-east-2"
 API_ID="z6q74akq5f"
 
