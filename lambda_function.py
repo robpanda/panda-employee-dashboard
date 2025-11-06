@@ -2073,16 +2073,21 @@ def handle_admin_login(event):
         method = event['httpMethod']
     else:
         method = 'POST'
-    
+
     if method != 'POST':
         return {
             'statusCode': 405,
             'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Method not allowed'})
         }
-    
+
     try:
-        body = json.loads(event.get('body', '{}'))
+        # Handle both string and dict body formats
+        body_data = event.get('body', '{}')
+        if isinstance(body_data, str):
+            body = json.loads(body_data)
+        else:
+            body = body_data
         email = body.get('email', '').strip().lower()
         password = body.get('password', '')
         
