@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Asset Management - Panda Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
+            min-height: 100vh;
+            color: #374151;
+        }
+        .main-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+            max-width: 1600px;
+            margin: 20px auto;
+            border: 1px solid #f3f4f6;
+        }
+        .utility-nav {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .nav-links { display: flex; gap: 4px; flex: 1; }
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            font-size: 14px;
+        }
+        .nav-link:hover { background: #f9fafb; color: #374151; }
+        .nav-link.active { background: #3b82f6; color: white; font-weight: 500; }
+        .header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
+            padding: 32px 40px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .header h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .content-area { padding: 32px 40px; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .stat-card h3 { font-size: 32px; font-weight: 600; margin: 8px 0; }
+        .stat-card p { color: #6b7280; font-size: 14px; margin: 0; }
+        .table { font-size: 14px; }
+        .table th {
+            background: #fafbfc;
+            font-weight: 500;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .badge { font-size: 12px; font-weight: 400; }
+        .badge-assigned { background: #10b981; }
+        .badge-floater { background: #3b82f6; }
+        .badge-downed { background: #ef4444; }
+        .badge-maintenance { background: #f59e0b; }
+        .badge-sold { background: #6b7280; }
+        .modal-header { border-bottom: 2px solid #f3f4f6; }
+        .modal-footer { border-top: 2px solid #f3f4f6; }
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .search-bar input {
+            flex: 1;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .filter-btn {
+            background: #f3f4f6;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .filter-btn:hover { background: #e5e7eb; }
+        .filter-btn.active { background: #3b82f6; color: white; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="utility-nav">
+            <div class="logo">
+                <img src="panda-logo.png" alt="Panda" style="height: 40px;">
+            </div>
+            <div class="nav-links">
+                <a href="./employee.html" class="nav-link">👥 Employees</a>
+                <a href="./points.html" class="nav-link">⭐ Points</a>
+                <a href="./leads.html" class="nav-link">📊 Leads</a>
+                <a href="./referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="./assets.html" class="nav-link">📦 Assets</a>
+                <a href="./fleet-assets.html" class="nav-link active">🚗 Fleet</a>
+                <a href="./admin.html" class="nav-link">⚙️ Admin</a>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="header">
+            <h1>🚗 Fleet Asset Management</h1>
+            <p>Manage vehicles, accidents, EZ passes, and maintenance</p>
+        </div>
+
+        <div class="content-area">
+            <!-- Stats Dashboard -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <p><i class="fas fa-car"></i> Total Vehicles</p>
+                    <h3 id="totalVehicles">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p><i class="fas fa-user-check"></i> Assigned</p>
+                    <h3 id="assignedCount">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p><i class="fas fa-random"></i> Floaters</p>
+                    <h3 id="floatersCount">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p><i class="fas fa-wrench"></i> Downed</p>
+                    <h3 id="downedCount">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p><i class="fas fa-exclamation-triangle"></i> Accidents</p>
+                    <h3 id="accidentsCount">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p><i class="fas fa-dollar-sign"></i> Fleet Value</p>
+                    <h3 id="fleetValue">$0</h3>
+                </div>
+            </div>
+
+            <!-- Main Tabs -->
+            <ul class="nav nav-pills nav-fill mb-4" id="fleetTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#vehicles">
+                        <i class="fas fa-car me-2"></i>Vehicles
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#accidents">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Accidents
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ezpass">
+                        <i class="fas fa-ticket-alt me-2"></i>EZ Pass
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#maintenance">
+                        <i class="fas fa-tools me-2"></i>Maintenance
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#requests">
+                        <i class="fas fa-clipboard-list me-2"></i>Requests
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- VEHICLES TAB -->
+                <div class="tab-pane fade show active" id="vehicles">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Vehicle Fleet</h5>
+                            <button class="btn btn-primary btn-sm" onclick="showAddVehicleModal()">
+                                <i class="fas fa-plus"></i> Add Vehicle
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-bar">
+                                <input type="text" class="form-control" id="vehicleSearch" placeholder="Search vehicles..." onkeyup="filterVehicles()">
+                                <button class="filter-btn active" data-status="all" onclick="filterByStatus(this, 'all')">All</button>
+                                <button class="filter-btn" data-status="assigned" onclick="filterByStatus(this, 'assigned')">Assigned</button>
+                                <button class="filter-btn" data-status="floater" onclick="filterByStatus(this, 'floater')">Floaters</button>
+                                <button class="filter-btn" data-status="downed" onclick="filterByStatus(this, 'downed')">Downed</button>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Asset ID</th>
+                                            <th>Vehicle</th>
+                                            <th>VIN</th>
+                                            <th>License Plate</th>
+                                            <th>Status</th>
+                                            <th>Driver</th>
+                                            <th>Territory</th>
+                                            <th>Mileage</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vehiclesTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACCIDENTS TAB -->
+                <div class="tab-pane fade" id="accidents">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Accident Reports</h5>
+                            <button class="btn btn-danger btn-sm" onclick="showAddAccidentModal()">
+                                <i class="fas fa-plus"></i> Report Accident
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Vehicle</th>
+                                            <th>Driver</th>
+                                            <th>Claim #</th>
+                                            <th>Estimate</th>
+                                            <th>Actual Cost</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="accidentsTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EZ PASS TAB -->
+                <div class="tab-pane fade" id="ezpass">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">EZ Pass Management</h5>
+                            <button class="btn btn-info btn-sm" onclick="showAddEZPassModal()">
+                                <i class="fas fa-plus"></i> Add EZ Pass
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>EZ Pass ID</th>
+                                            <th>Vehicle</th>
+                                            <th>Driver</th>
+                                            <th>Plate Number</th>
+                                            <th>Territory</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ezpassTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAINTENANCE TAB -->
+                <div class="tab-pane fade" id="maintenance">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Maintenance Schedule</h5>
+                            <button class="btn btn-warning btn-sm" onclick="showAddMaintenanceModal()">
+                                <i class="fas fa-plus"></i> Schedule Maintenance
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning" id="overdueAlert" style="display: none;">
+                                <strong>⚠️ Overdue Maintenance:</strong> <span id="overdueCount">0</span> items need attention
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Vehicle</th>
+                                            <th>Type</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                            <th>Provider</th>
+                                            <th>Cost</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="maintenanceTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REQUESTS TAB -->
+                <div class="tab-pane fade" id="requests">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Vehicle Requests</h5>
+                            <button class="btn btn-success btn-sm" onclick="showRequestVehicleModal()">
+                                <i class="fas fa-plus"></i> Request Vehicle
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Request Date</th>
+                                            <th>Requester</th>
+                                            <th>Vehicle Type</th>
+                                            <th>Duration</th>
+                                            <th>Territory</th>
+                                            <th>Status</th>
+                                            <th>Assigned Vehicle</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="requestsTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Vehicle Modal -->
+    <div class="modal fade" id="vehicleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add/Edit Vehicle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="vehicleForm">
+                        <input type="hidden" id="vehicleId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Asset Name *</label>
+                                <input type="text" class="form-control" id="assetName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status *</label>
+                                <select class="form-select" id="vehicleStatus" required>
+                                    <option value="floater">Floater</option>
+                                    <option value="assigned">Assigned</option>
+                                    <option value="downed">Downed</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Year</label>
+                                <input type="text" class="form-control" id="vehicleYear">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Make</label>
+                                <input type="text" class="form-control" id="vehicleMake">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-control" id="vehicleModel">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">VIN</label>
+                                <input type="text" class="form-control" id="vehicleVin">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">License Plate</label>
+                                <input type="text" class="form-control" id="vehiclePlate">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" id="vehicleDepartment">
+                                    <option value="">Select...</option>
+                                    <option>Executive</option>
+                                    <option>Production</option>
+                                    <option>Insurance</option>
+                                    <option>Sales</option>
+                                    <option>Interiors</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Territory</label>
+                                <select class="form-select" id="vehicleTerritory">
+                                    <option value="">Select...</option>
+                                    <option>MD</option>
+                                    <option>VA</option>
+                                    <option>DC</option>
+                                    <option>NJ</option>
+                                    <option>NC</option>
+                                    <option>KOP</option>
+                                    <option>DE</option>
+                                    <option>MA</option>
+                                    <option>Tampa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Current Driver</label>
+                                <input type="text" class="form-control" id="vehicleDriver">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Driver Email</label>
+                                <input type="email" class="form-control" id="vehicleDriverEmail">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Driver Phone</label>
+                                <input type="tel" class="form-control" id="vehicleDriverPhone">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mileage</label>
+                                <input type="number" class="form-control" id="vehicleMileage">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Unit Value ($)</label>
+                                <input type="number" class="form-control" id="vehicleValue">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Comments</label>
+                            <textarea class="form-control" id="vehicleComments" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveVehicle()">Save Vehicle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Accident Modal -->
+    <div class="modal fade" id="accidentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Report Accident</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accidentForm">
+                        <input type="hidden" id="accidentId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Vehicle *</label>
+                                <select class="form-select" id="accidentVehicle" required></select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Accident Date *</label>
+                                <input type="date" class="form-control" id="accidentDate" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Driver</label>
+                                <input type="text" class="form-control" id="accidentDriver">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Claim Number</label>
+                                <input type="text" class="form-control" id="accidentClaim">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Repair Estimate ($)</label>
+                                <input type="number" class="form-control" id="accidentEstimate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Actual Cost ($)</label>
+                                <input type="number" class="form-control" id="accidentCost">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="accidentDescription" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="accidentPandaFault">
+                                    <label class="form-check-label">Panda At Fault</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="accidentVideo">
+                                    <label class="form-check-label">Video Available</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="accidentPolice">
+                                    <label class="form-check-label">Police Report</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="saveAccident()">Save Accident</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Vehicle Modal -->
+    <div class="modal fade" id="requestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Vehicle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="requestForm">
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle Type *</label>
+                            <select class="form-select" id="requestVehicleType" required>
+                                <option value="">Select...</option>
+                                <option>Truck</option>
+                                <option>Van</option>
+                                <option>SUV</option>
+                                <option>Sedan</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Duration *</label>
+                            <select class="form-select" id="requestDuration" required>
+                                <option value="temporary">Temporary</option>
+                                <option value="permanent">Permanent</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="requestStartDate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="requestEndDate">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Territory</label>
+                            <select class="form-select" id="requestTerritory">
+                                <option value="">Select...</option>
+                                <option>MD</option>
+                                <option>VA</option>
+                                <option>DC</option>
+                                <option>NJ</option>
+                                <option>NC</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purpose</label>
+                            <textarea class="form-control" id="requestPurpose" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveRequest()">Submit Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'https://z6q74akq5f.execute-api.us-east-2.amazonaws.com/prod';
+        let currentStatusFilter = 'all';
+        let allVehicles = [];
+        let allAccidents = [];
+        let allEZPass = [];
+        let allMaintenance = [];
+        let allRequests = [];
+
+        async function loadFleetData() {
+            try {
+                await Promise.all([
+                    loadVehicles(),
+                    loadAccidents(),
+                    loadEZPass(),
+                    loadMaintenance(),
+                    loadRequests(),
+                    loadStats()
+                ]);
+            } catch (error) {
+                console.error('Error loading fleet data:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/fleet-stats`);
+                const stats = await response.json();
+
+                document.getElementById('totalVehicles').textContent = stats.total_vehicles || 0;
+                document.getElementById('assignedCount').textContent = stats.assigned || 0;
+                document.getElementById('floatersCount').textContent = stats.floaters || 0;
+                document.getElementById('downedCount').textContent = stats.downed || 0;
+                document.getElementById('accidentsCount').textContent = stats.total_accidents || 0;
+                document.getElementById('fleetValue').textContent = '$' + (stats.total_fleet_value || 0).toLocaleString();
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadVehicles() {
+            try {
+                const response = await fetch(`${API_URL}/vehicles`);
+                allVehicles = await response.json();
+                displayVehicles(allVehicles);
+            } catch (error) {
+                console.error('Error loading vehicles:', error);
+            }
+        }
+
+        function displayVehicles(vehicles) {
+            const tbody = document.getElementById('vehiclesTableBody');
+            tbody.innerHTML = '';
+
+            vehicles.forEach(vehicle => {
+                const statusBadge = `<span class="badge badge-${vehicle.status}">${vehicle.status}</span>`;
+                const row = `
+                    <tr>
+                        <td>${vehicle.vehicle_id || vehicle.asset_name}</td>
+                        <td><strong>${vehicle.year} ${vehicle.make} ${vehicle.model}</strong></td>
+                        <td>${vehicle.vin || '-'}</td>
+                        <td>${vehicle.license_plate || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td>${vehicle.current_driver || '-'}</td>
+                        <td>${vehicle.territory || '-'}</td>
+                        <td>${vehicle.mileage || 0}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editVehicle('${vehicle.vehicle_id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${vehicle.status === 'floater' ? `
+                            <button class="btn btn-sm btn-success" onclick="checkoutVehicle('${vehicle.vehicle_id}')">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                            ` : ''}
+                            ${vehicle.status === 'assigned' ? `
+                            <button class="btn btn-sm btn-warning" onclick="checkinVehicle('${vehicle.vehicle_id}')">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function filterVehicles() {
+            const searchTerm = document.getElementById('vehicleSearch').value.toLowerCase();
+            let filtered = allVehicles;
+
+            if (currentStatusFilter !== 'all') {
+                filtered = filtered.filter(v => v.status === currentStatusFilter);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(v =>
+                    (v.asset_name || '').toLowerCase().includes(searchTerm) ||
+                    (v.current_driver || '').toLowerCase().includes(searchTerm) ||
+                    (v.vin || '').toLowerCase().includes(searchTerm) ||
+                    (v.license_plate || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            displayVehicles(filtered);
+        }
+
+        function filterByStatus(btn, status) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentStatusFilter = status;
+            filterVehicles();
+        }
+
+        async function loadAccidents() {
+            try {
+                const response = await fetch(`${API_URL}/accidents`);
+                allAccidents = await response.json();
+                displayAccidents(allAccidents);
+            } catch (error) {
+                console.error('Error loading accidents:', error);
+            }
+        }
+
+        function displayAccidents(accidents) {
+            const tbody = document.getElementById('accidentsTableBody');
+            tbody.innerHTML = '';
+
+            accidents.forEach(acc => {
+                const date = new Date(acc.accident_date).toLocaleDateString();
+                const row = `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${acc.asset_name}</td>
+                        <td>${acc.driver || '-'}</td>
+                        <td>${acc.claim_number || '-'}</td>
+                        <td>$${acc.panda_repair_estimate || 0}</td>
+                        <td>$${acc.actual_repair_cost || 0}</td>
+                        <td><span class="badge bg-${acc.status === 'completed' ? 'success' : 'warning'}">${acc.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="viewAccident('${acc.accident_id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        async function loadEZPass() {
+            try {
+                const response = await fetch(`${API_URL}/ezpass`);
+                allEZPass = await response.json();
+                displayEZPass(allEZPass);
+            } catch (error) {
+                console.error('Error loading EZ Pass:', error);
+            }
+        }
+
+        function displayEZPass(records) {
+            const tbody = document.getElementById('ezpassTableBody');
+            tbody.innerHTML = '';
+
+            records.forEach(ez => {
+                const row = `
+                    <tr>
+                        <td>${ez.ezpass_id}</td>
+                        <td>${ez.asset_name || '-'}</td>
+                        <td>${ez.driver || '-'}</td>
+                        <td>${ez.plate_number || '-'}</td>
+                        <td>${ez.territory || '-'}</td>
+                        <td><span class="badge bg-${ez.status === 'active' ? 'success' : 'secondary'}">${ez.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editEZPass('${ez.ezpass_id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        async function loadMaintenance() {
+            try {
+                const response = await fetch(`${API_URL}/maintenance`);
+                allMaintenance = await response.json();
+                displayMaintenance(allMaintenance);
+
+                // Check for overdue
+                const overdue = await fetch(`${API_URL}/overdue-maintenance`).then(r => r.json());
+                if (overdue.length > 0) {
+                    document.getElementById('overdueAlert').style.display = 'block';
+                    document.getElementById('overdueCount').textContent = overdue.length;
+                }
+            } catch (error) {
+                console.error('Error loading maintenance:', error);
+            }
+        }
+
+        function displayMaintenance(records) {
+            const tbody = document.getElementById('maintenanceTableBody');
+            tbody.innerHTML = '';
+
+            records.forEach(maint => {
+                const dueDate = new Date(maint.due_date).toLocaleDateString();
+                const row = `
+                    <tr>
+                        <td>${maint.asset_name}</td>
+                        <td>${maint.type}</td>
+                        <td>${dueDate}</td>
+                        <td><span class="badge bg-${maint.status === 'completed' ? 'success' : maint.status === 'overdue' ? 'danger' : 'warning'}">${maint.status}</span></td>
+                        <td>${maint.provider || '-'}</td>
+                        <td>$${maint.cost || 0}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="completeMaintenance('${maint.maintenance_id}')">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        async function loadRequests() {
+            try {
+                const response = await fetch(`${API_URL}/requests`);
+                allRequests = await response.json();
+                displayRequests(allRequests);
+            } catch (error) {
+                console.error('Error loading requests:', error);
+            }
+        }
+
+        function displayRequests(requests) {
+            const tbody = document.getElementById('requestsTableBody');
+            tbody.innerHTML = '';
+
+            requests.forEach(req => {
+                const reqDate = new Date(req.request_date).toLocaleDateString();
+                const row = `
+                    <tr>
+                        <td>${reqDate}</td>
+                        <td>${req.requester_name}</td>
+                        <td>${req.vehicle_type}</td>
+                        <td>${req.duration}</td>
+                        <td>${req.territory || '-'}</td>
+                        <td><span class="badge bg-${req.status === 'approved' ? 'success' : req.status === 'rejected' ? 'danger' : 'warning'}">${req.status}</span></td>
+                        <td>${req.assigned_vehicle_id || '-'}</td>
+                        <td>
+                            ${req.status === 'pending' ? `
+                            <button class="btn btn-sm btn-success" onclick="approveRequest('${req.request_id}')">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="rejectRequest('${req.request_id}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Modal Functions
+        function showAddVehicleModal() {
+            document.getElementById('vehicleForm').reset();
+            document.getElementById('vehicleId').value = '';
+            new bootstrap.Modal(document.getElementById('vehicleModal')).show();
+        }
+
+        async function saveVehicle() {
+            const vehicleData = {
+                vehicle_id: document.getElementById('vehicleId').value,
+                asset_name: document.getElementById('assetName').value,
+                year: document.getElementById('vehicleYear').value,
+                make: document.getElementById('vehicleMake').value,
+                model: document.getElementById('vehicleModel').value,
+                vin: document.getElementById('vehicleVin').value,
+                license_plate: document.getElementById('vehiclePlate').value,
+                status: document.getElementById('vehicleStatus').value,
+                department: document.getElementById('vehicleDepartment').value,
+                territory: document.getElementById('vehicleTerritory').value,
+                current_driver: document.getElementById('vehicleDriver').value,
+                driver_email: document.getElementById('vehicleDriverEmail').value,
+                driver_phone: document.getElementById('vehicleDriverPhone').value,
+                mileage: parseInt(document.getElementById('vehicleMileage').value) || 0,
+                unit_value: parseFloat(document.getElementById('vehicleValue').value) || 0,
+                comments: document.getElementById('vehicleComments').value
+            };
+
+            try {
+                const method = vehicleData.vehicle_id ? 'PUT' : 'POST';
+                const response = await fetch(`${API_URL}/vehicles`, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vehicleData)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('vehicleModal')).hide();
+                    loadFleetData();
+                    alert('Vehicle saved successfully!');
+                }
+            } catch (error) {
+                console.error('Error saving vehicle:', error);
+                alert('Error saving vehicle');
+            }
+        }
+
+        function showAddAccidentModal() {
+            // Populate vehicle dropdown
+            const select = document.getElementById('accidentVehicle');
+            select.innerHTML = '<option value="">Select vehicle...</option>';
+            allVehicles.forEach(v => {
+                select.innerHTML += `<option value="${v.vehicle_id}">${v.asset_name} - ${v.year} ${v.make}</option>`;
+            });
+
+            document.getElementById('accidentForm').reset();
+            new bootstrap.Modal(document.getElementById('accidentModal')).show();
+        }
+
+        async function saveAccident() {
+            const accidentData = {
+                vehicle_id: document.getElementById('accidentVehicle').value,
+                accident_date: document.getElementById('accidentDate').value,
+                driver: document.getElementById('accidentDriver').value,
+                claim_number: document.getElementById('accidentClaim').value,
+                panda_repair_estimate: parseFloat(document.getElementById('accidentEstimate').value) || 0,
+                actual_repair_cost: parseFloat(document.getElementById('accidentCost').value) || 0,
+                video_description: document.getElementById('accidentDescription').value,
+                panda_at_fault: document.getElementById('accidentPandaFault').checked,
+                video: document.getElementById('accidentVideo').checked,
+                police_report: document.getElementById('accidentPolice').checked,
+                status: 'pending'
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/accidents`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(accidentData)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('accidentModal')).hide();
+                    loadFleetData();
+                    alert('Accident reported successfully!');
+                }
+            } catch (error) {
+                console.error('Error saving accident:', error);
+                alert('Error saving accident');
+            }
+        }
+
+        function showRequestVehicleModal() {
+            document.getElementById('requestForm').reset();
+            new bootstrap.Modal(document.getElementById('requestModal')).show();
+        }
+
+        async function saveRequest() {
+            const requestData = {
+                requester_email: 'user@pandaexteriors.com', // Get from session
+                requester_name: 'Current User', // Get from session
+                request_type: 'vehicle',
+                vehicle_type: document.getElementById('requestVehicleType').value,
+                duration: document.getElementById('requestDuration').value,
+                start_date: document.getElementById('requestStartDate').value,
+                end_date: document.getElementById('requestEndDate').value,
+                territory: document.getElementById('requestTerritory').value,
+                purpose: document.getElementById('requestPurpose').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/requests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+                    loadRequests();
+                    alert('Request submitted successfully!');
+                }
+            } catch (error) {
+                console.error('Error saving request:', error);
+                alert('Error saving request');
+            }
+        }
+
+        function logout() {
+            window.location.href = 'login.html';
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadFleetData);
+    </script>
+</body>
+</html>
