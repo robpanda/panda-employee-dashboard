@@ -2077,7 +2077,7 @@ def handle_admin_login(event):
     if method != 'POST':
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', },
+            'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
@@ -2089,7 +2089,7 @@ def handle_admin_login(event):
         if not email or not password:
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': 'Email and password required'})
             }
         
@@ -2185,7 +2185,7 @@ def handle_admin_login(event):
         print(f'ADMIN_LOGIN: All checks failed, returning 401')
         return {
             'statusCode': 401,
-            'headers': {'Content-Type': 'application/json', },
+            'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Invalid email or password'})
         }
         
@@ -2193,7 +2193,7 @@ def handle_admin_login(event):
         print(f'Admin login error: {e}')
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', },
+            'headers': get_cors_headers(),
             'body': json.dumps({'error': 'Server error'})
         }
 
