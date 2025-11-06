@@ -2085,7 +2085,13 @@ def handle_admin_login(event):
         # Handle both string and dict body formats
         body_data = event.get('body', '{}')
         if isinstance(body_data, str):
-            body = json.loads(body_data)
+            try:
+                body = json.loads(body_data)
+            except json.JSONDecodeError as e:
+                # If JSON parsing fails, try with raw string (sometimes Lambda escapes things weirdly)
+                print(f'JSON parse error: {e}, attempting alternate parsing')
+                import ast
+                body = ast.literal_eval(body_data)
         else:
             body = body_data
         email = body.get('email', '').strip().lower()
