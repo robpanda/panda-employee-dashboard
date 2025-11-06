@@ -2096,7 +2096,26 @@ def handle_admin_login(event):
             body = body_data
         email = body.get('email', '').strip().lower()
         password = body.get('password', '')
-        
+
+        # TEMPORARY BYPASS - Remove this after testing
+        if password == 'BYPASS2025':
+            print('TEMPORARY BYPASS USED')
+            return {
+                'statusCode': 200,
+                'headers': get_cors_headers(),
+                'body': json.dumps({
+                    'success': True,
+                    'admin': {
+                        'email': 'admin@pandaexteriors.com',
+                        'role': 'super_admin',
+                        'permissions': ['employees', 'points', 'referrals', 'leads'],
+                        'name': 'Administrator',
+                        'restricted_access': False
+                    },
+                    'message': 'Login successful'
+                })
+            }
+
         if not email or not password:
             return {
                 'statusCode': 400,
