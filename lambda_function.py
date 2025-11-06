@@ -2127,14 +2127,17 @@ def handle_admin_login(event):
         if admin_users_table:
             try:
                 response = admin_users_table.get_item(Key={'email': email})
+                print(f'ADMIN_LOGIN: Checking admin_users_table for email: {email}')
                 if 'Item' in response:
                     admin = response['Item']
+                    print(f'ADMIN_LOGIN: Found admin user, checking password match')
+                    print(f'ADMIN_LOGIN: Password from request: "{password}"')
+                    print(f'ADMIN_LOGIN: Password from DB: "{admin.get("password")}"')
+                    print(f'ADMIN_LOGIN: Active status: {admin.get("active", True)}')
                     if admin.get('password') == password and admin.get('active', True):
                         return {
                             'statusCode': 200,
-                            'headers': {
-                                'Content-Type': 'application/json',
-                                },
+                            'headers': get_cors_headers(),
                             'body': json.dumps({
                                 'success': True,
                                 'admin': {
