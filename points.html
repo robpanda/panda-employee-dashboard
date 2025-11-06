@@ -607,8 +607,12 @@
                         const terminated = emp['Terminated'] || emp.terminated || 'No';
                         const supervisor = emp.supervisor || emp.manager || '';
 
-                        // Match both formats: "First Last" and "Last, First"
-                        return terminated === 'No' && (supervisor === managerNameStandard || supervisor === managerNameReversed);
+                        // Match formats: exact match OR last name match
+                        // This handles cases like "J." vs "Justin" where display name differs from full name
+                        const exactMatch = supervisor === managerNameStandard || supervisor === managerNameReversed;
+                        const lastNameMatch = lastName && supervisor.toLowerCase().startsWith(lastName.toLowerCase() + ',');
+
+                        return terminated === 'No' && (exactMatch || lastNameMatch);
                     }).sort((a, b) => {
                         const nameA = a['First Name'] && a['Last Name'] ? 
                             `${a['First Name']} ${a['Last Name']}` : a.name || '';
