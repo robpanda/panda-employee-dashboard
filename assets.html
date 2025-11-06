@@ -15,7 +15,6 @@
             background: #fafbfc;
             min-height: 100vh;
             color: #374151;
-            font-weight: 400;
         }
         .main-container {
             background: white;
@@ -38,6 +37,7 @@
             display: flex;
             gap: 4px;
             flex: 1;
+            align-items: center;
         }
         .nav-link {
             color: #6b7280;
@@ -45,8 +45,8 @@
             padding: 8px 16px;
             border-radius: 8px;
             transition: all 0.15s ease;
-            font-weight: 400;
             font-size: 14px;
+            position: relative;
         }
         .nav-link:hover {
             background: #f9fafb;
@@ -56,8 +56,154 @@
         .nav-link.active {
             background: #3b82f6;
             color: white;
-            text-decoration: none;
             font-weight: 500;
+        }
+
+        /* Dropdown styles */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .nav-dropdown-toggle {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-dropdown-toggle:hover {
+            background: #f9fafb;
+            color: #374151;
+        }
+        .nav-dropdown-toggle.active {
+            background: #3b82f6;
+            color: white;
+            font-weight: 500;
+        }
+        .nav-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 180px;
+            margin-top: 4px;
+            z-index: 1000;
+        }
+        .nav-dropdown:hover .nav-dropdown-menu {
+            display: block;
+        }
+        .nav-dropdown-item {
+            padding: 10px 16px;
+            color: #374151;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.15s ease;
+            font-size: 14px;
+        }
+        .nav-dropdown-item:hover {
+            background: #f9fafb;
+            color: #3b82f6;
+        }
+        .nav-dropdown-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        .nav-dropdown-item:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
+            padding: 48px 40px;
+            text-align: center;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .header h1 {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+        .header p {
+            color: #6b7280;
+            font-size: 18px;
+        }
+        .cards-container {
+            padding: 60px 40px;
+            display: flex;
+            gap: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+            justify-content: center;
+        }
+        .asset-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 48px 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            flex: 1;
+            max-width: 420px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .asset-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
+            transform: translateY(-4px);
+            text-decoration: none;
+        }
+        .asset-card-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .asset-card h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+        .asset-card p {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+        .asset-card-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .asset-card-stat {
+            text-align: center;
+        }
+        .asset-card-stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        .asset-card-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
         }
         .logout-btn {
             background: #f3f4f6;
@@ -67,108 +213,20 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 400;
             transition: all 0.15s ease;
         }
         .logout-btn:hover {
             background: #ef4444;
             color: white;
         }
-        .header {
-            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
-            color: #374151;
-            padding: 32px 40px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .logo img { height: 40px; }
-        .header h1 {
-            margin: 16px 0 8px 0;
-            font-size: 28px;
-            font-weight: 600;
-            color: #111827;
-        }
-        .header p {
-            color: #6b7280;
-            margin-bottom: 0;
-            font-size: 16px;
-            font-weight: 400;
-        }
-        .content-area {
-            padding: 32px 40px;
-            background: white;
-        }
-        .card {
-            border: 1px solid #f3f4f6;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            border-radius: 12px;
-            transition: all 0.15s ease;
-            background: white;
-        }
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: #e5e7eb;
-        }
-        .card-header {
-            background: #fafbfc;
-            border-bottom: 1px solid #f3f4f6;
-            font-weight: 500;
-            color: #374151;
-        }
-        .nav-pills .nav-link {
-            border-radius: 8px;
-            font-weight: 400;
-            color: #6b7280;
-            padding: 12px 20px;
-        }
-        .nav-pills .nav-link.active {
-            background: #3b82f6;
-            color: white;
-            font-weight: 500;
-        }
-        .nav-pills .nav-link:hover {
-            background: #f9fafb;
-            color: #374151;
-        }
-        .btn {
-            font-weight: 400;
-            border-radius: 8px;
-            transition: all 0.15s ease;
-        }
-        .table {
-            font-size: 14px;
-        }
-        .table th {
-            background: #fafbfc;
-            border-bottom: 1px solid #e5e7eb;
-            font-weight: 500;
-            color: #374151;
-        }
-        .table td {
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .badge {
-            font-weight: 400;
-            font-size: 12px;
-        }
-        .sortable {
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.15s ease;
-        }
-        .sortable:hover {
-            background-color: #f9fafb;
-        }
-        .equipment-checkbox {
-            margin-bottom: 10px;
-        }
-        .equipment-checkbox label {
-            cursor: pointer;
-            user-select: none;
-        }
-        .signature-pad {
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            cursor: crosshair;
+        @media (max-width: 768px) {
+            .cards-container {
+                flex-direction: column;
+                padding: 40px 20px;
+            }
+            .asset-card {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -176,2420 +234,104 @@
     <div class="main-container">
         <div class="utility-nav">
             <div class="logo">
-                <img src="panda-logo.png" alt="Panda Exteriors">
+                <img src="panda-logo.png" alt="Panda" style="height: 40px;">
             </div>
             <div class="nav-links">
                 <a href="./employee.html" class="nav-link">👥 Employees</a>
                 <a href="./points.html" class="nav-link">⭐ Points</a>
                 <a href="./leads.html" class="nav-link">📊 Leads</a>
                 <a href="./referrals.html" class="nav-link">🤝 Referrals</a>
-                <a href="./assets.html" class="nav-link active">📦 Assets</a>
+
+                <!-- Assets Dropdown -->
+                <div class="nav-dropdown">
+                    <div class="nav-dropdown-toggle active">
+                        📦 Assets <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                    </div>
+                    <div class="nav-dropdown-menu">
+                        <a href="./assets-office.html" class="nav-dropdown-item">
+                            <i class="fas fa-briefcase"></i> Office Assets
+                        </a>
+                        <a href="./assets-vehicles.html" class="nav-dropdown-item">
+                            <i class="fas fa-car"></i> Fleet & Vehicles
+                        </a>
+                    </div>
+                </div>
+
                 <a href="./admin.html" class="nav-link">⚙️ Admin</a>
             </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
         <div class="header">
-            <h1>📦 Asset Management</h1>
-            <p>Track company assets, inventory, and equipment</p>
+            <h1>Asset Management</h1>
+            <p>Choose the asset category you want to manage</p>
         </div>
 
-        <div class="content-area">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="d-flex gap-2">
-                    <div class="badge bg-warning fs-6 px-3 py-2">Pending: <span id="pendingCount">0</span></div>
-                    <div class="badge bg-info fs-6 px-3 py-2">Approved: <span id="approvedCount">0</span></div>
-                    <div class="badge bg-danger fs-6 px-3 py-2">Rejected: <span id="rejectedCount">0</span></div>
-                    <div class="badge bg-success fs-6 px-3 py-2">Checked Out: <span id="checkedOutCount">0</span></div>
+        <div class="cards-container">
+            <!-- Office Assets Card -->
+            <a href="./assets-office.html" class="asset-card">
+                <div class="asset-card-icon">
+                    <i class="fas fa-briefcase"></i>
                 </div>
-            </div>
-
-            <ul class="nav nav-pills nav-fill mb-4" id="assetTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="new-requests-tab" data-bs-toggle="tab" data-bs-target="#new-requests" type="button" role="tab">
-                        <i class="fas fa-clock me-2"></i>New Requests <span class="badge bg-warning ms-2" id="pendingBadge">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
-                        <i class="fas fa-check me-2"></i>Approved <span class="badge bg-info ms-2" id="approvedBadge">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
-                        <i class="fas fa-times me-2"></i>Rejected <span class="badge bg-danger ms-2" id="rejectedBadge">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="checked-out-tab" data-bs-toggle="tab" data-bs-target="#checked-out" type="button" role="tab">
-                        <i class="fas fa-user-check me-2"></i>Checked Out <span class="badge bg-success ms-2" id="checkedOutBadge">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab">
-                        <i class="fas fa-warehouse me-2"></i>Inventory
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
-                        <i class="fas fa-chart-bar me-2"></i>Reports
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="vehicles-tab" data-bs-toggle="tab" data-bs-target="#vehicles" type="button" role="tab">
-                        <i class="fas fa-car me-2"></i>Vehicles
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="accidents-tab" data-bs-toggle="tab" data-bs-target="#accidents" type="button" role="tab">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Accidents
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="ezpass-tab" data-bs-toggle="tab" data-bs-target="#ezpass" type="button" role="tab">
-                        <i class="fas fa-ticket-alt me-2"></i>EZ Pass
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance" type="button" role="tab">
-                        <i class="fas fa-tools me-2"></i>Maintenance
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="assetTabContent">
-                <!-- New Requests Tab -->
-                <div class="tab-pane fade show active" id="new-requests" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-clock me-2"></i>New Requests</h5>
-                            <button class="btn btn-dark btn-sm" onclick="showNewRequestForm()">
-                                <i class="fas fa-plus"></i> New Request
-                            </button>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Request ID</th>
-                                            <th>Employee</th>
-                                            <th>Office Location</th>
-                                            <th>Equipment</th>
-                                            <th>Total Value</th>
-                                            <th>Request Date</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="pendingRequestsTable">
-                                        <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                <h2>Office Assets</h2>
+                <p>Manage equipment requests, inventory, and office supplies</p>
+                <div class="asset-card-stats">
+                    <div class="asset-card-stat">
+                        <div class="asset-card-stat-value" id="officeRequests">-</div>
+                        <div class="asset-card-stat-label">Requests</div>
+                    </div>
+                    <div class="asset-card-stat">
+                        <div class="asset-card-stat-value" id="officeInventory">-</div>
+                        <div class="asset-card-stat-label">Inventory</div>
                     </div>
                 </div>
+            </a>
 
-                <!-- Approved Tab -->
-                <div class="tab-pane fade" id="approved" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-info text-white">
-                            <h5 class="mb-0"><i class="fas fa-check me-2"></i>Approved - Pending Checkout</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Request ID</th>
-                                            <th>Employee</th>
-                                            <th>Office Location</th>
-                                            <th>Equipment</th>
-                                            <th>Total Value</th>
-                                            <th>Approved By</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="approvedRequestsTable">
-                                        <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+            <!-- Fleet & Vehicles Card -->
+            <a href="./assets-vehicles.html" class="asset-card">
+                <div class="asset-card-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+                <h2>Fleet & Vehicles</h2>
+                <p>Track vehicles, accidents, EZ passes, and maintenance</p>
+                <div class="asset-card-stats">
+                    <div class="asset-card-stat">
+                        <div class="asset-card-stat-value" id="totalVehicles">3</div>
+                        <div class="asset-card-stat-label">Vehicles</div>
+                    </div>
+                    <div class="asset-card-stat">
+                        <div class="asset-card-stat-value" id="floaterCount">1</div>
+                        <div class="asset-card-stat-label">Available</div>
                     </div>
                 </div>
-
-                <!-- Checked Out Tab -->
-                <div class="tab-pane fade" id="checked-out" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Checked Out Assets</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Request ID</th>
-                                            <th>Employee</th>
-                                            <th>Office Location</th>
-                                            <th>Equipment</th>
-                                            <th>Total Value</th>
-                                            <th>Checkout Date</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="checkedOutTable">
-                                        <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Rejected Tab -->
-                <div class="tab-pane fade" id="rejected" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-danger text-white">
-                            <h5 class="mb-0"><i class="fas fa-times me-2"></i>Rejected Requests</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Request ID</th>
-                                            <th>Employee</th>
-                                            <th>Equipment</th>
-                                            <th>Rejected By</th>
-                                            <th>Reason</th>
-                                            <th>Rejected Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="rejectedTable">
-                                        <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Inventory Tab -->
-                <div class="tab-pane fade" id="inventory" role="tabpanel">
-                    <!-- Inventory Items Management -->
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Inventory Items</h5>
-                            <button class="btn btn-light btn-sm" onclick="showAddItemModal()">
-                                <i class="fas fa-plus me-2"></i>Add Item
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="inventoryItemsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Item</th>
-                                            <th>Quantity on Hand</th>
-                                            <th>Unit Price</th>
-                                            <th>Total Value</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="inventoryItemsBody">
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">Loading items...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Checkout Summary -->
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="mb-0"><i class="fas fa-warehouse me-2"></i>Checkout Summary</h5>
-                        </div>
-                        <div class="card-body" id="inventoryContent">
-                            <p class="text-center text-muted">Loading inventory...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Add/Edit Item Modal -->
-                <div class="modal fade" id="itemModal" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="itemModalTitle">Add Inventory Item</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="itemForm">
-                                    <input type="hidden" id="editItemId">
-                                    <div class="mb-3">
-                                        <label for="itemName" class="form-label">Item Name</label>
-                                        <input type="text" class="form-control" id="itemName" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="itemQuantity" class="form-label">Quantity on Hand</label>
-                                        <input type="number" class="form-control" id="itemQuantity" min="0" value="0" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="itemPrice" class="form-label">Unit Price ($)</label>
-                                        <input type="number" class="form-control" id="itemPrice" min="0" step="0.01" value="0" required>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" onclick="saveInventoryItem()">Save Item</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Reports Tab -->
-                <div class="tab-pane fade" id="reports" role="tabpanel">
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-primary text-white">
-                                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Reports & Analytics</h5>
-                                </div>
-                                <div class="card-body">
-                                    <ul class="nav nav-tabs" id="reportTabs" role="tablist">
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link active" id="summary-report-tab" data-bs-toggle="tab" data-bs-target="#summary-report" type="button" role="tab">
-                                                Summary
-                                            </button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="employee-report-tab" data-bs-toggle="tab" data-bs-target="#employee-report" type="button" role="tab">
-                                                By Employee
-                                            </button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="equipment-report-tab" data-bs-toggle="tab" data-bs-target="#equipment-report" type="button" role="tab">
-                                                By Equipment
-                                            </button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="office-report-tab" data-bs-toggle="tab" data-bs-target="#office-report" type="button" role="tab">
-                                                By Office
-                                            </button>
-                                        </li>
-                                    </ul>
-                                    <div class="tab-content mt-3" id="reportTabContent">
-                                        <div class="tab-pane fade show active" id="summary-report" role="tabpanel">
-                                            <div id="summaryReportContent">
-                                                <p class="text-center text-muted">Loading report...</p>
-                                            </div>
-                                        </div>
-                                        <div class="tab-pane fade" id="employee-report" role="tabpanel">
-                                            <div id="employeeReportContent">
-                                                <p class="text-center text-muted">Loading report...</p>
-                                            </div>
-                                        </div>
-                                        <div class="tab-pane fade" id="equipment-report" role="tabpanel">
-                                            <div id="equipmentReportContent">
-                                                <p class="text-center text-muted">Loading report...</p>
-                                            </div>
-                                        </div>
-                                        <div class="tab-pane fade" id="office-report" role="tabpanel">
-                                            <div id="officeReportContent">
-                                                <p class="text-center text-muted">Loading report...</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- VEHICLES TAB -->
-                <div class="tab-pane fade" id="vehicles" role="tabpanel">
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-car me-2"></i>Vehicle Fleet <span class="badge bg-light text-dark ms-2" id="vehicleCount">0</span></h5>
-                            <button class="btn btn-light btn-sm" onclick="showAddVehicleModal()">
-                                <i class="fas fa-plus"></i> Add Vehicle
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h4 id="totalVehicles">0</h4>
-                                            <small>Total</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h4 class="text-success" id="assignedVehicles">0</h4>
-                                            <small>Assigned</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h4 class="text-primary" id="floaterVehicles">0</h4>
-                                            <small>Floaters</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h4 class="text-danger" id="downedVehicles">0</h4>
-                                            <small>Downed</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <input type="text" class="form-control" id="vehicleSearch" placeholder="Search vehicles..." onkeyup="filterVehicles()">
-                            </div>
-                            <div class="btn-group mb-3" role="group">
-                                <button type="button" class="btn btn-outline-secondary active" onclick="filterVehicleStatus('all')">All</button>
-                                <button type="button" class="btn btn-outline-success" onclick="filterVehicleStatus('assigned')">Assigned</button>
-                                <button type="button" class="btn btn-outline-primary" onclick="filterVehicleStatus('floater')">Floaters</button>
-                                <button type="button" class="btn btn-outline-danger" onclick="filterVehicleStatus('downed')">Downed</button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Asset ID</th>
-                                            <th>Vehicle</th>
-                                            <th>VIN</th>
-                                            <th>License</th>
-                                            <th>Status</th>
-                                            <th>Driver</th>
-                                            <th>Territory</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="vehiclesTableBody">
-                                        <tr><td colspan="8" class="text-center text-muted">Loading vehicles...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ACCIDENTS TAB -->
-                <div class="tab-pane fade" id="accidents" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Accident Reports</h5>
-                            <button class="btn btn-dark btn-sm" onclick="showAddAccidentModal()">
-                                <i class="fas fa-plus"></i> Report Accident
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Vehicle</th>
-                                            <th>Driver</th>
-                                            <th>Claim #</th>
-                                            <th>Estimate</th>
-                                            <th>Actual</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="accidentsTableBody">
-                                        <tr><td colspan="8" class="text-center text-muted">Loading accidents...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- EZ PASS TAB -->
-                <div class="tab-pane fade" id="ezpass" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-ticket-alt me-2"></i>EZ Pass Management</h5>
-                            <button class="btn btn-light btn-sm" onclick="showAddEZPassModal()">
-                                <i class="fas fa-plus"></i> Add EZ Pass
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>EZ Pass ID</th>
-                                            <th>Vehicle</th>
-                                            <th>Driver</th>
-                                            <th>Plate</th>
-                                            <th>Territory</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="ezpassTableBody">
-                                        <tr><td colspan="7" class="text-center text-muted">Loading EZ Pass records...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MAINTENANCE TAB -->
-                <div class="tab-pane fade" id="maintenance" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Maintenance Schedule</h5>
-                            <button class="btn btn-light btn-sm" onclick="showAddMaintenanceModal()">
-                                <i class="fas fa-plus"></i> Schedule Maintenance
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-warning" id="overdueAlert" style="display: none;">
-                                <strong>⚠️ Overdue:</strong> <span id="overdueCount">0</span> items need attention
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Vehicle</th>
-                                            <th>Type</th>
-                                            <th>Due Date</th>
-                                            <th>Status</th>
-                                            <th>Cost</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="maintenanceTableBody">
-                                        <tr><td colspan="6" class="text-center text-muted">Loading maintenance...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Return Asset Modal -->
-    <div class="modal fade" id="returnAssetModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Return Asset</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="returnRequestId">
-                    <div class="mb-3">
-                        <label class="form-label">Condition <span class="text-danger">*</span></label>
-                        <select class="form-select" id="returnCondition" required>
-                            <option value="good">Good - Excellent working condition</option>
-                            <option value="fair">Fair - Minor wear and tear</option>
-                            <option value="damaged">Damaged - Requires repair</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes (Optional)</label>
-                        <textarea class="form-control" id="returnNotes" rows="3" placeholder="Any issues or observations..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-warning" onclick="submitReturn()">
-                        <i class="fas fa-undo"></i> Process Return
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- New Request Modal -->
-    <div class="modal fade" id="newRequestModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">New Asset Request</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="newRequestForm">
-                        <!-- Employee Lookup Field -->
-                        <div class="mb-3">
-                            <label class="form-label">Search Employee</label>
-                            <input type="text" class="form-control" id="employeeSearch"
-                                   placeholder="Start typing employee name or email..."
-                                   autocomplete="off">
-                            <div id="employeeSearchResults" class="list-group position-absolute w-100 shadow-lg"
-                                 style="max-height: 300px; overflow-y: auto; z-index: 1050; display: none;"></div>
-                            <small class="text-muted">Select an existing employee or enter new employee details below</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Employee Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="employeeName" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Employee Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="employeeEmail" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Office Location <span class="text-danger">*</span></label>
-                            <select class="form-select" id="officeLocation" required>
-                                <option value="">Select Office...</option>
-                                <option value="Delaware">Delaware</option>
-                                <option value="King of Prussia">King of Prussia</option>
-                                <option value="Maryland">Maryland</option>
-                                <option value="New Jersey">New Jersey</option>
-                                <option value="North Carolina">North Carolina</option>
-                                <option value="Tampa">Tampa</option>
-                                <option value="Virginia">Virginia</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Equipment Requested <span class="text-danger">* (Select at least one)</span></label>
-                            <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_desktop_setup" value="desktop_setup">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_desktop_setup">Complete Desktop Setup - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_desktop_setup" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_new_hire_kit" value="new_hire_kit">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_new_hire_kit">Complete New Hire Kit for Sales Rep - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_new_hire_kit" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_desktop_computer" value="desktop_computer">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_desktop_computer">Desktop Computer - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_desktop_computer" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_desktop_screens" value="desktop_screens">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_desktop_screens">Desktop Screens - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_desktop_screens" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_laptop" value="laptop">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_laptop">Laptop - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_laptop" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_ipad" value="ipad">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_ipad">iPad w/case and charger - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_ipad" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_ladder_32ft" value="ladder_32ft">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_ladder_32ft">32 ft Ladder - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_ladder_32ft" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_ladder_18ft" value="ladder_18ft">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_ladder_18ft">18 ft Little Giant ladder - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_ladder_18ft" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_gaf_sales_kit" value="gaf_sales_kit">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_gaf_sales_kit">GAF Sales Kit - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_gaf_sales_kit" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                                <div class="equipment-checkbox mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input equipment-check" id="eq_goat_steep_roof" value="goat_steep_roof">
-                                        <label class="form-check-label ms-2 flex-grow-1" for="eq_goat_steep_roof">GOAT Steep Roof Assist - $100.00</label>
-                                        <input type="number" class="form-control form-control-sm quantity-input" id="qty_goat_steep_roof" min="1" value="1" style="width: 70px; display: none;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Additional Notes</label>
-                            <textarea class="form-control" id="requestNotes" rows="3" placeholder="Any additional information..."></textarea>
-                        </div>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Total Value:</strong> $<span id="totalValue">0.00</span>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="submitRequest()">
-                        <i class="fas fa-paper-plane"></i> Submit Request
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Signature Modal -->
-    <div class="modal fade" id="signatureModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Sign Document</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="signRequestId">
-                    <div id="pdfPreview" class="mb-3"></div>
-
-                    <label class="form-label">Employee Signature</label>
-                    <div class="text-center">
-                        <canvas id="signatureCanvas" class="signature-pad" width="600" height="200"></canvas>
-                    </div>
-                    <div class="text-end mt-2">
-                        <button class="btn btn-sm btn-secondary" onclick="clearSignature()">Clear</button>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="submitSignature()">
-                        <i class="fas fa-check"></i> Complete Checkout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-<!-- Vehicle Modal -->
-    <div class="modal fade" id="vehicleModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add/Edit Vehicle</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="vehicleForm">
-                        <input type="hidden" id="vehicleId">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Asset Name *</label>
-                                <input type="text" class="form-control" id="vehicleAssetName" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Status *</label>
-                                <select class="form-select" id="vehicleStatus" required>
-                                    <option value="floater">Floater</option>
-                                    <option value="assigned">Assigned</option>
-                                    <option value="downed">Downed</option>
-                                    <option value="maintenance">Maintenance</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Year</label>
-                                <input type="text" class="form-control" id="vehicleYear">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Make</label>
-                                <input type="text" class="form-control" id="vehicleMake">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Model</label>
-                                <input type="text" class="form-control" id="vehicleModel">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">VIN</label>
-                                <input type="text" class="form-control" id="vehicleVin">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">License Plate</label>
-                                <input type="text" class="form-control" id="vehiclePlate">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Current Driver</label>
-                                <input type="text" class="form-control" id="vehicleDriver">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Territory</label>
-                                <select class="form-select" id="vehicleTerritory">
-                                    <option value="">Select...</option>
-                                    <option>MD</option>
-                                    <option>VA</option>
-                                    <option>DC</option>
-                                    <option>NJ</option>
-                                    <option>NC</option>
-                                    <option>KOP</option>
-                                    <option>DE</option>
-                                    <option>MA</option>
-                                    <option>Tampa</option>
-                                </select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveVehicle()">Save Vehicle</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Accident Modal -->
-    <div class="modal fade" id="accidentModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Report Accident</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="accidentForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Vehicle *</label>
-                                <select class="form-select" id="accidentVehicle" required></select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Accident Date *</label>
-                                <input type="date" class="form-control" id="accidentDate" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Driver</label>
-                                <input type="text" class="form-control" id="accidentDriver">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Claim Number</label>
-                                <input type="text" class="form-control" id="accidentClaim">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Estimate ($)</label>
-                                <input type="number" class="form-control" id="accidentEstimate">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Actual Cost ($)</label>
-                                <input type="number" class="form-control" id="accidentCost">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" id="accidentDescription" rows="3"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" onclick="saveAccident()">Save Accident</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- EZ Pass Modal -->
-    <div class="modal fade" id="ezpassModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add EZ Pass</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="ezpassForm">
-                        <div class="mb-3">
-                            <label class="form-label">EZ Pass ID *</label>
-                            <input type="text" class="form-control" id="ezpassId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Vehicle</label>
-                            <select class="form-select" id="ezpassVehicle"></select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Driver</label>
-                            <input type="text" class="form-control" id="ezpassDriver">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Plate Number</label>
-                            <input type="text" class="form-control" id="ezpassPlate">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Territory</label>
-                            <select class="form-select" id="ezpassTerritory">
-                                <option value="">Select...</option>
-                                <option>MD</option>
-                                <option>VA</option>
-                                <option>NJ</option>
-                                <option>NC</option>
-                                <option>KOP</option>
-                                <option>DE</option>
-                                <option>MA</option>
-                                <option>Tampa</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-info" onclick="saveEZPass()">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Maintenance Modal -->
-    <div class="modal fade" id="maintenanceModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Schedule Maintenance</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="maintenanceForm">
-                        <div class="mb-3">
-                            <label class="form-label">Vehicle *</label>
-                            <select class="form-select" id="maintenanceVehicle" required></select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Type *</label>
-                            <select class="form-select" id="maintenanceType" required>
-                                <option value="">Select...</option>
-                                <option value="emissions">Emissions</option>
-                                <option value="registration">Registration</option>
-                                <option value="insurance">Insurance</option>
-                                <option value="inspection">Inspection</option>
-                                <option value="oil_change">Oil Change</option>
-                                <option value="repair">Repair</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Due Date *</label>
-                            <input type="date" class="form-control" id="maintenanceDueDate" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Estimated Cost ($)</label>
-                            <input type="number" class="form-control" id="maintenanceCost" value="0">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-control" id="maintenanceNotes" rows="2"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="saveMaintenance()">Schedule</button>
-                </div>
-            </div>
+            </a>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const API_URL = 'https://ygrbdqrxm2pavmkuik262l5bry0qtkdx.lambda-url.us-east-2.on.aws/';
-
-        let signatureCanvas, signatureCtx, isDrawing = false;
-
         function logout() {
-            sessionStorage.removeItem('pandaAdmin');
-            sessionStorage.removeItem('adminUser');
-            window.location.href = './login.html';
+            localStorage.removeItem('isAuthenticated');
+            window.location.href = 'login.html';
         }
 
-        // Employee search variables
-        let allEmployees = [];
-        let employeeSearchTimeout = null;
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAllRequests();
-            loadInventory();
-            loadInventoryItems();
-            loadEmployeeList();
-            setupEmployeeSearch();
-
-            // Check for actions from points.html
-            const urlParams = new URLSearchParams(window.location.search);
-            const action = urlParams.get('action');
-
-            if (action === 'request') {
-                // Pre-fill request form from sessionStorage
-                const employeeData = sessionStorage.getItem('assetRequestEmployee');
-                if (employeeData) {
-                    const employee = JSON.parse(employeeData);
-                    sessionStorage.removeItem('assetRequestEmployee');
-
-                    // Show the new request modal with pre-filled data
-                    setTimeout(() => {
-                        document.getElementById('employeeName').value = employee.name || '';
-                        document.getElementById('employeeEmail').value = employee.email || '';
-                        document.getElementById('officeLocation').value = employee.office || '';
-                        showNewRequestForm();
-                    }, 500);
-                }
-            } else if (action === 'return') {
-                // Show checked out tab and highlight employee's assets
-                const employeeData = sessionStorage.getItem('assetReturnEmployee');
-                if (employeeData) {
-                    const employee = JSON.parse(employeeData);
-                    sessionStorage.removeItem('assetReturnEmployee');
-
-                    // Switch to checked out tab
-                    setTimeout(() => {
-                        const checkedOutTab = document.getElementById('checked-out-tab');
-                        if (checkedOutTab) {
-                            checkedOutTab.click();
-                        }
-                    }, 500);
-                }
-            }
-
-            // Set up equipment checkboxes to show/hide quantity fields
-            document.querySelectorAll('.equipment-check').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const equipmentCode = this.value;
-                    const quantityInput = document.getElementById('qty_' + equipmentCode);
-                    if (this.checked) {
-                        quantityInput.style.display = 'block';
-                    } else {
-                        quantityInput.style.display = 'none';
-                    }
-                    updateTotalValue();
-                });
-            });
-
-            // Set up quantity inputs to update total
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.addEventListener('change', updateTotalValue);
-                input.addEventListener('input', updateTotalValue);
-            });
-
-            // Initialize signature canvas
-            signatureCanvas = document.getElementById('signatureCanvas');
-            if (signatureCanvas) {
-                signatureCtx = signatureCanvas.getContext('2d');
-                setupSignaturePad();
-            }
-        });
-
-        function updateTotalValue() {
-            let total = 0;
-            document.querySelectorAll('.equipment-check:checked').forEach(checkbox => {
-                const equipmentCode = checkbox.value;
-                const quantityInput = document.getElementById('qty_' + equipmentCode);
-                const quantity = parseInt(quantityInput.value) || 1;
-                total += quantity * 100;
-            });
-            document.getElementById('totalValue').textContent = total.toFixed(2);
-        }
-
-        async function loadAllRequests() {
+        // Load stats from API
+        async function loadStats() {
             try {
-                const response = await fetch(API_URL + 'requests');
-                const data = await response.json();
-
-                if (data.success) {
-                    const requests = data.requests;
-
-                    // Group by status
-                    const pending = requests.filter(r => r.status === 'pending');
-                    const approved = requests.filter(r => r.status === 'approved');
-                    const rejected = requests.filter(r => r.status === 'rejected');
-                    const checkedOut = requests.filter(r => r.status === 'checked_out');
-
-                    // Update counts
-                    document.getElementById('pendingCount').textContent = pending.length;
-                    document.getElementById('approvedCount').textContent = approved.length;
-                    document.getElementById('rejectedCount').textContent = rejected.length;
-                    document.getElementById('checkedOutCount').textContent = checkedOut.length;
-
-                    document.getElementById('pendingBadge').textContent = pending.length;
-                    document.getElementById('approvedBadge').textContent = approved.length;
-                    document.getElementById('rejectedBadge').textContent = rejected.length;
-                    document.getElementById('checkedOutBadge').textContent = checkedOut.length;
-
-                    // Render tables
-                    renderPendingRequests(pending);
-                    renderApprovedRequests(approved);
-                    renderRejectedRequests(rejected);
-                    renderCheckedOutRequests(checkedOut);
+                // Load fleet stats
+                const fleetResponse = await fetch('https://fzvmganebjklnse547t4rh3siu0cfaei.lambda-url.us-east-2.on.aws/vehicles');
+                if (fleetResponse.ok) {
+                    const vehicles = await fleetResponse.json();
+                    document.getElementById('totalVehicles').textContent = vehicles.length;
+                    document.getElementById('floaterCount').textContent = vehicles.filter(v => v.status === 'floater').length;
                 }
             } catch (error) {
-                console.error('Error loading requests:', error);
+                console.error('Error loading stats:', error);
             }
         }
 
-        function renderPendingRequests(requests) {
-            const tbody = document.getElementById('pendingRequestsTable');
-            if (requests.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No pending requests</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = requests.map(req => `
-                <tr>
-                    <td><code>${req.id.substring(0, 8)}</code></td>
-                    <td>
-                        <div><strong>${req.employee_name}</strong></div>
-                        <small class="text-muted">${req.employee_email}</small>
-                    </td>
-                    <td>${req.office_location}</td>
-                    <td>
-                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
-                    </td>
-                    <td><strong>$${parseFloat(req.total_value).toFixed(2)}</strong></td>
-                    <td>${new Date(req.created_at).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn btn-sm btn-success me-1" onclick="approveRequest('${req.id}')">
-                            <i class="fas fa-check"></i> Approve
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="rejectRequest('${req.id}')">
-                            <i class="fas fa-times"></i> Reject
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function renderApprovedRequests(requests) {
-            const tbody = document.getElementById('approvedRequestsTable');
-            if (requests.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No approved requests</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = requests.map(req => `
-                <tr>
-                    <td><code>${req.id.substring(0, 8)}</code></td>
-                    <td>
-                        <div><strong>${req.employee_name}</strong></div>
-                        <small class="text-muted">${req.employee_email}</small>
-                    </td>
-                    <td>${req.office_location}</td>
-                    <td>
-                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
-                    </td>
-                    <td><strong>$${parseFloat(req.total_value).toFixed(2)}</strong></td>
-                    <td><small>${req.approved_by}</small></td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="generatePDF('${req.id}')">
-                            <i class="fas fa-file-pdf"></i> Generate PDF
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function renderRejectedRequests(requests) {
-            const tbody = document.getElementById('rejectedTable');
-            if (requests.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No rejected requests</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = requests.map(req => `
-                <tr>
-                    <td><code>${req.id.substring(0, 8)}</code></td>
-                    <td>
-                        <div><strong>${req.employee_name}</strong></div>
-                        <small class="text-muted">${req.employee_email}</small>
-                    </td>
-                    <td>
-                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
-                    </td>
-                    <td><small>${req.rejected_by}</small></td>
-                    <td>${req.rejection_reason || 'N/A'}</td>
-                    <td>${new Date(req.rejected_at).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
-        }
-
-        function renderCheckedOutRequests(requests) {
-            const tbody = document.getElementById('checkedOutTable');
-            if (requests.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No checked out assets</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = requests.map(req => `
-                <tr>
-                    <td><code>${req.id.substring(0, 8)}</code></td>
-                    <td>
-                        <div><strong>${req.employee_name}</strong></div>
-                        <small class="text-muted">${req.employee_email}</small>
-                    </td>
-                    <td>${req.office_location}</td>
-                    <td>
-                        <small>${req.equipment_details.map(e => e.name).join(', ')}</small>
-                    </td>
-                    <td><strong>$${parseFloat(req.total_value).toFixed(2)}</strong></td>
-                    <td>${new Date(req.checked_out_at).toLocaleDateString()}</td>
-                    <td>
-                        ${req.pdf_url ? `<a href="${req.pdf_url}" class="btn btn-sm btn-info me-1" target="_blank"><i class="fas fa-file-pdf"></i> PDF</a>` : ''}
-                        <button class="btn btn-sm btn-warning" onclick="showReturnModal('${req.id}')">
-                            <i class="fas fa-undo"></i> Return
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        async function loadInventory() {
-            try {
-                const response = await fetch(API_URL + 'inventory');
-                const data = await response.json();
-
-                if (data.success) {
-                    const summary = data.summary;
-                    const inventoryHtml = `
-                        <div class="row mb-4">
-                            <div class="col-md-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h3>${summary.total_requests}</h3>
-                                        <p class="mb-0">Total Requests</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h3 class="text-success">${summary.status_counts.checked_out}</h3>
-                                        <p class="mb-0">Checked Out</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h3 class="text-primary">$${summary.total_value_checked_out.toFixed(2)}</h3>
-                                        <p class="mb-0">Total Value Out</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h6 class="mb-3">Equipment Checked Out</h6>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Equipment</th>
-                                    <th>Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Object.entries(summary.equipment_checked_out).map(([name, count]) => `
-                                    <tr>
-                                        <td>${name}</td>
-                                        <td><span class="badge bg-primary">${count}</span></td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-
-                    document.getElementById('inventoryContent').innerHTML = inventoryHtml;
-                }
-            } catch (error) {
-                console.error('Error loading inventory:', error);
-                document.getElementById('inventoryContent').innerHTML = '<p class="text-danger">Error loading inventory</p>';
-            }
-        }
-
-        // Inventory Items Management
-        async function loadInventoryItems() {
-            try {
-                const response = await fetch(API_URL + 'inventory-items');
-                const data = await response.json();
-
-                const tbody = document.getElementById('inventoryItemsBody');
-
-                if (data.success && data.items && data.items.length > 0) {
-                    let totalValue = 0;
-                    tbody.innerHTML = data.items.map(item => {
-                        const itemTotal = (item.quantity || 0) * (item.price || 0);
-                        totalValue += itemTotal;
-                        return `
-                            <tr>
-                                <td><strong>${item.name}</strong></td>
-                                <td>${item.quantity || 0}</td>
-                                <td>$${(item.price || 0).toFixed(2)}</td>
-                                <td><strong>$${itemTotal.toFixed(2)}</strong></td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary" onclick="editInventoryItem('${item.id}')">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteInventoryItem('${item.id}', '${item.name}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('') + `
-                        <tr class="table-info">
-                            <td colspan="3"><strong>Total Inventory Value</strong></td>
-                            <td colspan="2"><strong>$${totalValue.toFixed(2)}</strong></td>
-                        </tr>
-                    `;
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No inventory items. Click "Add Item" to get started.</td></tr>';
-                }
-            } catch (error) {
-                console.error('Error loading inventory items:', error);
-                document.getElementById('inventoryItemsBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading items</td></tr>';
-            }
-        }
-
-        function showAddItemModal() {
-            document.getElementById('itemModalTitle').textContent = 'Add Inventory Item';
-            document.getElementById('editItemId').value = '';
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemQuantity').value = '0';
-            document.getElementById('itemPrice').value = '0';
-            const modal = new bootstrap.Modal(document.getElementById('itemModal'));
-            modal.show();
-        }
-
-        async function editInventoryItem(itemId) {
-            try {
-                const response = await fetch(API_URL + `inventory-items/${itemId}`);
-                const data = await response.json();
-
-                if (data.success && data.item) {
-                    document.getElementById('itemModalTitle').textContent = 'Edit Inventory Item';
-                    document.getElementById('editItemId').value = data.item.id;
-                    document.getElementById('itemName').value = data.item.name;
-                    document.getElementById('itemQuantity').value = data.item.quantity || 0;
-                    document.getElementById('itemPrice').value = data.item.price || 0;
-                    const modal = new bootstrap.Modal(document.getElementById('itemModal'));
-                    modal.show();
-                }
-            } catch (error) {
-                console.error('Error loading item:', error);
-                alert('Error loading item details');
-            }
-        }
-
-        async function saveInventoryItem() {
-            const itemId = document.getElementById('editItemId').value;
-            const name = document.getElementById('itemName').value.trim();
-            const quantity = parseInt(document.getElementById('itemQuantity').value) || 0;
-            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
-
-            if (!name) {
-                alert('Please enter an item name');
-                return;
-            }
-
-            try {
-                const url = itemId ? API_URL + `inventory-items/${itemId}` : API_URL + 'inventory-items';
-                const method = itemId ? 'PUT' : 'POST';
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, quantity, price })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('itemModal')).hide();
-                    loadInventoryItems();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error saving item:', error);
-                alert('Error saving item');
-            }
-        }
-
-        async function deleteInventoryItem(itemId, itemName) {
-            if (!confirm(`Are you sure you want to delete "${itemName}"?`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(API_URL + `inventory-items/${itemId}`, {
-                    method: 'DELETE'
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    loadInventoryItems();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error deleting item:', error);
-                alert('Error deleting item');
-            }
-        }
-
-        // Load employee list from API
-        async function loadEmployeeList() {
-            try {
-                const EMPLOYEE_API = 'https://dfu3zr3dnrvgiiwa2yu77cz5fq0rqmth.lambda-url.us-east-2.on.aws/employees';
-                const response = await fetch(EMPLOYEE_API);
-                const data = await response.json();
-
-                if (data.employees) {
-                    allEmployees = data.employees.filter(emp => {
-                        const terminated = emp['Terminated'] || emp.terminated || 'No';
-                        return terminated === 'No';
-                    });
-                    console.log(`Loaded ${allEmployees.length} active employees`);
-                } else {
-                    console.error('No employees in response:', data);
-                }
-            } catch (error) {
-                console.error('Error loading employees:', error);
-            }
-        }
-
-        // Setup employee search autocomplete
-        function setupEmployeeSearch() {
-            const searchInput = document.getElementById('employeeSearch');
-            const resultsDiv = document.getElementById('employeeSearchResults');
-
-            if (!searchInput) return;
-
-            searchInput.addEventListener('input', function(e) {
-                const query = e.target.value.trim().toLowerCase();
-
-                clearTimeout(employeeSearchTimeout);
-
-                if (query.length < 2) {
-                    resultsDiv.style.display = 'none';
-                    return;
-                }
-
-                employeeSearchTimeout = setTimeout(() => {
-                    const matches = allEmployees.filter(emp => {
-                        const firstName = (emp['First Name'] || emp.first_name || '').toLowerCase();
-                        const lastName = (emp['Last Name'] || emp.last_name || '').toLowerCase();
-                        const fullName = `${firstName} ${lastName}`;
-                        const email = (emp.email || emp.Email || '').toLowerCase();
-
-                        return fullName.includes(query) || email.includes(query);
-                    }).slice(0, 10);
-
-                    displaySearchResults(matches);
-                }, 300);
-            });
-
-            // Close results when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
-                    resultsDiv.style.display = 'none';
-                }
-            });
-        }
-
-        // Display employee search results
-        function displaySearchResults(matches) {
-            const resultsDiv = document.getElementById('employeeSearchResults');
-
-            if (matches.length === 0) {
-                resultsDiv.innerHTML = '<div class="list-group-item text-muted">No employees found</div>';
-                resultsDiv.style.display = 'block';
-                return;
-            }
-
-            const resultsHTML = matches.map(emp => {
-                const firstName = emp['First Name'] || emp.first_name || '';
-                const lastName = emp['Last Name'] || emp.last_name || '';
-                const fullName = `${firstName} ${lastName}`.trim();
-                const email = emp.email || emp.Email || '';
-                const office = emp['Office Location'] || emp.office_location || emp.location || '';
-                const empId = emp.employee_id || emp.id;
-
-                return `
-                    <a href="javascript:void(0)" class="list-group-item list-group-item-action"
-                       onclick="selectEmployee('${empId}')">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <strong>${fullName}</strong><br>
-                                <small class="text-muted">${email}</small>
-                            </div>
-                            <div class="text-end">
-                                <small class="badge bg-secondary">${office}</small>
-                            </div>
-                        </div>
-                    </a>
-                `;
-            }).join('');
-
-            resultsDiv.innerHTML = resultsHTML;
-            resultsDiv.style.display = 'block';
-        }
-
-        // Select employee from search results
-        function selectEmployee(empId) {
-            const employee = allEmployees.find(emp => (emp.employee_id || emp.id) === empId);
-
-            if (employee) {
-                const firstName = employee['First Name'] || employee.first_name || '';
-                const lastName = employee['Last Name'] || employee.last_name || '';
-                const fullName = `${firstName} ${lastName}`.trim();
-                const email = employee.email || employee.Email || employee['Work Email'] || employee.work_email || '';
-                const office = employee['Office Location'] || employee.office_location || employee.office || employee.location || '';
-
-                document.getElementById('employeeName').value = fullName;
-                document.getElementById('employeeEmail').value = email;
-                document.getElementById('officeLocation').value = office;
-                document.getElementById('employeeSearch').value = fullName;
-                document.getElementById('employeeSearchResults').style.display = 'none';
-            }
-        }
-
-        function showNewRequestForm() {
-            const modal = new bootstrap.Modal(document.getElementById('newRequestModal'));
-            document.getElementById('newRequestForm').reset();
-            // Clear search results
-            document.getElementById('employeeSearchResults').style.display = 'none';
-            document.getElementById('employeeSearch').value = '';
-            updateTotalValue();
-            modal.show();
-        }
-
-        async function submitRequest() {
-            const name = document.getElementById('employeeName').value.trim();
-            const email = document.getElementById('employeeEmail').value.trim();
-            const location = document.getElementById('officeLocation').value;
-            const notes = document.getElementById('requestNotes').value.trim();
-
-            // Get selected equipment with quantities
-            const equipment = [];
-            const equipmentWithQuantities = {};
-            document.querySelectorAll('.equipment-check:checked').forEach(checkbox => {
-                const equipmentCode = checkbox.value;
-                const quantityInput = document.getElementById('qty_' + equipmentCode);
-                const quantity = parseInt(quantityInput.value) || 1;
-
-                // Add to equipment array (repeat based on quantity for backend compatibility)
-                for (let i = 0; i < quantity; i++) {
-                    equipment.push(equipmentCode);
-                }
-
-                // Store quantity info
-                equipmentWithQuantities[equipmentCode] = quantity;
-            });
-
-            // Validate
-            if (!name || !email || !location) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            if (equipment.length === 0) {
-                alert('Please select at least one equipment item');
-                return;
-            }
-
-            try {
-                const response = await fetch(API_URL + 'requests', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        employee_name: name,
-                        employee_email: email,
-                        office_location: location,
-                        equipment: equipment,
-                        equipment_quantities: equipmentWithQuantities,
-                        notes: notes
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Request submitted successfully!');
-                    bootstrap.Modal.getInstance(document.getElementById('newRequestModal')).hide();
-                    loadAllRequests();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error submitting request:', error);
-                alert('Error submitting request');
-            }
-        }
-
-        async function approveRequest(requestId) {
-            const adminUser = sessionStorage.getItem('adminUser');
-            if (!adminUser) {
-                alert('Admin user not found');
-                return;
-            }
-
-            const admin = JSON.parse(adminUser);
-
-            if (!confirm('Approve this request?')) return;
-
-            try {
-                const response = await fetch(API_URL + `requests/${requestId}/approve`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        approved_by: admin.email
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Request approved!');
-                    loadAllRequests();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error approving request:', error);
-                alert('Error approving request');
-            }
-        }
-
-        async function rejectRequest(requestId) {
-            const adminUser = sessionStorage.getItem('adminUser');
-            if (!adminUser) {
-                alert('Admin user not found');
-                return;
-            }
-
-            const admin = JSON.parse(adminUser);
-            const reason = prompt('Enter rejection reason:');
-
-            if (!reason) return;
-
-            try {
-                const response = await fetch(API_URL + `requests/${requestId}/reject`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        rejected_by: admin.email,
-                        reason: reason
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Request rejected');
-                    loadAllRequests();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error rejecting request:', error);
-                alert('Error rejecting request');
-            }
-        }
-
-        async function generatePDF(requestId) {
-            try {
-                const response = await fetch(API_URL + `requests/${requestId}/pdf`, {
-                    method: 'POST'
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // Show signature modal
-                    document.getElementById('signRequestId').value = requestId;
-                    document.getElementById('pdfPreview').innerHTML = `
-                        <div class="alert alert-info">
-                            <i class="fas fa-file-pdf me-2"></i>
-                            PDF generated successfully. Please have the employee sign below to complete checkout.
-                            <br>
-                            <a href="${data.pdf_url}" target="_blank" class="btn btn-sm btn-primary mt-2">
-                                <i class="fas fa-eye"></i> Preview Document
-                            </a>
-                        </div>
-                    `;
-                    const modal = new bootstrap.Modal(document.getElementById('signatureModal'));
-                    modal.show();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert('Error generating PDF');
-            }
-        }
-
-        function setupSignaturePad() {
-            signatureCanvas.addEventListener('mousedown', startDrawing);
-            signatureCanvas.addEventListener('mousemove', draw);
-            signatureCanvas.addEventListener('mouseup', stopDrawing);
-            signatureCanvas.addEventListener('mouseout', stopDrawing);
-
-            // Touch events for mobile
-            signatureCanvas.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousedown', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                signatureCanvas.dispatchEvent(mouseEvent);
-            });
-
-            signatureCanvas.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousemove', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                signatureCanvas.dispatchEvent(mouseEvent);
-            });
-
-            signatureCanvas.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                const mouseEvent = new MouseEvent('mouseup', {});
-                signatureCanvas.dispatchEvent(mouseEvent);
-            });
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            const rect = signatureCanvas.getBoundingClientRect();
-            signatureCtx.beginPath();
-            signatureCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            const rect = signatureCanvas.getBoundingClientRect();
-            signatureCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-            signatureCtx.strokeStyle = '#000';
-            signatureCtx.lineWidth = 2;
-            signatureCtx.stroke();
-        }
-
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        function clearSignature() {
-            signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-        }
-
-        async function submitSignature() {
-            const requestId = document.getElementById('signRequestId').value;
-            const signatureData = signatureCanvas.toDataURL();
-
-            try {
-                const response = await fetch(API_URL + `requests/${requestId}/sign`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        signature_data: signatureData
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Checkout complete!');
-                    bootstrap.Modal.getInstance(document.getElementById('signatureModal')).hide();
-                    clearSignature();
-                    loadAllRequests();
-                    loadInventory();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error signing document:', error);
-                alert('Error completing checkout');
-            }
-        }
-
-        // Return Asset Functions
-        function showReturnModal(requestId) {
-            document.getElementById('returnRequestId').value = requestId;
-            document.getElementById('returnCondition').value = 'good';
-            document.getElementById('returnNotes').value = '';
-            const modal = new bootstrap.Modal(document.getElementById('returnAssetModal'));
-            modal.show();
-        }
-
-        async function submitReturn() {
-            const requestId = document.getElementById('returnRequestId').value;
-            const condition = document.getElementById('returnCondition').value;
-            const notes = document.getElementById('returnNotes').value;
-
-            try {
-                const response = await fetch(API_URL + `requests/${requestId}/return`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        return_condition: condition,
-                        return_notes: notes
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Asset returned successfully!');
-                    bootstrap.Modal.getInstance(document.getElementById('returnAssetModal')).hide();
-                    loadAllRequests();
-                    loadInventory();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error returning asset:', error);
-                alert('Error processing return');
-            }
-        }
-
-        // Reports Functions
-        document.getElementById('reports-tab')?.addEventListener('shown.bs.tab', function() {
-            loadAllReports();
-        });
-
-        document.getElementById('summary-report-tab')?.addEventListener('shown.bs.tab', loadSummaryReport);
-        document.getElementById('employee-report-tab')?.addEventListener('shown.bs.tab', loadEmployeeReport);
-        document.getElementById('equipment-report-tab')?.addEventListener('shown.bs.tab', loadEquipmentReport);
-        document.getElementById('office-report-tab')?.addEventListener('shown.bs.tab', loadOfficeReport);
-
-        function loadAllReports() {
-            loadSummaryReport();
-        }
-
-        async function loadSummaryReport() {
-            try {
-                const response = await fetch(API_URL + 'reports/summary');
-                const data = await response.json();
-
-                if (data.success) {
-                    const report = data.report;
-                    const html = `
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h3 class="text-primary">${report.metrics.total_requests}</h3>
-                                        <p class="mb-0">Total Requests</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h3 class="text-success">$${report.metrics.total_value.toFixed(2)}</h3>
-                                        <p class="mb-0">Total Value</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h3 class="text-info">${report.metrics.average_processing_time_hours.toFixed(1)}h</h3>
-                                        <p class="mb-0">Avg Processing Time</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h3 class="text-warning">${report.metrics.status_breakdown.checked_out || 0}</h3>
-                                        <p class="mb-0">Currently Out</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <h5>Status Breakdown</h5>
-                                <table class="table table-sm">
-                                    ${Object.entries(report.metrics.status_breakdown).map(([status, count]) => `
-                                        <tr>
-                                            <td>${status.charAt(0).toUpperCase() + status.slice(1)}</td>
-                                            <td class="text-end"><strong>${count}</strong></td>
-                                        </tr>
-                                    `).join('')}
-                                </table>
-                            </div>
-                            <div class="col-md-6">
-                                <h5>Top Equipment</h5>
-                                <table class="table table-sm">
-                                    ${report.metrics.top_equipment.map(item => `
-                                        <tr>
-                                            <td>${item.name}</td>
-                                            <td class="text-end"><strong>${item.count}</strong></td>
-                                        </tr>
-                                    `).join('')}
-                                </table>
-                            </div>
-                        </div>
-                    `;
-                    document.getElementById('summaryReportContent').innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Error loading summary report:', error);
-                document.getElementById('summaryReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
-            }
-        }
-
-        async function loadEmployeeReport() {
-            try {
-                const response = await fetch(API_URL + 'reports/by-employee');
-                const data = await response.json();
-
-                if (data.success) {
-                    const html = `
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th class="text-end">Total Requests</th>
-                                    <th class="text-end">Total Value</th>
-                                    <th class="text-end">Checked Out</th>
-                                    <th class="text-end">Returned</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.employees.map(emp => `
-                                    <tr>
-                                        <td>
-                                            <strong>${emp.name}</strong><br>
-                                            <small class="text-muted">${emp.email}</small>
-                                        </td>
-                                        <td class="text-end">${emp.total_requests}</td>
-                                        <td class="text-end"><strong>$${emp.total_value.toFixed(2)}</strong></td>
-                                        <td class="text-end"><span class="badge bg-success">${emp.checked_out_count}</span></td>
-                                        <td class="text-end"><span class="badge bg-secondary">${emp.returned_count}</span></td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                    document.getElementById('employeeReportContent').innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Error loading employee report:', error);
-                document.getElementById('employeeReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
-            }
-        }
-
-        async function loadEquipmentReport() {
-            try {
-                const response = await fetch(API_URL + 'reports/by-equipment');
-                const data = await response.json();
-
-                if (data.success) {
-                    const html = `
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Equipment</th>
-                                    <th class="text-end">Total Requested</th>
-                                    <th class="text-end">Currently Out</th>
-                                    <th class="text-end">Returned</th>
-                                    <th class="text-end">Total Value</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.equipment.map(equip => `
-                                    <tr>
-                                        <td><strong>${equip.name}</strong></td>
-                                        <td class="text-end">${equip.total_requested}</td>
-                                        <td class="text-end"><span class="badge bg-warning">${equip.currently_checked_out}</span></td>
-                                        <td class="text-end"><span class="badge bg-secondary">${equip.returned}</span></td>
-                                        <td class="text-end"><strong>$${equip.total_value.toFixed(2)}</strong></td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                    document.getElementById('equipmentReportContent').innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Error loading equipment report:', error);
-                document.getElementById('equipmentReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
-            }
-        }
-
-        async function loadOfficeReport() {
-            try {
-                const response = await fetch(API_URL + 'reports/by-office');
-                const data = await response.json();
-
-                if (data.success) {
-                    const html = `
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Office</th>
-                                    <th class="text-end">Total Requests</th>
-                                    <th class="text-end">Total Value</th>
-                                    <th class="text-end">Currently Out</th>
-                                    <th>Top Equipment</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.offices.map(office => `
-                                    <tr>
-                                        <td><strong>${office.office}</strong></td>
-                                        <td class="text-end">${office.total_requests}</td>
-                                        <td class="text-end"><strong>$${office.total_value.toFixed(2)}</strong></td>
-                                        <td class="text-end"><span class="badge bg-success">${office.checked_out_count}</span></td>
-                                        <td>
-                                            <small>${Object.entries(office.equipment_breakdown)
-                                                .sort((a, b) => b[1] - a[1])
-                                                .slice(0, 3)
-                                                .map(([name, count]) => `${name} (${count})`)
-                                                .join(', ')}</small>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                    document.getElementById('officeReportContent').innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Error loading office report:', error);
-                document.getElementById('officeReportContent').innerHTML = '<p class="text-danger">Error loading report</p>';
-            }
-        }
-
-// FLEET MANAGEMENT CODE - Add this to the existing script section
-
-const FLEET_API_URL = 'https://fzvmganebjklnse547t4rh3siu0cfaei.lambda-url.us-east-2.on.aws';
-let allVehicles = [];
-let currentVehicleFilter = 'all';
-
-// Load fleet data when vehicles tab is shown
-document.getElementById('vehicles-tab')?.addEventListener('shown.bs.tab', function() {
-    loadFleetVehicles();
-});
-
-document.getElementById('accidents-tab')?.addEventListener('shown.bs.tab', loadAccidents);
-document.getElementById('ezpass-tab')?.addEventListener('shown.bs.tab', loadEZPass);
-document.getElementById('maintenance-tab')?.addEventListener('shown.bs.tab', loadMaintenance);
-
-async function loadFleetVehicles() {
-    try {
-        const response = await fetch(FLEET_API_URL + '/vehicles');
-        const vehicles = await response.json();
-        allVehicles = vehicles;
-
-        // Update counts
-        document.getElementById('totalVehicles').textContent = vehicles.length;
-        document.getElementById('assignedVehicles').textContent = vehicles.filter(v => v.status === 'assigned').length;
-        document.getElementById('floaterVehicles').textContent = vehicles.filter(v => v.status === 'floater').length;
-        document.getElementById('downedVehicles').textContent = vehicles.filter(v => v.status === 'downed').length;
-        document.getElementById('vehicleCount').textContent = vehicles.length;
-
-        displayVehicles(vehicles);
-    } catch (error) {
-        console.error('Error loading vehicles:', error);
-        document.getElementById('vehiclesTableBody').innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading vehicles</td></tr>';
-    }
-}
-
-function displayVehicles(vehicles) {
-    const tbody = document.getElementById('vehiclesTableBody');
-    if (vehicles.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No vehicles found</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = vehicles.map(v => `
-        <tr>
-            <td><strong>${v.vehicle_id || v.asset_name}</strong></td>
-            <td>${v.year} ${v.make} ${v.model}</td>
-            <td><small>${v.vin || '-'}</small></td>
-            <td>${v.license_plate || '-'}</td>
-            <td><span class="badge bg-${v.status === 'assigned' ? 'success' : v.status === 'floater' ? 'primary' : 'danger'}">${v.status}</span></td>
-            <td>${v.current_driver || '-'}</td>
-            <td>${v.territory || '-'}</td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="editVehicle('${v.vehicle_id}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function filterVehicleStatus(status) {
-    currentVehicleFilter = status;
-    let filtered = allVehicles;
-
-    if (status !== 'all') {
-        filtered = allVehicles.filter(v => v.status === status);
-    }
-
-    const searchTerm = document.getElementById('vehicleSearch').value.toLowerCase();
-    if (searchTerm) {
-        filtered = filtered.filter(v =>
-            (v.asset_name || '').toLowerCase().includes(searchTerm) ||
-            (v.current_driver || '').toLowerCase().includes(searchTerm) ||
-            (v.vin || '').toLowerCase().includes(searchTerm) ||
-            (v.license_plate || '').toLowerCase().includes(searchTerm)
-        );
-    }
-
-    displayVehicles(filtered);
-
-    // Update button states
-    document.querySelectorAll('.btn-group button').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-}
-
-function filterVehicles() {
-    filterVehicleStatus(currentVehicleFilter);
-}
-
-function showAddVehicleModal() {
-    document.getElementById('vehicleForm').reset();
-    document.getElementById('vehicleId').value = '';
-    new bootstrap.Modal(document.getElementById('vehicleModal')).show();
-}
-
-async function saveVehicle() {
-    const vehicleData = {
-        vehicle_id: document.getElementById('vehicleId').value,
-        asset_name: document.getElementById('vehicleAssetName').value,
-        year: document.getElementById('vehicleYear').value,
-        make: document.getElementById('vehicleMake').value,
-        model: document.getElementById('vehicleModel').value,
-        vin: document.getElementById('vehicleVin').value,
-        license_plate: document.getElementById('vehiclePlate').value,
-        status: document.getElementById('vehicleStatus').value,
-        current_driver: document.getElementById('vehicleDriver').value,
-        territory: document.getElementById('vehicleTerritory').value
-    };
-
-    try {
-        const method = vehicleData.vehicle_id ? 'PUT' : 'POST';
-        const response = await fetch(FLEET_API_URL + '/vehicles', {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(vehicleData)
-        });
-
-        if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('vehicleModal')).hide();
-            loadFleetVehicles();
-            alert('Vehicle saved successfully!');
-        }
-    } catch (error) {
-        console.error('Error saving vehicle:', error);
-        alert('Error saving vehicle');
-    }
-}
-
-async function loadAccidents() {
-    try {
-        const response = await fetch(FLEET_API_URL + '/accidents');
-        const accidents = await response.json();
-
-        const tbody = document.getElementById('accidentsTableBody');
-        if (accidents.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No accidents reported</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = accidents.map(acc => `
-            <tr>
-                <td>${new Date(acc.accident_date).toLocaleDateString()}</td>
-                <td>${acc.asset_name}</td>
-                <td>${acc.driver || '-'}</td>
-                <td>${acc.claim_number || '-'}</td>
-                <td>$${acc.panda_repair_estimate || 0}</td>
-                <td>$${acc.actual_repair_cost || 0}</td>
-                <td><span class="badge bg-${acc.status === 'completed' ? 'success' : 'warning'}">${acc.status}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-info" onclick="viewAccident('${acc.accident_id}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading accidents:', error);
-    }
-}
-
-function showAddAccidentModal() {
-    // Populate vehicle dropdown
-    const select = document.getElementById('accidentVehicle');
-    select.innerHTML = '<option value="">Select vehicle...</option>';
-    allVehicles.forEach(v => {
-        select.innerHTML += `<option value="${v.vehicle_id}">${v.asset_name} - ${v.year} ${v.make}</option>`;
-    });
-
-    document.getElementById('accidentForm').reset();
-    new bootstrap.Modal(document.getElementById('accidentModal')).show();
-}
-
-async function saveAccident() {
-    const accidentData = {
-        vehicle_id: document.getElementById('accidentVehicle').value,
-        accident_date: document.getElementById('accidentDate').value,
-        driver: document.getElementById('accidentDriver').value,
-        claim_number: document.getElementById('accidentClaim').value,
-        panda_repair_estimate: parseFloat(document.getElementById('accidentEstimate').value) || 0,
-        actual_repair_cost: parseFloat(document.getElementById('accidentCost').value) || 0,
-        video_description: document.getElementById('accidentDescription').value,
-        status: 'pending'
-    };
-
-    try {
-        const response = await fetch(FLEET_API_URL + '/accidents', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(accidentData)
-        });
-
-        if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('accidentModal')).hide();
-            loadAccidents();
-            alert('Accident reported successfully!');
-        }
-    } catch (error) {
-        console.error('Error saving accident:', error);
-        alert('Error saving accident');
-    }
-}
-
-async function loadEZPass() {
-    try {
-        const response = await fetch(FLEET_API_URL + '/ezpass');
-        const ezpass = await response.json();
-
-        const tbody = document.getElementById('ezpassTableBody');
-        if (ezpass.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No EZ Pass records</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = ezpass.map(ez => `
-            <tr>
-                <td><strong>${ez.ezpass_id}</strong></td>
-                <td>${ez.asset_name || '-'}</td>
-                <td>${ez.driver || '-'}</td>
-                <td>${ez.plate_number || '-'}</td>
-                <td>${ez.territory || '-'}</td>
-                <td><span class="badge bg-${ez.status === 'active' ? 'success' : 'secondary'}">${ez.status}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="editEZPass('${ez.ezpass_id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading EZ Pass:', error);
-    }
-}
-
-function showAddEZPassModal() {
-    const select = document.getElementById('ezpassVehicle');
-    select.innerHTML = '<option value="">Select vehicle...</option>';
-    allVehicles.forEach(v => {
-        select.innerHTML += `<option value="${v.vehicle_id}">${v.asset_name}</option>`;
-    });
-
-    document.getElementById('ezpassForm').reset();
-    new bootstrap.Modal(document.getElementById('ezpassModal')).show();
-}
-
-async function saveEZPass() {
-    const ezpassData = {
-        ezpass_id: document.getElementById('ezpassId').value,
-        vehicle_id: document.getElementById('ezpassVehicle').value,
-        driver: document.getElementById('ezpassDriver').value,
-        plate_number: document.getElementById('ezpassPlate').value,
-        territory: document.getElementById('ezpassTerritory').value,
-        status: 'active'
-    };
-
-    try {
-        const response = await fetch(FLEET_API_URL + '/ezpass', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(ezpassData)
-        });
-
-        if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('ezpassModal')).hide();
-            loadEZPass();
-            alert('EZ Pass added successfully!');
-        }
-    } catch (error) {
-        console.error('Error saving EZ Pass:', error);
-        alert('Error saving EZ Pass');
-    }
-}
-
-async function loadMaintenance() {
-    try {
-        const [maintenanceResp, overdueResp] = await Promise.all([
-            fetch(FLEET_API_URL + '/maintenance'),
-            fetch(FLEET_API_URL + '/overdue-maintenance')
-        ]);
-
-        const maintenance = await maintenanceResp.json();
-        const overdue = await overdueResp.json();
-
-        if (overdue.length > 0) {
-            document.getElementById('overdueAlert').style.display = 'block';
-            document.getElementById('overdueCount').textContent = overdue.length;
-        }
-
-        const tbody = document.getElementById('maintenanceTableBody');
-        if (maintenance.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No maintenance scheduled</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = maintenance.map(m => `
-            <tr>
-                <td>${m.asset_name}</td>
-                <td>${m.type}</td>
-                <td>${new Date(m.due_date).toLocaleDateString()}</td>
-                <td><span class="badge bg-${m.status === 'completed' ? 'success' : m.status === 'overdue' ? 'danger' : 'warning'}">${m.status}</span></td>
-                <td>$${m.cost || 0}</td>
-                <td>
-                    <button class="btn btn-sm btn-success" onclick="completeMaintenance('${m.maintenance_id}')">
-                        <i class="fas fa-check"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading maintenance:', error);
-    }
-}
-
-function showAddMaintenanceModal() {
-    const select = document.getElementById('maintenanceVehicle');
-    select.innerHTML = '<option value="">Select vehicle...</option>';
-    allVehicles.forEach(v => {
-        select.innerHTML += `<option value="${v.vehicle_id}">${v.asset_name}</option>`;
-    });
-
-    document.getElementById('maintenanceForm').reset();
-    new bootstrap.Modal(document.getElementById('maintenanceModal')).show();
-}
-
-async function saveMaintenance() {
-    const maintenanceData = {
-        vehicle_id: document.getElementById('maintenanceVehicle').value,
-        type: document.getElementById('maintenanceType').value,
-        due_date: document.getElementById('maintenanceDueDate').value,
-        cost: parseFloat(document.getElementById('maintenanceCost').value) || 0,
-        notes: document.getElementById('maintenanceNotes').value,
-        status: 'pending'
-    };
-
-    try {
-        const response = await fetch(FLEET_API_URL + '/maintenance', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(maintenanceData)
-        });
-
-        if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('maintenanceModal')).hide();
-            loadMaintenance();
-            alert('Maintenance scheduled successfully!');
-        }
-    } catch (error) {
-        console.error('Error scheduling maintenance:', error);
-        alert('Error scheduling maintenance');
-    }
-}
-
-function editVehicle(vehicleId) {
-    // TODO: Load vehicle data and show modal
-    alert('Edit vehicle: ' + vehicleId);
-}
-
-function viewAccident(accidentId) {
-    alert('View accident: ' + accidentId);
-}
-
-function editEZPass(ezpassId) {
-    alert('Edit EZ Pass: ' + ezpassId);
-}
-
-async function completeMaintenance(maintenanceId) {
-    if (!confirm('Mark this maintenance as completed?')) return;
-
-    try {
-        const response = await fetch(FLEET_API_URL + '/maintenance', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                maintenance_id: maintenanceId,
-                status: 'completed',
-                completed_date: new Date().toISOString().split('T')[0]
-            })
-        });
-
-        if (response.ok) {
-            loadMaintenance();
-            alert('Maintenance marked as completed!');
-        }
-    } catch (error) {
-        console.error('Error completing maintenance:', error);
-        alert('Error completing maintenance');
-    }
-}
+        // Load stats on page load
+        loadStats();
     </script>
 </body>
 </html>

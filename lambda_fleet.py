@@ -29,8 +29,17 @@ def lambda_handler(event, context):
     }
 
     try:
-        method = event['httpMethod']
-        path = event['path']
+        # Handle both API Gateway and Function URL formats
+        if 'requestContext' in event and 'http' in event['requestContext']:
+            # Function URL format
+            method = event['requestContext']['http']['method']
+            path = event['requestContext']['http']['path']
+            if 'rawPath' in event:
+                path = event['rawPath']
+        else:
+            # API Gateway format
+            method = event.get('httpMethod', 'GET')
+            path = event.get('path', '/')
 
         if method == 'OPTIONS':
             return {'statusCode': 200, 'headers': headers, 'body': ''}
