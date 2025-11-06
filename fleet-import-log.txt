@@ -1,0 +1,323 @@
+🚗 Starting Complete Fleet Data Import
+============================================================
+
+🚗 Importing Assigned Vehicles...
+  ✓ Panda 7
+  ✓ Panda 10
+  ✓ Panda 15
+  ✓ Panda 16(Not under Panda)
+  ✓ Panda 17
+  ✓ Panda 21
+  ✓ Panda 24
+  ✓ Panda 25
+  ✓ Panda 26
+  ✓ Panda 27(Not under Panda)
+  ✓ Panda 28
+  ✓ Panda 29
+  ✓ Panda 30
+  ✓ Panda 31
+  ✓ Panda 32
+  ✓ Panda 33
+  ✓ Panda 34
+  ✓ Panda 35
+  ✓ Panda 36
+  ✓ Panda 37
+  ✓ Panda 39
+  ✓ Panda 41
+  ✓ Panda 42
+  ✓ Panda 43
+  ✓ Panda 44
+  ✓ Panda 45
+  ✓ Panda 46
+  ✓ Panda 47
+  ✓ Panda 48
+  ✓ Panda 50
+  ✓ Panda 52
+  ✓ Panda 53
+  ✓ Panda 55
+  ✓ Panda 56
+  ✓ Panda 57
+  ✓ Panda 60
+  ✓ Panda 62
+  ✓ Panda 63
+  ✓ Panda 64
+  ✓ Panda 65
+  ✓ Panda 67
+  ✓ Panda 68
+  ✓ Panda 69
+  ✓ Panda 70
+  ✓ Panda 71
+  ✓ Panda 72
+  ✓ Panda 73
+  ✓ Panda 74
+  ✓ Panda 75
+  ✓ Panda 77
+  ✓ Panda 78
+  ✓ Panda 79
+  ✓ Panda 80
+  ✓ Panda 82
+  ✓ Panda 83
+  ✓ Panda 84
+  ✓ Panda 85
+  ✓ Panda 87
+  ✓ Panda 88
+  ✓ Panda 89
+  ✓ Panda 93
+  ✓ Panda 94
+  ✓ Panda 95
+  ✓ Panda 96
+  ✓ Panda 97
+  ✓ Panda 98
+  ✓ Panda 99
+  ✓ Panda 100 (Bear 00)
+  ✓ Panda 101 (Bear 01)
+  ✓ Panda 102 (Bear 02)
+  ✓ Panda 103 (Bear 03)
+  ✓ Panda 104 (Bear 04)
+  ✓ Panda 105 (Bear 05)
+  ✓ Panda 106 (Bear 06)
+  ✓ Panda 107(Bear 07)
+  ✓ Panda 108(Bear 08)
+  ✓ Panda 109(Bear 09)
+  ✓ Panda 110(BEAR 10)
+  ✓ Panda 111(BEAR 11)
+  ✓ Panda 112(BEAR 12)
+  ✓ Panda 113(BEAR 13)
+  ✓ Panda 114(BEAR 14)
+  ✓ Panda 115(Bear 15)
+  ✓ Panda 116(Bear 16)
+  ✓ Panda 117(BEAR 17)
+  ✓ Panda 118(BEAR 18)
+  ✓ Panda 119(Bear 19)
+  ✓ Panda 120
+  ✓ Panda 121
+  ✓ Panda 122
+  ✓ Panda 123
+  ✓ Panda 126
+  ✓ Panda 127
+  ✓ Panda 128
+  ✓ Panda 129
+  ✓ Panda 130
+  ✓ Panda 131
+  ✓ Panda 132(Branded)
+  ✓ Panda 133
+  ✓ Panda 134
+  ✓ Panda 135
+✅ Imported 101 assigned vehicles (0 errors)
+
+🔄 Importing Floaters & Downed Vehicles...
+  ✓ Panda 9 (floater)
+  ✓ Panda 13 (floater)
+  ✓ Panda 3(Not under Panda ) (floater)
+  ✓ Panda 91 (floater)
+  ✓ Panda 92 (floater)
+  ✓ Panda 90 (floater)
+  ✓ Panda 125 (floater)
+  ✓ Panda 61 (floater)
+  ✓ Panda 54 (floater)
+  ✓ Panda 40 (floater)
+  ✓ Colorado vin 1GCPTBEK7T1142534 price$36425, plus tax tags and freight, trade Panda 92 Trax trade value $16,800 you are $41904.47 on the road out the door after everything. (floater)
+  ✓ 2. Colorado vin 1GCPTBEK1T1107505 price$35700, plus tax tags and freight, trade Panda 90 Trax trade value $16,200 you are $41589.75 on the road out the door after everything. (floater)
+  ✓ 3. Colorado vin 1GCPTBEK6T1116684 price$36175, plus tax tags and freight, trade Panda 91 Trax trade value $14,800 you are $42682.02 on the road out the door after everything. (floater)
+  ✓ DOWN (floater)
+  ✓ Panda 38 (downed)
+  ✓ Panda 5(Formely P76) (floater)
+  ✓ Panda 86 (downed)
+  ✓ Panda 81 (downed)
+  ✓ Driver (floater)
+  ✓ Noah Ferguson (floater)
+  ✓ Michael Whatson (floater)
+  ✓ Reagan Schaeffer (floater)
+  ✓ John Heaton (floater)
+  ✓ 7/7 Class Vehicle Assignments (floater)
+  ✓ Asset ID (floater)
+  ✓ Panda 47 (floater)
+  ✓ Panda 85 (floater)
+  ✓ Panda 86 (floater)
+  ✓ Panda 72 (floater)
+  ✓ Panda 56 (floater)
+  ✓ Panda 31 (floater)
+  ✓ Panda 61 (floater)
+  ✓ Candidate Name (floater)
+  ✓ Mohammad Hamdan (floater)
+  ✓ Brandon Stewart (floater)
+  ✓ Colin Mchugh (floater)
+  ✓ Sebastien Cazeau (floater)
+  ✓ Garrett Evans (floater)
+  ✓ Justin Stamey (floater)
+  ✓ Devon Timmonds (floater)
+  ✓ Prospective Sales Rep (floater)
+  ✓ Sebastian Cazeau (floater)
+  ✓ Colin Mchugh (floater)
+  ✓ Garret Evans (floater)
+  ✓ Brandon Stewart (floater)
+  ✓ Devon Timmonds (floater)
+  ✓ 6/ 2 Vehicle Assignments (floater)
+  ✓ Asset ID (floater)
+  ✓ Panda  85 (floater)
+  ✓ Panda 56 (floater)
+  ✓ Panda 37 (floater)
+  ✓ Panda 69 (floater)
+  ✓ Panda 55 (floater)
+✅ Imported 53 floaters/downed vehicles (0 errors)
+
+💰 Importing Sold Vehicles...
+  ✓ panda 2
+  ✓ Panda 6
+  ✓ Panda 7
+  ✓ Panda 11
+  ✓ Panda 18
+  ✓ panda 20
+  ✓ Panda 22
+  ✓ Panda 51
+  ✓ Panda 58
+  ✓ Panda 5
+  ✓ Panda 59
+  ✓ Panda 21
+  ✓ Panda 8
+  ✓ Panda 49
+  ✓ Panda 66
+  ✓ Panda 14
+  ✓ Panda 4
+  ✓ Panda 19
+  ✓ Panda 12
+  ✓ Panda 124
+✅ Imported 20 sold vehicles (0 errors)
+
+🎫 Importing EZ Pass Records...
+  ✓ 1604834377
+  ✓ 1604948561
+  ✓ 1604948563
+  ✓ 1604948566
+  ✓ 1604948568
+  ✓ 1604948569
+  ✓ 1605419083
+  ✓ 1605419415
+  ✓ 1605471439
+  ✓ 1605512912
+  ✓ 1605512913
+  ✓ 1605721355
+  ✓ 1605725151
+  ✓ 1605756495
+  ✓ 1605756497
+  ✓ 1605780535
+  ✓ 1605780536
+  ✓ 1605780538
+  ✓ 1605780539
+  ✓ 1605780540
+  ✓ 1605780541
+  ✓ 1605780542
+  ✓ 1605788133
+  ✓ 1605788134
+  ✓ 1605788136
+  ✓ 1605788140
+  ✓ 1605788141
+  ✓ 1605804106
+  ✓ 1605804109
+  ✓ 1605804111
+  ✓ 1605804112
+  ✓ 1605804113
+  ✓ 1605809803
+  ✓ 1605860060
+  ✓ 1605860063
+  ✓ 1605860064
+  ✓ 1605860065
+  ✓ 1605860067
+  ✓ 1605860068
+  ✓ 1605860069
+  ✓ 1606012832
+  ✓ 1605981079
+  ✓ 1605981080
+  ✓ 1605981081
+  ✓ 1606012834
+  ✓ 1606012837
+  ✓ 1606012839
+  ✓ 1606374884
+  ✓ 2214782207
+  ✓ 2214782208
+  ✓ 2216187445
+  ✓ 1605809796
+  ✓ ??????
+  ✓ 1604834045
+  ✓ 1604837294
+  ✓ 1604948570
+  ✓ 1605419438
+  ✓ 1605419481
+  ✓ 1605512909
+  ✓ 1605512910
+  ✓ 1605512911
+  ✓ 1605512914
+  ✓ 1605512915
+  ✓ 1605512916
+  ✓ 1605512917
+  ✓ 1605512918
+  ✓ 1605721353
+  ✓ 1605725152
+  ✓ 1605756496
+  ✓ 1605780537
+  ✓ 1605788132
+  ✓ 1605788132
+  ✓ 1605788135
+  ✓ 1605788137
+  ✓ 1605788138
+  ✓ 1605804107
+  ✓ 1605804114
+  ✓ 1606396453
+  ✓ 1605809797
+  ✓ 1605809798
+  ✓ 1605860062
+  ✓ 1605981083
+  ✓ 1605981086
+  ✓ 1606012833
+  ✓ 1606012836
+  ✓ 1606012840
+  ✓ 1606012841
+  ✓ 1606374880
+  ✓ 1606374881
+  ✓ 1606374882
+  ✓ 1606374883
+  ✓ 1606374885
+  ✓ 1606374886
+  ✓ 1606374887
+  ✓ 1606374888
+  ✓ 1606374889
+  ✓ 1606396451
+  ✓ 1606396453
+  ✓ 1606396454
+  ✓ 1606396456
+  ✓ 2105738499
+  ✓ 1603984002
+  ✓ Personal
+  ✓ 1605809799
+  ✓ 1605981077
+  ✓ 1605809804
+  ✓ 1606396446
+  ✓ 1606396452
+  ✓ 1606443388
+  ✓ 1606443387
+  ✓ 1606443389
+  ✓ 1606443390
+  ✓ 1606443386
+  ✓ 1606396447
+  ✓ 1606396445
+  ✓ 1606396450
+  ✓ 1606396448
+  ✓ 1606396455
+  ✓ 1606396442
+  ✓ 1606396444
+  ✓ 1606396438
+✅ Imported 121 EZ Pass records (0 errors)
+
+
+============================================================
+✅ IMPORT COMPLETE!
+
+📊 Summary:
+   - Vehicles: 154
+   - Sales: 20
+   - EZ Pass: 121
+   - Total Records: 295
+
+🎉 All data imported to DynamoDB!
+
+🌐 View at: https://pandaadmin.com/assets-vehicles.html

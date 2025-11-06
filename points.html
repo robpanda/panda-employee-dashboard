@@ -597,14 +597,18 @@
                     teamMembers = [...allEmployees];
                 } else {
                     // Regular manager - find their direct reports
-                    const managerName = currentManager.name || 
-                        `${currentManager['First Name'] || ''} ${currentManager['Last Name'] || ''}`.trim();
-                    
+                    // Supervisor field is stored as "Last Name, First Name"
+                    const firstName = currentManager['First Name'] || currentManager.first_name || '';
+                    const lastName = currentManager['Last Name'] || currentManager.last_name || '';
+                    const managerNameStandard = `${firstName} ${lastName}`.trim();
+                    const managerNameReversed = `${lastName}, ${firstName}`.trim();
+
                     teamMembers = employees.filter(emp => {
                         const terminated = emp['Terminated'] || emp.terminated || 'No';
                         const supervisor = emp.supervisor || emp.manager || '';
-                        
-                        return terminated === 'No' && supervisor === managerName;
+
+                        // Match both formats: "First Last" and "Last, First"
+                        return terminated === 'No' && (supervisor === managerNameStandard || supervisor === managerNameReversed);
                     }).sort((a, b) => {
                         const nameA = a['First Name'] && a['Last Name'] ? 
                             `${a['First Name']} ${a['Last Name']}` : a.name || '';
