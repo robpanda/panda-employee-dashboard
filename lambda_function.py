@@ -696,14 +696,14 @@ def handle_collections(event):
                 for key, value in item.items():
                     if isinstance(value, Decimal):
                         item[key] = float(value)
-                # Handle Merchandise Value strings with $ and commas
-                elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
-                    try:
-                        # Remove $ and commas, then convert to float
-                        cleaned = value.replace('$', '').replace(',', '').strip()
-                        item[key] = float(cleaned) if cleaned else 0.0
-                    except (ValueError, AttributeError):
-                        item[key] = 0.0
+                    # Handle Merchandise Value strings with $ and commas
+                    elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
+                        try:
+                            # Remove $ and commas, then convert to float
+                            cleaned = value.replace('$', '').replace(',', '').strip()
+                            item[key] = float(cleaned) if cleaned else 0.0
+                        except (ValueError, AttributeError):
+                            item[key] = 0.0
             
             return {
                 'statusCode': 200,
@@ -936,16 +936,32 @@ def handle_points(event):
                 )
                 if response['Items']:
                     emp = response['Items'][0]
+                    current_points = float(emp.get('points', emp.get('Panda Points', 0)) or 0)
+
+                    # Calculate lifetime total and redeemed from points history
+                    try:
+                        history_response = points_history_table.query(
+                            IndexName='employee_id-index',
+                            KeyConditionExpression='employee_id = :emp_id',
+                            ExpressionAttributeValues={':emp_id': emp_id}
+                        )
+                        total_received = sum(h.get('points', 0) for h in history_response.get('Items', []) if h.get('points', 0) > 0)
+                        points_redeemed = sum(abs(h.get('points', 0)) for h in history_response.get('Items', []) if h.get('points', 0) < 0)
+                    except:
+                        total_received = current_points
+                        points_redeemed = 0
+
                     return {
                         'statusCode': 200,
-                        'headers': {
-                'Content-Type': 'application/json',
-                },
+                        'headers': get_cors_headers(),
                         'body': json.dumps({
                             'employee_id': emp_id,
                             'name': f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip(),
-                            'points': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
-                            'total_received': float(emp.get('points', emp.get('Panda Points', 0)) or 0),
+                            'points': current_points,
+                            'points_balance': current_points,
+                            'points_lifetime': float(total_received),
+                            'total_received': float(total_received),
+                            'points_redeemed': float(points_redeemed),
                             'department': emp.get('Department', ''),
                             'supervisor': emp.get('supervisor', '')
                         })
@@ -953,17 +969,13 @@ def handle_points(event):
                 else:
                     return {
                         'statusCode': 404,
-                        'headers': {
-                'Content-Type': 'application/json',
-                },
+                        'headers': get_cors_headers(),
                         'body': json.dumps({'error': 'Employee not found'})
                     }
             except Exception as e:
                 return {
                     'statusCode': 500,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': str(e)})
                 }
         else:
@@ -981,17 +993,13 @@ def handle_points(event):
                     })
                 return {
                     'statusCode': 200,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'employees': points_data})
                 }
             except Exception as e:
                 return {
                     'statusCode': 500,
-                    'headers': {
-                'Content-Type': 'application/json',
-                },
+                    'headers': get_cors_headers(),
                     'body': json.dumps({'error': str(e)})
                 }
 
@@ -1655,12 +1663,26 @@ def create_shopify_gift_card(value, employee):
 def handle_points_history(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
         method = event['requestContext']['http']['method']
+        query_params = event.get('queryStringParameters', {}) or {}
     else:
         method = event.get('httpMethod', 'GET')
-    
+        query_params = event.get('queryStringParameters', {}) or {}
+
     if method == 'GET':
         try:
-            response = points_history_table.scan()
+            employee_id = query_params.get('employee_id')
+
+            if employee_id:
+                # Query by employee_id using GSI
+                response = points_history_table.query(
+                    IndexName='employee_id-index',
+                    KeyConditionExpression='employee_id = :emp_id',
+                    ExpressionAttributeValues={':emp_id': employee_id}
+                )
+            else:
+                # Scan all if no employee_id specified
+                response = points_history_table.scan()
+
             items = response['Items']
             
             # Convert Decimal to float for JSON serialization
@@ -1668,28 +1690,24 @@ def handle_points_history(event):
                 for key, value in item.items():
                     if isinstance(value, Decimal):
                         item[key] = float(value)
-                # Handle Merchandise Value strings with $ and commas
-                elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
-                    try:
-                        # Remove $ and commas, then convert to float
-                        cleaned = value.replace('$', '').replace(',', '').strip()
-                        item[key] = float(cleaned) if cleaned else 0.0
-                    except (ValueError, AttributeError):
-                        item[key] = 0.0
+                    # Handle Merchandise Value strings with $ and commas
+                    elif key in ['Merchandise Value', 'merchandise_value'] and isinstance(value, str):
+                        try:
+                            # Remove $ and commas, then convert to float
+                            cleaned = value.replace('$', '').replace(',', '').strip()
+                            item[key] = float(cleaned) if cleaned else 0.0
+                        except (ValueError, AttributeError):
+                            item[key] = 0.0
             
             return {
                 'statusCode': 200,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'history': items})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': str(e), 'history': []})
             }
     
@@ -1710,20 +1728,16 @@ def handle_points_history(event):
             }
             
             points_history_table.put_item(Item=history_item)
-            
+
             return {
                 'statusCode': 201,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'message': 'Points history recorded successfully'})
             }
         except Exception as e:
             return {
                 'statusCode': 500,
-                'headers': {
-                'Content-Type': 'application/json',
-                },
+                'headers': get_cors_headers(),
                 'body': json.dumps({'error': str(e)})
             }
 
