@@ -1,0 +1,10 @@
+version: 1
+frontend:
+  phases:
+    build:
+      commands:
+        - echo "No build step needed - deploying static files"
+  artifacts:
+    baseDirectory: /
+    files:
+      - '**/*'
