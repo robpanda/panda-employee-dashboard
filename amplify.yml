@@ -5,6 +5,6 @@ frontend:
       commands:
         - echo "No build step needed - deploying static files"
   artifacts:
-    baseDirectory: /
+    baseDirectory: .
     files:
       - '**/*'
