@@ -6,10 +6,8 @@ from decimal import Decimal
 import uuid
 
 def get_cors_headers():
+    # Lambda Function URL handles CORS automatically, only return Content-Type
     return {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
         'Content-Type': 'application/json'
     }
 
@@ -1986,7 +1984,7 @@ def handle_employee_login(event):
                 'employment_date': employee.get('Employment Date', ''),
                 'last_login': employee.get('last_login'),
                 'points_manager': employee.get('points_manager', 'No'),
-                'points_budget': employee.get('points_budget', 0),
+                'points_budget': float(employee.get('points_budget', 0) or 0),
                 'total_points_received': float(employee.get('total_points_received', 0) or 0),
                 'total_points_redeemed': float(employee.get('total_points_redeemed', 0) or 0)
             }
