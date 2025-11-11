@@ -3,491 +3,586 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Panda Referrals">
     <title>Referral Management - Panda Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="manifest" href="/manifest.json">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
             min-height: 100vh;
-            padding: 20px;
+            color: #374151;
+            font-weight: 400;
         }
         .main-container {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             overflow: hidden;
-            max-width: 1600px;
-            margin: 0 auto;
+            max-width: 1400px;
+            margin: 20px auto;
+            border: 1px solid #f3f4f6;
         }
         .utility-nav {
-            background: #f8f9fa;
-            padding: 15px 30px;
+            background: white;
+            padding: 16px 24px;
             display: flex;
             align-items: center;
-            gap: 30px;
-            border-bottom: 1px solid #e9ecef;
-            flex-wrap: wrap;
+            gap: 24px;
+            border-bottom: 1px solid #f3f4f6;
         }
         .nav-links {
             display: flex;
-            gap: 20px;
+            gap: 4px;
             flex: 1;
-            flex-wrap: wrap;
         }
         .nav-link {
-            color: #6c757d;
+            color: #6b7280;
             text-decoration: none;
             padding: 8px 16px;
             border-radius: 8px;
-            transition: all 0.3s;
+            transition: all 0.15s ease;
+            font-weight: 400;
+            font-size: 14px;
         }
-        .nav-link:hover, .nav-link.active {
-            background: #2c5530;
-            color: white;
+        .nav-link:hover {
+            background: #f9fafb;
+            color: #374151;
             text-decoration: none;
         }
-        .header {
-            background: linear-gradient(135deg, #2c5530 0%, #1a3d1f 100%);
+        .nav-link.active {
+            background: #3b82f6;
             color: white;
-            padding: 30px;
+            text-decoration: none;
+            font-weight: 500;
         }
-        .header h1 { margin: 20px 0 10px 0; font-size: 2.5em; }
-        .header p { opacity: 0.9; margin-bottom: 0; }
+        .header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
+            color: #374151;
+            padding: 32px 40px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .logo img { height: 40px; }
+        .header h1 {
+            margin: 16px 0 8px 0;
+            font-size: 28px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .header p {
+            color: #6b7280;
+            margin-bottom: 0;
+            font-size: 16px;
+            font-weight: 400;
+        }
         .content-area {
-            padding: 30px;
+            padding: 32px 40px;
+            background: white;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
         }
         .stat-card {
             background: white;
-            border-radius: 10px;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-left: 4px solid;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
+            transition: all 0.15s ease;
         }
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-        .stat-card.primary { border-left-color: #007bff; }
-        .stat-card.success { border-left-color: #28a745; }
-        .stat-card.warning { border-left-color: #ffc107; }
-        .stat-card.danger { border-left-color: #dc3545; }
-        .stat-card.info { border-left-color: #17a2b8; }
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #e5e7eb;
         }
         .stat-label {
-            color: #6c757d;
-            font-size: 0.9em;
+            color: #6b7280;
+            font-size: 13px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #111827;
+            margin: 8px 0;
         }
         .stat-icon {
-            font-size: 2em;
-            opacity: 0.3;
+            font-size: 24px;
+            opacity: 0.2;
             float: right;
         }
-        .table-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 24px;
         }
-        .search-filter {
-            background: #f8f9fa;
-            padding: 15px;
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .tab:hover {
+            color: #374151;
+        }
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            font-weight: 500;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .table {
+            font-size: 14px;
+        }
+        .table th {
+            background: #fafbfc;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 500;
+            color: #374151;
+        }
+        .table td {
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 400;
+        }
+        .btn {
+            font-weight: 400;
             border-radius: 8px;
-            margin-bottom: 20px;
+            transition: all 0.15s ease;
+            font-size: 14px;
         }
-        .badge-status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
+        .btn-primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
         }
-        .badge-new { background: #e3f2fd; color: #1976d2; }
-        .badge-contacted { background: #f3e5f5; color: #7b1fa2; }
-        .badge-qualified { background: #e8f5e9; color: #388e3c; }
-        .badge-working { background: #fff3e0; color: #f57c00; }
-        .badge-sold { background: #c8e6c9; color: #2e7d32; }
-        .badge-lost { background: #ffebee; color: #c62828; }
-        .badge-pending { background: #fff3cd; color: #856404; }
-        .badge-paid { background: #d4edda; color: #155724; }
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 13px;
+        }
         .loading {
             text-align: center;
             padding: 40px;
+            color: #6b7280;
         }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #2c5530;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .btn-panda {
-            background: #2c5530;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 16px;
             border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
+            margin-bottom: 24px;
         }
-        .btn-panda:hover {
-            background: #1a3d1f;
-            color: white;
+        .search-box {
+            max-width: 400px;
+            margin-bottom: 20px;
         }
-        .modal-content {
-            border-radius: 15px;
-        }
-        .referral-link-box {
-            background: #f8f9fa;
-            padding: 15px;
+        .form-control, .form-select {
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
-            border: 2px dashed #dee2e6;
-            margin: 10px 0;
-            font-family: monospace;
+            transition: all 0.15s ease;
+            font-size: 14px;
         }
-        @media (max-width: 768px) {
-            .header h1 { font-size: 1.8em; }
-            .stat-number { font-size: 2em; }
-            .table-responsive { font-size: 0.9em; }
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
     </style>
 </head>
 <body>
     <div class="main-container">
+        <!-- Navigation -->
         <div class="utility-nav">
-            <div class="logo">
-                <img src="/panda-logo.png" alt="Panda Exteriors" height="40">
-            </div>
             <div class="nav-links">
-                <a href="/employee.html" class="nav-link">👥 Employees</a>
-                <a href="/points.html" class="nav-link">⭐ Points</a>
-                <a href="/leads" class="nav-link active">📊 Leads & Referrals</a>
-                <a href="/referrals.html" class="nav-link">🤝 Talent</a>
-                <a href="/assets.html" class="nav-link">📦 Assets</a>
-                <a href="/admin.html" class="nav-link">⚙️ Admin</a>
+                <a href="./employee.html" class="nav-link">👥 Employees</a>
+                <a href="./points.html" class="nav-link">⭐ Points</a>
+                <a href="./leads.html" class="nav-link active">📊 Leads</a>
+                <a href="./referrals.html" class="nav-link">🤝 Referrals</a>
+                <a href="./assets.html" class="nav-link">📦 Assets</a>
+                <a href="./admin.html" class="nav-link">⚙️ Admin</a>
             </div>
-            <button class="btn btn-sm btn-outline-danger" onclick="logout()">Logout</button>
         </div>
 
+        <!-- Header -->
         <div class="header">
-            <h1>📊 Referral Management System</h1>
-            <p>Track advocates, leads, and payouts - GTR Replacement</p>
+            <div class="logo">
+                <img src="https://pandaexteriors.com/wp-content/uploads/2023/09/cropped-Panda-Logo-Main-3.png" alt="Panda Exteriors">
+            </div>
+            <h1>Referral Management</h1>
+            <p>Track advocates, leads, and commission payouts</p>
         </div>
 
+        <!-- Content -->
         <div class="content-area">
             <!-- Loading Indicator -->
             <div id="loadingIndicator" class="loading">
-                <div class="spinner"></div>
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
                 <p class="mt-3">Loading referral data...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message" style="display: none;">
+                <strong>Error:</strong> <span id="errorText"></span>
             </div>
 
             <!-- Dashboard Stats -->
             <div id="dashboardStats" style="display: none;">
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3 col-sm-6">
-                        <div class="stat-card primary" onclick="showTab('advocates')">
-                            <i class="fas fa-users stat-icon"></i>
-                            <div class="stat-label">Total Advocates</div>
-                            <div class="stat-number" id="totalAdvocates">0</div>
-                            <small class="text-muted"><span id="activeAdvocates">0</span> active</small>
-                        </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-users stat-icon"></i>
+                        <div class="stat-label">Total Advocates</div>
+                        <div class="stat-value" id="totalAdvocates">0</div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="stat-card success" onclick="showTab('leads')">
-                            <i class="fas fa-handshake stat-icon"></i>
-                            <div class="stat-label">Total Leads</div>
-                            <div class="stat-number" id="totalLeads">0</div>
-                            <small class="text-muted"><span id="qualifiedLeads">0</span> qualified, <span id="soldLeads">0</span> sold</small>
-                        </div>
+                    <div class="stat-card">
+                        <i class="fas fa-user-check stat-icon"></i>
+                        <div class="stat-label">Active Advocates</div>
+                        <div class="stat-value" id="activeAdvocates">0</div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="stat-card warning" onclick="showTab('payouts')">
-                            <i class="fas fa-dollar-sign stat-icon"></i>
-                            <div class="stat-label">Pending Payouts</div>
-                            <div class="stat-number" id="pendingPayouts">$0</div>
-                            <small class="text-muted">Awaiting payment</small>
-                        </div>
+                    <div class="stat-card">
+                        <i class="fas fa-clipboard-list stat-icon"></i>
+                        <div class="stat-label">Total Leads</div>
+                        <div class="stat-value" id="totalLeads">0</div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="stat-card info">
-                            <i class="fas fa-chart-line stat-icon"></i>
-                            <div class="stat-label">Total Earnings</div>
-                            <div class="stat-number" id="totalPayouts">$0</div>
-                            <small class="text-muted"><span id="paidPayouts">$0</span> paid</small>
-                        </div>
+                    <div class="stat-card">
+                        <i class="fas fa-check-circle stat-icon"></i>
+                        <div class="stat-label">Qualified Leads</div>
+                        <div class="stat-value" id="qualifiedLeads">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-dollar-sign stat-icon"></i>
+                        <div class="stat-label">Total Earnings</div>
+                        <div class="stat-value" id="totalEarnings">$0</div>
                     </div>
                 </div>
 
                 <!-- Tabs -->
-                <ul class="nav nav-pills mb-4" id="mainTabs">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#" onclick="showTab('dashboard'); return false;">
-                            <i class="fas fa-chart-bar me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showTab('advocates'); return false;">
-                            <i class="fas fa-users me-2"></i>Advocates
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showTab('leads'); return false;">
-                            <i class="fas fa-handshake me-2"></i>Leads
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showTab('payouts'); return false;">
-                            <i class="fas fa-money-bill-wave me-2"></i>Payouts
-                        </a>
-                    </li>
-                </ul>
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('advocates')">
+                        <i class="fas fa-users"></i> Advocates
+                    </button>
+                    <button class="tab" onclick="switchTab('leads')">
+                        <i class="fas fa-clipboard-list"></i> Leads
+                    </button>
+                    <button class="tab" onclick="switchTab('payouts')">
+                        <i class="fas fa-money-bill-wave"></i> Payouts
+                    </button>
+                </div>
 
-                <!-- Tab Content -->
-                <div id="tabContent">
-                    <!-- Dashboard Tab -->
-                    <div id="dashboardTab" class="tab-pane">
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <div class="table-container">
-                                    <h5><i class="fas fa-trophy text-warning me-2"></i>Top Performing Advocates</h5>
-                                    <table class="table table-hover mt-3">
-                                        <thead>
-                                            <tr>
-                                                <th>Advocate</th>
-                                                <th>Leads</th>
-                                                <th>Earnings</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="topAdvocatesTable">
-                                            <tr><td colspan="3" class="text-center text-muted">Loading...</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="table-container">
-                                    <h5><i class="fas fa-fire text-danger me-2"></i>Recent Leads</h5>
-                                    <table class="table table-hover mt-3">
-                                        <thead>
-                                            <tr>
-                                                <th>Lead</th>
-                                                <th>Advocate</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="recentLeadsTable">
-                                            <tr><td colspan="3" class="text-center text-muted">Loading...</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                <!-- Advocates Tab -->
+                <div id="advocatesTab" class="tab-content active">
+                    <div class="search-box mb-3">
+                        <input type="text" class="form-control" id="advocateSearch" placeholder="Search advocates...">
                     </div>
-
-                    <!-- Advocates Tab -->
-                    <div id="advocatesTab" class="tab-pane" style="display: none;">
-                        <div class="table-container">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5><i class="fas fa-users me-2"></i>Advocates</h5>
-                                <button class="btn btn-panda btn-sm" onclick="showAddAdvocateModal()">
-                                    <i class="fas fa-plus me-2"></i>Add Advocate
-                                </button>
-                            </div>
-                            <div class="search-filter">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <input type="text" class="form-control" id="advocateSearch" placeholder="Search advocates..." onkeyup="filterAdvocates()">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <select class="form-select" id="advocateRepFilter" onchange="filterAdvocates()">
-                                            <option value="">All Sales Reps</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <select class="form-select" id="advocateStatusFilter" onchange="filterAdvocates()">
-                                            <option value="">All Status</option>
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Referral Code</th>
-                                            <th>Leads</th>
-                                            <th>Earnings</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="advocatesTableBody">
-                                        <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Leads Tab -->
-                    <div id="leadsTab" class="tab-pane" style="display: none;">
-                        <div class="table-container">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5><i class="fas fa-handshake me-2"></i>Leads</h5>
-                                <button class="btn btn-panda btn-sm" onclick="showAddLeadModal()">
-                                    <i class="fas fa-plus me-2"></i>Add Lead
-                                </button>
-                            </div>
-                            <div class="search-filter">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <input type="text" class="form-control" id="leadSearch" placeholder="Search leads..." onkeyup="filterLeads()">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <select class="form-select" id="leadStatusFilter" onchange="filterLeads()">
-                                            <option value="">All Status</option>
-                                            <option value="new">New</option>
-                                            <option value="contacted">Contacted</option>
-                                            <option value="qualified">Qualified</option>
-                                            <option value="working">Working</option>
-                                            <option value="sold">Sold</option>
-                                            <option value="lost">Lost</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <select class="form-select" id="leadAdvocateFilter" onchange="filterLeads()">
-                                            <option value="">All Advocates</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Lead Name</th>
-                                            <th>Contact</th>
-                                            <th>Advocate</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="leadsTableBody">
-                                        <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Payouts Tab -->
-                    <div id="payoutsTab" class="tab-pane" style="display: none;">
-                        <div class="table-container">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5><i class="fas fa-money-bill-wave me-2"></i>Payouts</h5>
-                                <button class="btn btn-success btn-sm" onclick="exportPayouts()">
-                                    <i class="fas fa-download me-2"></i>Export CSV
-                                </button>
-                            </div>
-                            <div class="search-filter">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <select class="form-select" id="payoutStatusFilter" onchange="filterPayouts()">
-                                            <option value="">All Status</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="paid">Paid</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <select class="form-select" id="payoutTypeFilter" onchange="filterPayouts()">
-                                            <option value="">All Types</option>
-                                            <option value="signup">Signup ($25)</option>
-                                            <option value="qualified">Qualified ($50)</option>
-                                            <option value="sold">Sold ($150)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Advocate</th>
-                                            <th>Type</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="payoutsTableBody">
-                                        <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Referral Code</th>
+                                    <th>Total Referrals</th>
+                                    <th>Total Earnings</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="advocatesTableBody">
+                                <tr><td colspan="6" class="text-center">No data</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Advocate Detail Modal -->
-    <div class="modal fade" id="advocateDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-user me-2"></i>Advocate Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- Leads Tab -->
+                <div id="leadsTab" class="tab-content">
+                    <div class="search-box mb-3">
+                        <input type="text" class="form-control" id="leadSearch" placeholder="Search leads...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Advocate</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leadsTableBody">
+                                <tr><td colspan="6" class="text-center">No data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="modal-body" id="advocateDetailContent">
-                    <div class="text-center"><div class="spinner"></div></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Lead Detail Modal -->
-    <div class="modal fade" id="leadDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-handshake me-2"></i>Lead Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="leadDetailContent">
-                    <div class="text-center"><div class="spinner"></div></div>
+                <!-- Payouts Tab -->
+                <div id="payoutsTab" class="tab-content">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Advocate</th>
+                                    <th>Tier</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payoutsTableBody">
+                                <tr><td colspan="5" class="text-center">No data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/referral-api.js"></script>
-    <script src="/js/referral-app.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE = 'https://7paaginnvg.execute-api.us-east-2.amazonaws.com/prod/referrals';
+
+        // Global data storage
+        let appData = {
+            advocates: [],
+            leads: [],
+            payouts: [],
+            advocatesMap: new Map()
+        };
+
+        // Initialize app on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Page loaded, fetching data...');
+            await loadAllData();
+        });
+
+        // Load all data from API
+        async function loadAllData() {
+            try {
+                showLoading(true);
+
+                console.log('Fetching from:', API_BASE);
+
+                // Load dashboard data
+                const dashboardRes = await fetch(`${API_BASE}/dashboard`);
+                console.log('Dashboard response status:', dashboardRes.status);
+                const dashboard = await dashboardRes.json();
+                console.log('Dashboard data:', dashboard);
+
+                // Load stats
+                const statsRes = await fetch(`${API_BASE}/stats`);
+                const stats = await statsRes.json();
+                console.log('Stats data:', stats);
+
+                // Load sales reps
+                const repsRes = await fetch(`${API_BASE}/reps`);
+                const reps = await repsRes.json();
+                console.log('Reps data:', reps);
+
+                // Store data
+                appData.advocates = dashboard.advocates || [];
+                appData.leads = dashboard.leads || [];
+                appData.payouts = dashboard.payouts || [];
+                appData.stats = stats;
+
+                // Create maps for quick lookup
+                appData.advocatesMap = new Map(appData.advocates.map(a => [a.advocateId, a]));
+
+                console.log('Data loaded:', {
+                    advocates: appData.advocates.length,
+                    leads: appData.leads.length,
+                    payouts: appData.payouts.length
+                });
+
+                // Update UI
+                updateDashboardStats();
+                renderAdvocatesTable();
+                renderLeadsTable();
+                renderPayoutsTable();
+
+                showLoading(false);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Failed to load data: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // Show/hide loading indicator
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+            document.getElementById('dashboardStats').style.display = show ? 'none' : 'block';
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+
+        // Update dashboard stats
+        function updateDashboardStats() {
+            const stats = appData.stats || {};
+            document.getElementById('totalAdvocates').textContent = stats.totalAdvocates || appData.advocates.length;
+            document.getElementById('activeAdvocates').textContent = stats.activeAdvocates || appData.advocates.filter(a => a.active !== false).length;
+            document.getElementById('totalLeads').textContent = stats.totalLeads || appData.leads.length;
+            document.getElementById('qualifiedLeads').textContent = stats.qualifiedLeads || appData.leads.filter(l => l.status === 'qualified').length;
+            document.getElementById('totalEarnings').textContent = '$' + (stats.totalEarnings || 0).toLocaleString();
+        }
+
+        // Render advocates table
+        function renderAdvocatesTable() {
+            const tbody = document.getElementById('advocatesTableBody');
+            if (!appData.advocates.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No advocates found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = appData.advocates.map(adv => {
+                const name = `${adv.firstName || ''} ${adv.lastName || ''}`.trim() || 'N/A';
+                const leadsCount = appData.leads.filter(l => l.advocateId === adv.advocateId).length;
+                return `
+                    <tr>
+                        <td>${name}</td>
+                        <td>${adv.email || 'N/A'}</td>
+                        <td><code>${adv.referralCode || 'N/A'}</code></td>
+                        <td>${leadsCount}</td>
+                        <td>$${(adv.totalEarnings || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewAdvocate('${adv.advocateId}')">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render leads table
+        function renderLeadsTable() {
+            const tbody = document.getElementById('leadsTableBody');
+            if (!appData.leads.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No leads found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = appData.leads.map(lead => {
+                const name = `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'N/A';
+                const advocate = appData.advocatesMap.get(lead.advocateId);
+                const advocateName = advocate ? `${advocate.firstName || ''} ${advocate.lastName || ''}`.trim() : 'N/A';
+                const createdDate = new Date(lead.createdAt).toLocaleDateString();
+                const statusBadge = getStatusBadge(lead.status);
+
+                return `
+                    <tr>
+                        <td>${name}</td>
+                        <td>${lead.phone || 'N/A'}</td>
+                        <td>${advocateName}</td>
+                        <td>${statusBadge}</td>
+                        <td>${createdDate}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewLead('${lead.leadId}')">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render payouts table
+        function renderPayoutsTable() {
+            const tbody = document.getElementById('payoutsTableBody');
+            if (!appData.payouts.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No payouts found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = appData.payouts.map(payout => {
+                const advocate = appData.advocatesMap.get(payout.advocateId);
+                const advocateName = advocate ? `${advocate.firstName || ''} ${advocate.lastName || ''}`.trim() : 'N/A';
+                const date = new Date(payout.createdAt).toLocaleDateString();
+                const statusBadge = payout.status === 'paid' ?
+                    '<span class="badge bg-success">Paid</span>' :
+                    '<span class="badge bg-warning">Pending</span>';
+
+                return `
+                    <tr>
+                        <td>${advocateName}</td>
+                        <td>${payout.tier || 'N/A'}</td>
+                        <td>$${(payout.amount || 0).toFixed(2)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${date}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            const badges = {
+                'new': '<span class="badge bg-primary">New</span>',
+                'contacted': '<span class="badge bg-info">Contacted</span>',
+                'qualified': '<span class="badge bg-success">Qualified</span>',
+                'sold': '<span class="badge bg-success">Sold</span>',
+                'lost': '<span class="badge bg-danger">Lost</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.closest('.tab').classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // View advocate details
+        function viewAdvocate(advocateId) {
+            const advocate = appData.advocatesMap.get(advocateId);
+            if (advocate) {
+                alert(`Advocate: ${advocate.firstName} ${advocate.lastName}\nEmail: ${advocate.email}\nReferral Code: ${advocate.referralCode}`);
+            }
+        }
+
+        // View lead details
+        function viewLead(leadId) {
+            const lead = appData.leads.find(l => l.leadId === leadId);
+            if (lead) {
+                alert(`Lead: ${lead.firstName} ${lead.lastName}\nPhone: ${lead.phone}\nStatus: ${lead.status}`);
+            }
+        }
+    </script>
 </body>
 </html>
