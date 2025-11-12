@@ -457,75 +457,84 @@
 
                     <div class="tier-config">
                         <h5>Commission Tiers (Amount Paid to Advocate)</h5>
-                        <div class="tier-row">
-                            <div><strong>Referral Stage</strong></div>
-                            <div><strong>Product</strong></div>
-                            <div><strong>Territory</strong></div>
-                            <div><strong>Commission Amount</strong></div>
-                            <div></div>
+                        <p class="text-muted small mb-3">Current GTR Product Tiers:</p>
+
+                        <!-- Roofing/Siding -->
+                        <div class="mb-4">
+                            <h6 class="text-primary">Roofing/Siding</h6>
+                            <div class="tier-row">
+                                <div><strong>Stage</strong></div>
+                                <div><strong>Territory</strong></div>
+                                <div><strong>Amount</strong></div>
+                                <div><strong>Bonus</strong></div>
+                                <div></div>
+                            </div>
+                            <div class="tier-row">
+                                <input type="text" class="form-control" value="Verified (Qualified)" readonly>
+                                <input type="text" class="form-control" value="All States" readonly>
+                                <input type="number" class="form-control" value="50" step="1">
+                                <input type="text" class="form-control" value="-" readonly>
+                                <button class="btn btn-sm btn-success" onclick="saveTierConfig('roofing', 'verified')">Save</button>
+                            </div>
+                            <div class="tier-row">
+                                <input type="text" class="form-control" value="Sold" readonly>
+                                <input type="text" class="form-control" value="All States" readonly>
+                                <input type="number" class="form-control" value="150" step="1">
+                                <input type="text" class="form-control" value="$200 after 3 sold" readonly>
+                                <button class="btn btn-sm btn-success" onclick="saveTierConfig('roofing', 'sold')">Save</button>
+                            </div>
                         </div>
-                        <div class="tier-row">
-                            <input type="text" class="form-control" value="Signup" readonly>
-                            <select class="form-select" id="tier1Product">
-                                <option value="*">All Products</option>
-                                <option value="roofing">Roofing</option>
-                                <option value="siding">Siding</option>
-                                <option value="windows">Windows</option>
-                                <option value="gutters">Gutters</option>
-                            </select>
-                            <select class="form-select" id="tier1Territory">
-                                <option value="*">All Territories</option>
-                                <option value="MD">Maryland</option>
-                                <option value="VA">Virginia</option>
-                                <option value="DC">DC</option>
-                                <option value="PA">Pennsylvania</option>
-                                <option value="DE">Delaware</option>
-                                <option value="NJ">New Jersey</option>
-                            </select>
-                            <input type="number" class="form-control" id="tier1Amount" value="25" step="1">
-                            <button class="btn btn-sm btn-success" onclick="saveTierConfig(1)">Save</button>
+
+                        <!-- Solar -->
+                        <div class="mb-4">
+                            <h6 class="text-primary">Solar</h6>
+                            <div class="tier-row">
+                                <input type="text" class="form-control" value="Verified (Qualified)" readonly>
+                                <input type="text" class="form-control" value="All States" readonly>
+                                <input type="number" class="form-control" value="50" step="1">
+                                <input type="text" class="form-control" value="-" readonly>
+                                <button class="btn btn-sm btn-success" onclick="saveTierConfig('solar', 'verified')">Save</button>
+                            </div>
+                            <div class="tier-row">
+                                <input type="text" class="form-control" value="Sold" readonly>
+                                <input type="text" class="form-control" value="All States" readonly>
+                                <input type="number" class="form-control" value="150" step="1">
+                                <input type="text" class="form-control" value="$200 after 3 sold" readonly>
+                                <button class="btn btn-sm btn-success" onclick="saveTierConfig('solar', 'sold')">Save</button>
+                            </div>
                         </div>
-                        <div class="tier-row">
-                            <input type="text" class="form-control" value="Qualified" readonly>
-                            <select class="form-select" id="tier2Product">
-                                <option value="*">All Products</option>
-                                <option value="roofing">Roofing</option>
-                                <option value="siding">Siding</option>
-                                <option value="windows">Windows</option>
-                                <option value="gutters">Gutters</option>
-                            </select>
-                            <select class="form-select" id="tier2Territory">
-                                <option value="*">All Territories</option>
-                                <option value="MD">Maryland</option>
-                                <option value="VA">Virginia</option>
-                                <option value="DC">DC</option>
-                                <option value="PA">Pennsylvania</option>
-                                <option value="DE">Delaware</option>
-                                <option value="NJ">New Jersey</option>
-                            </select>
-                            <input type="number" class="form-control" id="tier2Amount" value="50" step="1">
-                            <button class="btn btn-sm btn-success" onclick="saveTierConfig(2)">Save</button>
+
+                        <!-- Bath -->
+                        <div class="mb-4">
+                            <h6 class="text-primary">Bath</h6>
+                            <p class="small text-muted">Available only in Delaware, New Jersey, and Pennsylvania</p>
+                            <div class="tier-row">
+                                <input type="text" class="form-control" value="Verified (Qualified)" readonly>
+                                <input type="text" class="form-control" value="DE, NJ, PA only" readonly>
+                                <input type="number" class="form-control" value="50" step="1">
+                                <input type="text" class="form-control" value="-" readonly>
+                                <button class="btn btn-sm btn-success" onclick="saveTierConfig('bath', 'verified')">Save</button>
+                            </div>
+                            <div class="tier-row">
+                                <input type="text" class="form-control" value="Sold" readonly>
+                                <input type="text" class="form-control" value="DE, NJ, PA only" readonly>
+                                <input type="number" class="form-control" value="250" step="1">
+                                <input type="text" class="form-control" value="N/A" readonly>
+                                <button class="btn btn-sm btn-success" onclick="saveTierConfig('bath', 'sold')">Save</button>
+                            </div>
                         </div>
-                        <div class="tier-row">
-                            <input type="text" class="form-control" value="Sold" readonly>
-                            <select class="form-select" id="tier3Product">
-                                <option value="*">All Products</option>
-                                <option value="roofing">Roofing</option>
-                                <option value="siding">Siding</option>
-                                <option value="windows">Windows</option>
-                                <option value="gutters">Gutters</option>
-                            </select>
-                            <select class="form-select" id="tier3Territory">
-                                <option value="*">All Territories</option>
-                                <option value="MD">Maryland</option>
-                                <option value="VA">Virginia</option>
-                                <option value="DC">DC</option>
-                                <option value="PA">Pennsylvania</option>
-                                <option value="DE">Delaware</option>
-                                <option value="NJ">New Jersey</option>
-                            </select>
-                            <input type="number" class="form-control" id="tier3Amount" value="150" step="1">
-                            <button class="btn btn-sm btn-success" onclick="saveTierConfig(3)">Save</button>
+
+                        <!-- Advocate SalesRep -->
+                        <div class="mb-4">
+                            <h6 class="text-primary">Advocate SalesRep Product</h6>
+                            <p class="small text-muted">For sales rep advocate referrals</p>
+                            <div class="tier-row">
+                                <input type="text" class="form-control" value="Signup" readonly>
+                                <input type="text" class="form-control" value="All States" readonly>
+                                <input type="number" class="form-control" value="25" step="1">
+                                <input type="text" class="form-control" value="-" readonly>
+                                <button class="btn btn-sm btn-success" onclick="saveTierConfig('salesrep', 'signup')">Save</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1115,21 +1124,24 @@
         }
 
         // Save tier configuration
-        function saveTierConfig(tierNum) {
-            const product = document.getElementById(`tier${tierNum}Product`).value;
-            const territory = document.getElementById(`tier${tierNum}Territory`).value;
-            const amount = document.getElementById(`tier${tierNum}Amount`).value;
+        function saveTierConfig(product, stage) {
+            console.log(`Saving tier config:`, { product, stage });
 
-            console.log(`Saving tier ${tierNum} config:`, { product, territory, amount });
-            alert(`Tier ${tierNum} configuration saved! (In production, this would save to database)`);
+            // In production, this would POST to the API to save to DynamoDB
+            // Example structure:
+            // {
+            //   product: 'roofing' | 'solar' | 'bath' | 'salesrep',
+            //   stage: 'verified' | 'sold' | 'signup',
+            //   amount: <value from input>,
+            //   territories: ['*'] or ['DE', 'NJ', 'PA']
+            // }
+
+            alert(`Configuration saved for ${product} - ${stage}\n\nIn production, this would update DynamoDB tier configuration table.`);
         }
 
         // Save all tier configurations
         function saveAllTierConfigs() {
-            saveTierConfig(1);
-            saveTierConfig(2);
-            saveTierConfig(3);
-            alert('All tier configurations saved!');
+            alert('All tier configurations saved!\n\nIn production, this would bulk update all tier amounts in DynamoDB.');
         }
     </script>
 </body>
