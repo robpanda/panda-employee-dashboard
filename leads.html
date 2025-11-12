@@ -22,7 +22,7 @@
             border-radius: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             overflow: hidden;
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 20px auto;
             border: 1px solid #f3f4f6;
         }
@@ -156,6 +156,29 @@
             border-bottom: 1px solid #e5e7eb;
             font-weight: 500;
             color: #374151;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        .table th:hover {
+            background: #f3f4f6;
+        }
+        .table th.sortable::after {
+            content: '\f0dc';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-left: 8px;
+            opacity: 0.3;
+        }
+        .table th.sort-asc::after {
+            content: '\f0de';
+            opacity: 1;
+            color: #3b82f6;
+        }
+        .table th.sort-desc::after {
+            content: '\f0dd';
+            opacity: 1;
+            color: #3b82f6;
         }
         .table td {
             border-bottom: 1px solid #f3f4f6;
@@ -179,6 +202,10 @@
         .btn-primary:hover {
             background: #2563eb;
             border-color: #2563eb;
+        }
+        .btn-success {
+            background: #10b981;
+            border-color: #10b981;
         }
         .btn-sm {
             padding: 4px 12px;
@@ -211,6 +238,39 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+        .modal-content {
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        .modal-header {
+            border-bottom: 1px solid #f3f4f6;
+            background: #fafbfc;
+        }
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .toolbar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tier-config {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .tier-row {
+            display: grid;
+            grid-template-columns: 150px 150px 150px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
@@ -233,7 +293,7 @@
                 <img src="https://pandaexteriors.com/wp-content/uploads/2023/09/cropped-Panda-Logo-Main-3.png" alt="Panda Exteriors">
             </div>
             <h1>Referral Management</h1>
-            <p>Track advocates, leads, and commission payouts</p>
+            <p>Track advocates, leads, and commission payouts - Now with 1,849 advocates!</p>
         </div>
 
         <!-- Content -->
@@ -282,7 +342,7 @@
                 <!-- Tabs -->
                 <div class="tabs">
                     <button class="tab active" onclick="switchTab('advocates')">
-                        <i class="fas fa-users"></i> Advocates
+                        <i class="fas fa-users"></i> Advocates (1,849)
                     </button>
                     <button class="tab" onclick="switchTab('leads')">
                         <i class="fas fa-clipboard-list"></i> Leads
@@ -290,51 +350,64 @@
                     <button class="tab" onclick="switchTab('payouts')">
                         <i class="fas fa-money-bill-wave"></i> Payouts
                     </button>
+                    <button class="tab" onclick="switchTab('settings')">
+                        <i class="fas fa-cog"></i> Tier Settings
+                    </button>
                 </div>
 
                 <!-- Advocates Tab -->
                 <div id="advocatesTab" class="tab-content active">
-                    <div class="search-box mb-3">
-                        <input type="text" class="form-control" id="advocateSearch" placeholder="Search advocates...">
+                    <div class="toolbar">
+                        <input type="text" class="form-control search-box" id="advocateSearch" placeholder="Search advocates..." onkeyup="filterAdvocates()">
+                        <button class="btn btn-primary toolbar-btn" onclick="exportToCSV('advocates')">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover" id="advocatesTable">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Referral Code</th>
-                                    <th>Total Referrals</th>
-                                    <th>Total Earnings</th>
+                                    <th class="sortable" onclick="sortTable('advocates', 'name')">Name</th>
+                                    <th class="sortable" onclick="sortTable('advocates', 'email')">Email</th>
+                                    <th class="sortable" onclick="sortTable('advocates', 'referralCode')">Referral Code</th>
+                                    <th class="sortable" onclick="sortTable('advocates', 'totalReferrals')">Total Referrals</th>
+                                    <th class="sortable" onclick="sortTable('advocates', 'totalEarnings')">Total Earnings</th>
+                                    <th class="sortable" onclick="sortTable('advocates', 'repName')">Sales Rep</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="advocatesTableBody">
-                                <tr><td colspan="6" class="text-center">No data</td></tr>
+                                <tr><td colspan="7" class="text-center">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
+                    <div id="advocatePagination" class="mt-3 text-center"></div>
                 </div>
 
                 <!-- Leads Tab -->
                 <div id="leadsTab" class="tab-content">
-                    <div class="search-box mb-3">
-                        <input type="text" class="form-control" id="leadSearch" placeholder="Search leads...">
+                    <div class="toolbar">
+                        <input type="text" class="form-control search-box" id="leadSearch" placeholder="Search leads..." onkeyup="filterLeads()">
+                        <button class="btn btn-primary toolbar-btn" onclick="exportToCSV('leads')">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover" id="leadsTable">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Phone</th>
-                                    <th>Advocate</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
+                                    <th class="sortable" onclick="sortTable('leads', 'name')">Name</th>
+                                    <th class="sortable" onclick="sortTable('leads', 'phone')">Phone</th>
+                                    <th class="sortable" onclick="sortTable('leads', 'advocateName')">Advocate</th>
+                                    <th class="sortable" onclick="sortTable('leads', 'status')">Status</th>
+                                    <th class="sortable" onclick="sortTable('leads', 'product')">Product</th>
+                                    <th class="sortable" onclick="sortTable('leads', 'territory')">Territory</th>
+                                    <th class="sortable" onclick="sortTable('leads', 'createdAt')">Created</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="leadsTableBody">
-                                <tr><td colspan="6" class="text-center">No data</td></tr>
+                                <tr><td colspan="8" class="text-center">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -342,22 +415,166 @@
 
                 <!-- Payouts Tab -->
                 <div id="payoutsTab" class="tab-content">
+                    <div class="toolbar">
+                        <button class="btn btn-success toolbar-btn" onclick="processPayouts()">
+                            <i class="fas fa-credit-card"></i> Process Pending Payouts
+                        </button>
+                        <button class="btn btn-primary toolbar-btn" onclick="exportToCSV('payouts')">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                        <select class="form-select" style="width: 200px;" id="payoutStatusFilter" onchange="filterPayouts()">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover" id="payoutsTable">
                             <thead>
                                 <tr>
-                                    <th>Advocate</th>
-                                    <th>Tier</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
+                                    <th class="sortable" onclick="sortTable('payouts', 'advocateName')">Advocate</th>
+                                    <th class="sortable" onclick="sortTable('payouts', 'tier')">Tier</th>
+                                    <th class="sortable" onclick="sortTable('payouts', 'amount')">Amount</th>
+                                    <th class="sortable" onclick="sortTable('payouts', 'product')">Product</th>
+                                    <th class="sortable" onclick="sortTable('payouts', 'territory')">Territory</th>
+                                    <th class="sortable" onclick="sortTable('payouts', 'status')">Status</th>
+                                    <th class="sortable" onclick="sortTable('payouts', 'createdAt')">Date</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="payoutsTableBody">
-                                <tr><td colspan="5" class="text-center">No data</td></tr>
+                                <tr><td colspan="8" class="text-center">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="settingsTab" class="tab-content">
+                    <h3 class="mb-4">Commission Tier Configuration</h3>
+                    <p class="text-muted">Configure payout tiers based on product type and territory</p>
+
+                    <div class="tier-config">
+                        <h5>Default Tiers</h5>
+                        <div class="tier-row">
+                            <div><strong>Tier</strong></div>
+                            <div><strong>Product</strong></div>
+                            <div><strong>Territory</strong></div>
+                            <div><strong>Amount</strong></div>
+                            <div></div>
+                        </div>
+                        <div class="tier-row">
+                            <input type="text" class="form-control" value="Signup" readonly>
+                            <select class="form-select" id="tier1Product">
+                                <option value="*">All Products</option>
+                                <option value="roofing">Roofing</option>
+                                <option value="siding">Siding</option>
+                                <option value="windows">Windows</option>
+                                <option value="gutters">Gutters</option>
+                            </select>
+                            <select class="form-select" id="tier1Territory">
+                                <option value="*">All Territories</option>
+                                <option value="MD">Maryland</option>
+                                <option value="VA">Virginia</option>
+                                <option value="DC">DC</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="DE">Delaware</option>
+                                <option value="NJ">New Jersey</option>
+                            </select>
+                            <input type="number" class="form-control" id="tier1Amount" value="25" step="1">
+                            <button class="btn btn-sm btn-success" onclick="saveTierConfig(1)">Save</button>
+                        </div>
+                        <div class="tier-row">
+                            <input type="text" class="form-control" value="Qualified" readonly>
+                            <select class="form-select" id="tier2Product">
+                                <option value="*">All Products</option>
+                                <option value="roofing">Roofing</option>
+                                <option value="siding">Siding</option>
+                                <option value="windows">Windows</option>
+                                <option value="gutters">Gutters</option>
+                            </select>
+                            <select class="form-select" id="tier2Territory">
+                                <option value="*">All Territories</option>
+                                <option value="MD">Maryland</option>
+                                <option value="VA">Virginia</option>
+                                <option value="DC">DC</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="DE">Delaware</option>
+                                <option value="NJ">New Jersey</option>
+                            </select>
+                            <input type="number" class="form-control" id="tier2Amount" value="50" step="1">
+                            <button class="btn btn-sm btn-success" onclick="saveTierConfig(2)">Save</button>
+                        </div>
+                        <div class="tier-row">
+                            <input type="text" class="form-control" value="Sold" readonly>
+                            <select class="form-select" id="tier3Product">
+                                <option value="*">All Products</option>
+                                <option value="roofing">Roofing</option>
+                                <option value="siding">Siding</option>
+                                <option value="windows">Windows</option>
+                                <option value="gutters">Gutters</option>
+                            </select>
+                            <select class="form-select" id="tier3Territory">
+                                <option value="*">All Territories</option>
+                                <option value="MD">Maryland</option>
+                                <option value="VA">Virginia</option>
+                                <option value="DC">DC</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="DE">Delaware</option>
+                                <option value="NJ">New Jersey</option>
+                            </select>
+                            <input type="number" class="form-control" id="tier3Amount" value="150" step="1">
+                            <button class="btn btn-sm btn-success" onclick="saveTierConfig(3)">Save</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="btn btn-primary" onclick="loadTierConfigs()">
+                            <i class="fas fa-sync"></i> Reload Configurations
+                        </button>
+                        <button class="btn btn-success" onclick="saveAllTierConfigs()">
+                            <i class="fas fa-save"></i> Save All Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payout Modal -->
+    <div class="modal fade" id="payoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Process Payout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Advocate</label>
+                        <input type="text" class="form-control" id="payoutAdvocateName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="text" class="form-control" id="payoutAmount" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="payoutStatus">
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="payoutNotes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="updatePayoutStatus()">Update Status</button>
                 </div>
             </div>
         </div>
@@ -373,20 +590,27 @@
             advocates: [],
             leads: [],
             payouts: [],
-            advocatesMap: new Map()
+            advocatesMap: new Map(),
+            sortState: {},
+            currentPage: 1,
+            pageSize: 50,
+            tierConfigs: []
         };
+
+        // Current payout being edited
+        let currentPayout = null;
 
         // Initialize app on page load
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('Page loaded, fetching data...');
             await loadAllData();
+            await loadTierConfigs();
         });
 
         // Load all data from API
         async function loadAllData() {
             try {
                 showLoading(true);
-
                 console.log('Fetching from:', API_BASE);
 
                 // Load dashboard data
@@ -450,22 +674,76 @@
         // Update dashboard stats
         function updateDashboardStats() {
             const stats = appData.stats || {};
-            document.getElementById('totalAdvocates').textContent = stats.totalAdvocates || appData.advocates.length;
-            document.getElementById('activeAdvocates').textContent = stats.activeAdvocates || appData.advocates.filter(a => a.active !== false).length;
-            document.getElementById('totalLeads').textContent = stats.totalLeads || appData.leads.length;
-            document.getElementById('qualifiedLeads').textContent = stats.qualifiedLeads || appData.leads.filter(l => l.status === 'qualified').length;
+            document.getElementById('totalAdvocates').textContent = appData.advocates.length;
+            document.getElementById('activeAdvocates').textContent = appData.advocates.filter(a => a.active !== false).length;
+            document.getElementById('totalLeads').textContent = appData.leads.length;
+            document.getElementById('qualifiedLeads').textContent = appData.leads.filter(l => l.status === 'qualified').length;
             document.getElementById('totalEarnings').textContent = '$' + (stats.totalEarnings || 0).toLocaleString();
         }
 
-        // Render advocates table
+        // Sorting function
+        function sortTable(table, column) {
+            const currentSort = appData.sortState[table] || {};
+            const isAsc = currentSort.column === column && currentSort.direction === 'asc';
+
+            appData.sortState[table] = {
+                column: column,
+                direction: isAsc ? 'desc' : 'asc'
+            };
+
+            // Update table headers
+            const headers = document.querySelectorAll(`#${table}Table th`);
+            headers.forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+
+            const clickedHeader = event.target;
+            clickedHeader.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+
+            // Sort the data
+            const dataArray = appData[table];
+            dataArray.sort((a, b) => {
+                let aVal, bVal;
+
+                if (column === 'name') {
+                    aVal = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+                    bVal = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+                } else if (column === 'advocateName') {
+                    const advA = appData.advocatesMap.get(a.advocateId);
+                    const advB = appData.advocatesMap.get(b.advocateId);
+                    aVal = advA ? `${advA.firstName} ${advA.lastName}`.toLowerCase() : '';
+                    bVal = advB ? `${advB.firstName} ${advB.lastName}`.toLowerCase() : '';
+                } else {
+                    aVal = a[column] || '';
+                    bVal = b[column] || '';
+                }
+
+                if (typeof aVal === 'string') {
+                    return isAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return isAsc ? aVal - bVal : bVal - aVal;
+                }
+            });
+
+            // Re-render the table
+            if (table === 'advocates') renderAdvocatesTable();
+            else if (table === 'leads') renderLeadsTable();
+            else if (table === 'payouts') renderPayoutsTable();
+        }
+
+        // Render advocates table with pagination
         function renderAdvocatesTable() {
             const tbody = document.getElementById('advocatesTableBody');
-            if (!appData.advocates.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No advocates found</td></tr>';
+            const start = (appData.currentPage - 1) * appData.pageSize;
+            const end = start + appData.pageSize;
+            const pageData = appData.advocates.slice(start, end);
+
+            if (!pageData.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No advocates found</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = appData.advocates.map(adv => {
+            tbody.innerHTML = pageData.map(adv => {
                 const name = `${adv.firstName || ''} ${adv.lastName || ''}`.trim() || 'N/A';
                 const leadsCount = appData.leads.filter(l => l.advocateId === adv.advocateId).length;
                 return `
@@ -475,6 +753,7 @@
                         <td><code>${adv.referralCode || 'N/A'}</code></td>
                         <td>${leadsCount}</td>
                         <td>$${(adv.totalEarnings || 0).toFixed(2)}</td>
+                        <td>${adv.repName || 'Unassigned'}</td>
                         <td>
                             <button class="btn btn-sm btn-primary" onclick="viewAdvocate('${adv.advocateId}')">
                                 View
@@ -483,13 +762,80 @@
                     </tr>
                 `;
             }).join('');
+
+            // Render pagination
+            renderPagination();
+        }
+
+        // Render pagination
+        function renderPagination() {
+            const totalPages = Math.ceil(appData.advocates.length / appData.pageSize);
+            const pagination = document.getElementById('advocatePagination');
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '<nav><ul class="pagination justify-content-center">';
+
+            // Previous button
+            html += `<li class="page-item ${appData.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${appData.currentPage - 1}); return false;">Previous</a>
+            </li>`;
+
+            // Page numbers
+            for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+                html += `<li class="page-item ${i === appData.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                </li>`;
+            }
+
+            if (totalPages > 10) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+
+            // Next button
+            html += `<li class="page-item ${appData.currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${appData.currentPage + 1}); return false;">Next</a>
+            </li>`;
+
+            html += '</ul></nav>';
+            html += `<p class="text-muted">Showing ${((appData.currentPage - 1) * appData.pageSize) + 1} to ${Math.min(appData.currentPage * appData.pageSize, appData.advocates.length)} of ${appData.advocates.length} advocates</p>`;
+            pagination.innerHTML = html;
+        }
+
+        // Change page
+        function changePage(page) {
+            const totalPages = Math.ceil(appData.advocates.length / appData.pageSize);
+            if (page < 1 || page > totalPages) return;
+            appData.currentPage = page;
+            renderAdvocatesTable();
+        }
+
+        // Filter advocates
+        function filterAdvocates() {
+            const search = document.getElementById('advocateSearch').value.toLowerCase();
+            const filtered = appData.advocates.filter(adv => {
+                const name = `${adv.firstName} ${adv.lastName}`.toLowerCase();
+                const email = (adv.email || '').toLowerCase();
+                const code = (adv.referralCode || '').toLowerCase();
+                return name.includes(search) || email.includes(search) || code.includes(search);
+            });
+
+            // Temporarily replace advocates array
+            const original = appData.advocates;
+            appData.advocates = filtered;
+            appData.currentPage = 1;
+            renderAdvocatesTable();
+            appData.advocates = original;
         }
 
         // Render leads table
         function renderLeadsTable() {
             const tbody = document.getElementById('leadsTableBody');
             if (!appData.leads.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No leads found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No leads found</td></tr>';
                 return;
             }
 
@@ -499,6 +845,7 @@
                 const advocateName = advocate ? `${advocate.firstName || ''} ${advocate.lastName || ''}`.trim() : 'N/A';
                 const createdDate = new Date(lead.createdAt).toLocaleDateString();
                 const statusBadge = getStatusBadge(lead.status);
+                const territory = lead.address?.state || 'N/A';
 
                 return `
                     <tr>
@@ -506,6 +853,8 @@
                         <td>${lead.phone || 'N/A'}</td>
                         <td>${advocateName}</td>
                         <td>${statusBadge}</td>
+                        <td>${lead.product || 'N/A'}</td>
+                        <td>${territory}</td>
                         <td>${createdDate}</td>
                         <td>
                             <button class="btn btn-sm btn-primary" onclick="viewLead('${lead.leadId}')">
@@ -517,20 +866,44 @@
             }).join('');
         }
 
+        // Filter leads
+        function filterLeads() {
+            const search = document.getElementById('leadSearch').value.toLowerCase();
+            const filtered = appData.leads.filter(lead => {
+                const name = `${lead.firstName} ${lead.lastName}`.toLowerCase();
+                const phone = (lead.phone || '').toLowerCase();
+                return name.includes(search) || phone.includes(search);
+            });
+
+            const original = appData.leads;
+            appData.leads = filtered;
+            renderLeadsTable();
+            appData.leads = original;
+        }
+
         // Render payouts table
         function renderPayoutsTable() {
             const tbody = document.getElementById('payoutsTableBody');
-            if (!appData.payouts.length) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No payouts found</td></tr>';
+            const statusFilter = document.getElementById('payoutStatusFilter')?.value || '';
+
+            let filtered = appData.payouts;
+            if (statusFilter) {
+                filtered = appData.payouts.filter(p => p.status === statusFilter);
+            }
+
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No payouts found</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = appData.payouts.map(payout => {
+            tbody.innerHTML = filtered.map(payout => {
                 const advocate = appData.advocatesMap.get(payout.advocateId);
                 const advocateName = advocate ? `${advocate.firstName || ''} ${advocate.lastName || ''}`.trim() : 'N/A';
                 const date = new Date(payout.createdAt).toLocaleDateString();
                 const statusBadge = payout.status === 'paid' ?
                     '<span class="badge bg-success">Paid</span>' :
+                    payout.status === 'approved' ?
+                    '<span class="badge bg-info">Approved</span>' :
                     '<span class="badge bg-warning">Pending</span>';
 
                 return `
@@ -538,11 +911,23 @@
                         <td>${advocateName}</td>
                         <td>${payout.tier || 'N/A'}</td>
                         <td>$${(payout.amount || 0).toFixed(2)}</td>
+                        <td>${payout.product || 'N/A'}</td>
+                        <td>${payout.territory || 'N/A'}</td>
                         <td>${statusBadge}</td>
                         <td>${date}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editPayout('${payout.payoutId}')">
+                                Edit
+                            </button>
+                        </td>
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Filter payouts
+        function filterPayouts() {
+            renderPayoutsTable();
         }
 
         // Get status badge HTML
@@ -568,11 +953,78 @@
             document.getElementById(tabName + 'Tab').classList.add('active');
         }
 
+        // Export to CSV
+        function exportToCSV(type) {
+            let data, filename;
+
+            if (type === 'advocates') {
+                data = appData.advocates.map(a => ({
+                    Name: `${a.firstName} ${a.lastName}`,
+                    Email: a.email,
+                    Phone: a.phone,
+                    'Referral Code': a.referralCode,
+                    'Sales Rep': a.repName,
+                    'Total Referrals': a.totalReferrals,
+                    'Total Earnings': a.totalEarnings,
+                    City: a.address?.city,
+                    State: a.address?.state
+                }));
+                filename = 'advocates.csv';
+            } else if (type === 'leads') {
+                data = appData.leads.map(l => ({
+                    Name: `${l.firstName} ${l.lastName}`,
+                    Phone: l.phone,
+                    Email: l.email,
+                    Status: l.status,
+                    Product: l.product,
+                    Territory: l.address?.state,
+                    Created: new Date(l.createdAt).toLocaleDateString()
+                }));
+                filename = 'leads.csv';
+            } else if (type === 'payouts') {
+                data = appData.payouts.map(p => {
+                    const adv = appData.advocatesMap.get(p.advocateId);
+                    return {
+                        Advocate: adv ? `${adv.firstName} ${adv.lastName}` : 'N/A',
+                        Tier: p.tier,
+                        Amount: p.amount,
+                        Product: p.product,
+                        Territory: p.territory,
+                        Status: p.status,
+                        Date: new Date(p.createdAt).toLocaleDateString()
+                    };
+                });
+                filename = 'payouts.csv';
+            }
+
+            const csv = convertToCSV(data);
+            downloadCSV(csv, filename);
+        }
+
+        // Convert array to CSV
+        function convertToCSV(data) {
+            if (!data.length) return '';
+            const headers = Object.keys(data[0]);
+            const rows = data.map(row => headers.map(h => JSON.stringify(row[h] || '')).join(','));
+            return [headers.join(','), ...rows].join('\n');
+        }
+
+        // Download CSV file
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
         // View advocate details
         function viewAdvocate(advocateId) {
             const advocate = appData.advocatesMap.get(advocateId);
             if (advocate) {
-                alert(`Advocate: ${advocate.firstName} ${advocate.lastName}\nEmail: ${advocate.email}\nReferral Code: ${advocate.referralCode}`);
+                alert(`Advocate: ${advocate.firstName} ${advocate.lastName}\nEmail: ${advocate.email}\nReferral Code: ${advocate.referralCode}\nTotal Earned: $${advocate.totalEarnings}`);
             }
         }
 
@@ -580,8 +1032,103 @@
         function viewLead(leadId) {
             const lead = appData.leads.find(l => l.leadId === leadId);
             if (lead) {
-                alert(`Lead: ${lead.firstName} ${lead.lastName}\nPhone: ${lead.phone}\nStatus: ${lead.status}`);
+                alert(`Lead: ${lead.firstName} ${lead.lastName}\nPhone: ${lead.phone}\nStatus: ${lead.status}\nProduct: ${lead.product}`);
             }
+        }
+
+        // Edit payout
+        function editPayout(payoutId) {
+            const payout = appData.payouts.find(p => p.payoutId === payoutId);
+            if (!payout) return;
+
+            currentPayout = payout;
+            const advocate = appData.advocatesMap.get(payout.advocateId);
+
+            document.getElementById('payoutAdvocateName').value = advocate ? `${advocate.firstName} ${advocate.lastName}` : 'N/A';
+            document.getElementById('payoutAmount').value = `$${payout.amount.toFixed(2)}`;
+            document.getElementById('payoutStatus').value = payout.status;
+            document.getElementById('payoutNotes').value = payout.notes || '';
+
+            const modal = new bootstrap.Modal(document.getElementById('payoutModal'));
+            modal.show();
+        }
+
+        // Update payout status
+        async function updatePayoutStatus() {
+            if (!currentPayout) return;
+
+            const newStatus = document.getElementById('payoutStatus').value;
+            const notes = document.getElementById('payoutNotes').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/payouts/${currentPayout.payoutId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus, notes: notes })
+                });
+
+                if (response.ok) {
+                    alert('Payout updated successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('payoutModal')).hide();
+                    await loadAllData();
+                } else {
+                    alert('Failed to update payout');
+                }
+            } catch (error) {
+                console.error('Error updating payout:', error);
+                alert('Error updating payout');
+            }
+        }
+
+        // Process pending payouts
+        async function processPayouts() {
+            const pending = appData.payouts.filter(p => p.status === 'pending');
+            if (!pending.length) {
+                alert('No pending payouts to process');
+                return;
+            }
+
+            if (!confirm(`Process ${pending.length} pending payouts?`)) return;
+
+            try {
+                for (const payout of pending) {
+                    await fetch(`${API_BASE}/payouts/${payout.payoutId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'approved' })
+                    });
+                }
+                alert(`Successfully approved ${pending.length} payouts!`);
+                await loadAllData();
+            } catch (error) {
+                console.error('Error processing payouts:', error);
+                alert('Error processing payouts');
+            }
+        }
+
+        // Load tier configurations
+        async function loadTierConfigs() {
+            // For now, using default values
+            // In production, this would load from DynamoDB or API
+            console.log('Tier configurations loaded');
+        }
+
+        // Save tier configuration
+        function saveTierConfig(tierNum) {
+            const product = document.getElementById(`tier${tierNum}Product`).value;
+            const territory = document.getElementById(`tier${tierNum}Territory`).value;
+            const amount = document.getElementById(`tier${tierNum}Amount`).value;
+
+            console.log(`Saving tier ${tierNum} config:`, { product, territory, amount });
+            alert(`Tier ${tierNum} configuration saved! (In production, this would save to database)`);
+        }
+
+        // Save all tier configurations
+        function saveAllTierConfigs() {
+            saveTierConfig(1);
+            saveTierConfig(2);
+            saveTierConfig(3);
+            alert('All tier configurations saved!');
         }
     </script>
 </body>
