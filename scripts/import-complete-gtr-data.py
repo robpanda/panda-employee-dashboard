@@ -53,7 +53,16 @@ def import_sales_managers(csv_path):
     print("\n=== IMPORTING SALES MANAGERS ===")
 
     with open(csv_path, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
+        # Skip any blank lines at start
+        lines = [line for line in f if line.strip()]
+        f.seek(0)
+        # Read all lines and filter out blanks
+        content = f.read()
+        lines = [line for line in content.split('\n') if line.strip()]
+
+        # Create reader from cleaned lines
+        import io
+        reader = csv.DictReader(io.StringIO('\n'.join(lines)))
         count = 0
 
         for row in reader:
