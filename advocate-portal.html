@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit a Referral - Panda Referral Program</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .portal-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .portal-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .portal-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .portal-header img {
+            height: 60px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+        .portal-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .portal-header p {
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        .portal-body {
+            padding: 40px;
+        }
+        .welcome-message {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 16px 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .welcome-message h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #065f46;
+            margin-bottom: 8px;
+        }
+        .welcome-message p {
+            color: #047857;
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+        .earnings-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .earnings-card h4 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .earnings-card .amount {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .earnings-card .subtext {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .form-control, .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            color: white;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .referral-history {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px solid #f3f4f6;
+        }
+        .referral-history h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .referral-item {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        .referral-item .name {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        .referral-item .details {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .badge {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        .tier-explainer {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .tier-explainer h5 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #854d0e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tier-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .tier-list li {
+            padding: 8px 0;
+            font-size: 14px;
+            color: #713f12;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tier-list li i {
+            color: #ca8a04;
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <div class="portal-card">
+            <div class="portal-header">
+                <img src="https://pandaexteriors.com/wp-content/uploads/2023/09/cropped-Panda-Logo-Main-3.png" alt="Panda Exteriors">
+                <h1>Advocate Portal</h1>
+                <p>Submit referrals and earn commissions!</p>
+            </div>
+
+            <div class="portal-body">
+                <!-- Login Section (shown before advocate is loaded) -->
+                <div id="loginSection">
+                    <div class="mb-4">
+                        <label class="form-label">Enter Your Referral Code</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="referralCodeInput" placeholder="e.g., ABC123" style="text-transform: uppercase;">
+                            <button class="btn btn-primary" onclick="loadAdvocate()" style="padding: 12px 24px;">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </div>
+                        <small class="text-muted">Don't have a code? Contact your sales rep to get started!</small>
+                    </div>
+                </div>
+
+                <!-- Main Portal (shown after login) -->
+                <div id="mainPortal" style="display: none;">
+                    <!-- Welcome Message -->
+                    <div class="welcome-message">
+                        <h3>Welcome back, <span id="advocateName">Friend</span>! 👋</h3>
+                        <p>Your referral code: <strong id="displayReferralCode"></strong></p>
+                    </div>
+
+                    <!-- Earnings Card -->
+                    <div class="earnings-card">
+                        <h4>Your Total Earnings</h4>
+                        <div class="amount">$<span id="totalEarnings">0.00</span></div>
+                        <div class="subtext"><span id="totalLeads">0</span> referrals submitted</div>
+                    </div>
+
+                    <!-- Tier Explainer -->
+                    <div class="tier-explainer">
+                        <h5><i class="fas fa-dollar-sign"></i> How You Earn Commissions</h5>
+                        <ul class="tier-list">
+                            <li><i class="fas fa-check-circle"></i> <strong>$50</strong> when your referral is verified (qualified)</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>$150</strong> when your referral completes a sale</li>
+                            <li><i class="fas fa-star"></i> <strong>Bonus: $200</strong> after 3 sold referrals!</li>
+                        </ul>
+                    </div>
+
+                    <!-- Success Alert -->
+                    <div id="successAlert" class="alert alert-success" style="display: none;">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span id="successMessage"></span>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div id="errorAlert" class="alert alert-danger" style="display: none;">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span id="errorMessage"></span>
+                    </div>
+
+                    <!-- Referral Form -->
+                    <form id="referralForm" onsubmit="submitReferral(event)">
+                        <h3 class="mb-3" style="font-size: 20px; font-weight: 600;">Submit a New Referral</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="firstName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="lastName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone *</label>
+                                <input type="tel" class="form-control" id="phone" placeholder="(555) 123-4567" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" placeholder="optional">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Street Address *</label>
+                                <input type="text" class="form-control" id="street" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">City *</label>
+                                <input type="text" class="form-control" id="city" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">State *</label>
+                                <select class="form-select" id="state" required>
+                                    <option value="">Select</option>
+                                    <option value="MD">MD</option>
+                                    <option value="VA">VA</option>
+                                    <option value="DC">DC</option>
+                                    <option value="PA">PA</option>
+                                    <option value="DE">DE</option>
+                                    <option value="NJ">NJ</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Zip *</label>
+                                <input type="text" class="form-control" id="zip" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Product Interest *</label>
+                                <select class="form-select" id="product" required>
+                                    <option value="">Select Product</option>
+                                    <option value="Roofing">Roofing</option>
+                                    <option value="Siding">Siding</option>
+                                    <option value="Windows">Windows</option>
+                                    <option value="Gutters">Gutters</option>
+                                    <option value="Solar">Solar</option>
+                                    <option value="Bath">Bath</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Urgency</label>
+                                <select class="form-select" id="urgency">
+                                    <option value="low">Not urgent</option>
+                                    <option value="medium" selected>Within a few months</option>
+                                    <option value="high">ASAP</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes (Optional)</label>
+                                <textarea class="form-control" id="notes" rows="3" placeholder="Any additional information about this referral..."></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit mt-4" id="submitBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Referral
+                        </button>
+                    </form>
+
+                    <!-- Referral History -->
+                    <div class="referral-history">
+                        <h3><i class="fas fa-history me-2"></i>Your Recent Referrals</h3>
+                        <div id="referralsList">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-clipboard-list fa-2x mb-3" style="opacity: 0.3;"></i>
+                                <p>No referrals yet. Submit your first one above!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'https://7paaginnvg.execute-api.us-east-2.amazonaws.com/prod/referrals';
+        let currentAdvocate = null;
+
+        // Load advocate by referral code
+        async function loadAdvocate() {
+            const code = document.getElementById('referralCodeInput').value.trim().toUpperCase();
+            if (!code) {
+                alert('Please enter your referral code');
+                return;
+            }
+
+            try {
+                // Get all advocates and find by referral code
+                const response = await fetch(`${API_BASE}/advocates`);
+                const data = await response.json();
+                const advocate = data.advocates.find(a => a.referralCode === code);
+
+                if (!advocate) {
+                    alert('Referral code not found. Please check your code and try again.');
+                    return;
+                }
+
+                currentAdvocate = advocate;
+                await loadAdvocatePortal();
+            } catch (error) {
+                console.error('Error loading advocate:', error);
+                alert('Error loading your account. Please try again.');
+            }
+        }
+
+        // Load advocate portal with data
+        async function loadAdvocatePortal() {
+            // Hide login, show portal
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('mainPortal').style.display = 'block';
+
+            // Display advocate info
+            const name = `${currentAdvocate.firstName || ''} ${currentAdvocate.lastName || ''}`.trim();
+            document.getElementById('advocateName').textContent = name || 'Friend';
+            document.getElementById('displayReferralCode').textContent = currentAdvocate.referralCode;
+            document.getElementById('totalEarnings').textContent = (currentAdvocate.totalEarnings || 0).toFixed(2);
+            document.getElementById('totalLeads').textContent = currentAdvocate.totalLeads || 0;
+
+            // Load referral history
+            await loadReferrals();
+        }
+
+        // Load advocate's referrals
+        async function loadReferrals() {
+            try {
+                const response = await fetch(`${API_BASE}/leads?advocateId=${currentAdvocate.advocateId}`);
+                const data = await response.json();
+                const leads = data.leads || [];
+
+                const listDiv = document.getElementById('referralsList');
+                if (leads.length === 0) {
+                    listDiv.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-clipboard-list fa-2x mb-3" style="opacity: 0.3;"></i>
+                            <p>No referrals yet. Submit your first one above!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listDiv.innerHTML = leads.map(lead => {
+                    const statusBadge = getStatusBadge(lead.status);
+                    const name = `${lead.firstName || ''} ${lead.lastName || ''}`.trim();
+                    const date = new Date(lead.createdAt).toLocaleDateString();
+                    return `
+                        <div class="referral-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="name">${name}</div>
+                                    <div class="details">
+                                        ${lead.phone} • ${lead.product} • ${date}
+                                    </div>
+                                </div>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading referrals:', error);
+            }
+        }
+
+        // Submit new referral
+        async function submitReferral(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+
+            try {
+                const leadData = {
+                    advocateId: currentAdvocate.advocateId,
+                    repId: currentAdvocate.repId,
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value || '',
+                    address: {
+                        street: document.getElementById('street').value,
+                        city: document.getElementById('city').value,
+                        state: document.getElementById('state').value,
+                        zip: document.getElementById('zip').value
+                    },
+                    product: document.getElementById('product').value,
+                    urgency: document.getElementById('urgency').value,
+                    notes: document.getElementById('notes').value || '',
+                    source: 'ADVOCATE_PORTAL',
+                    syncToSalesforce: true // Flag for Salesforce sync
+                };
+
+                const response = await fetch(`${API_BASE}/leads`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(leadData)
+                });
+
+                if (!response.ok) throw new Error('Failed to submit referral');
+
+                // Show success message
+                showSuccess('Referral submitted successfully! Our team will contact them soon.');
+
+                // Reset form
+                document.getElementById('referralForm').reset();
+
+                // Reload data
+                await loadAdvocatePortal();
+
+            } catch (error) {
+                console.error('Error submitting referral:', error);
+                showError('Failed to submit referral. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Referral';
+            }
+        }
+
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            const badges = {
+                'new': '<span class="badge bg-primary">New</span>',
+                'contacted': '<span class="badge bg-info">Contacted</span>',
+                'qualified': '<span class="badge bg-success">Qualified - $50 Earned!</span>',
+                'sold': '<span class="badge bg-success">Sold - $150 Earned!</span>',
+                'lost': '<span class="badge bg-secondary">Lost</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const alert = document.getElementById('successAlert');
+            document.getElementById('successMessage').textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 5000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const alert = document.getElementById('errorAlert');
+            document.getElementById('errorMessage').textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 5000);
+        }
+
+        // Auto-login from URL parameter
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (code) {
+                document.getElementById('referralCodeInput').value = code;
+                loadAdvocate();
+            }
+        });
+    </script>
+</body>
+</html>
