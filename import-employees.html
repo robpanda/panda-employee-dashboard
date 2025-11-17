@@ -202,21 +202,35 @@
                         
                         const fullName = `${row['Last Name']}, ${row['First Name']}`;
                         
+                        // Parse supervisor from "Last, First" to "First Last"
+                        const supervisorRaw = row['Supervisor'] || '';
+                        const supervisorParsed = supervisorRaw.includes(',')
+                            ? supervisorRaw.split(',').reverse().map(s => s.trim()).join(' ')
+                            : supervisorRaw;
+
                         // Map CSV data to employee format
                         const employee = {
                             'Employee Id': employeeId,
                             'First Name': row['First Name'] || '',
                             'Last Name': row['Last Name'] || '',
-                            'Email': row['Email'] || row['Current Home Email'] || '',  // FIXED: Use 'Email' column
-                            'Work Email': row['Work Email'] || '',  // ADDED: Work Email support
+                            'Email': row['Email'] || '',  // FIXED: Removed incorrect 'Current Home Email' fallback
+                            'Work Email': row['Work Email'] || '',  // FIXED: Correctly maps to 'Work Email' column
                             'Department': row['Department Description'] || '',
-                            'Position': row['Position Description'] || '',
-                            'Employment Date': formatDate(row['Hire Date']) || '',
-                            'Phone': row['Phone'] || '',  // FIXED: Read Phone from CSV
+                            'Position': row['Position Description'] || row['Job Title (PIT)'] || '',
+                            'Employment Date': row['Hire Date'] || '',  // FIXED: Keep original date format instead of reformatting
+                            'Hire Date': row['Hire Date'] || '',  // ADDED: Store as multiple keys for compatibility
+                            'hire_date': row['Hire Date'] || '',  // ADDED: Lowercase version
+                            'Rehire Date': row['Rehire Date'] || '',
+                            'Phone': row['Phone'] || '',
                             'Terminated': row['Employee Status Code'] === 'A' ? 'No' : 'Yes',
                             'office': row['Current Work Location Name'] || '',
-                            'supervisor': row['Supervisor'] || '',
+                            'Office Location': row['Current Work Location Name'] || '',
+                            'supervisor': supervisorParsed,  // FIXED: Now parses "Last, First" to "First Last"
+                            'supervisor_raw': supervisorRaw,  // Keep original for debugging
                             'is_supervisor': supervisors.has(fullName) ? 'Yes' : 'No',
+                            'Employment Type': row['Employment Type Description'] || '',
+                            'Job Title': row['Job Title (PIT)'] || '',
+                            'Employee Status Code': row['Employee Status Code'] || '',
                             'Merch Requested': '',
                             'Merch Sent': 'No',
                             'Merch Sent Date': '',
