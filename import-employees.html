@@ -155,19 +155,34 @@
                 const lines = csv.split('\n');
                 const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
                 
-                // Get current employees first
+                // Get current employees first TO PRESERVE THEIR POINTS
                 document.getElementById('status').textContent = 'Loading current employees...';
                 updateProgress(20);
-                
+
                 let currentEmployees = [];
+                let existingPoints = {}; // Store existing employee points
                 try {
                     const currentResponse = await fetch(`${API_URL}/employees`);
                     const currentData = await currentResponse.json();
                     currentEmployees = currentData.employees || [];
+
+                    // Build lookup for existing points
+                    currentEmployees.forEach(emp => {
+                        const empId = emp['Employee Id'] || emp.employee_id || emp.id;
+                        if (empId) {
+                            existingPoints[empId] = {
+                                points: emp.points || emp['Panda Points'] || 0,
+                                pandaPoints: emp['Panda Points'] || emp.points || 0,
+                                pointsBudget: emp.points_budget || 0,
+                                pointsManager: emp.points_manager || 'No'
+                            };
+                        }
+                    });
+                    console.log(`Preserved points for ${Object.keys(existingPoints).length} employees`);
                 } catch (error) {
                     console.log('No current employees found or error loading:', error);
                 }
-                
+
                 const employees = [];
                 const supervisors = new Set();
                 const activeEmployeeIds = new Set();
@@ -208,6 +223,14 @@
                             ? supervisorRaw.split(',').reverse().map(s => s.trim()).join(' ')
                             : supervisorRaw;
 
+                        // PRESERVE existing points for this employee
+                        const preservedPoints = existingPoints[employeeId] || {
+                            points: 0,
+                            pandaPoints: 0,
+                            pointsBudget: 0,
+                            pointsManager: 'No'
+                        };
+
                         // Map CSV data to employee format
                         const employee = {
                             'Employee Id': employeeId,
@@ -231,6 +254,13 @@
                             'Employment Type': row['Employment Type Description'] || '',
                             'Job Title': row['Job Title (PIT)'] || '',
                             'Employee Status Code': row['Employee Status Code'] || '',
+
+                            // PRESERVE EXISTING POINTS - DO NOT OVERWRITE!
+                            'points': preservedPoints.points,
+                            'Panda Points': preservedPoints.pandaPoints,
+                            'points_budget': preservedPoints.pointsBudget,
+                            'points_manager': preservedPoints.pointsManager,
+
                             'Merch Requested': '',
                             'Merch Sent': 'No',
                             'Merch Sent Date': '',
