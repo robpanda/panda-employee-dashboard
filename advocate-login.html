@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Advocate Portal - Panda Exteriors</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Panda Advocate">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#764ba2">
+    <meta name="application-name" content="Panda Advocate">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest-advocate.json">
+
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" href="/assets/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/icon-192x192.png">
+
+    <!-- Android/Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512x512.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            height: 100%;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+            min-height: -webkit-fill-available;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #374151;
+            padding: 16px;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .auth-container {
+            background: white;
+            padding: 32px 24px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        /* Tablet and up */
+        @media (min-width: 768px) {
+            .auth-container {
+                padding: 48px;
+            }
+        }
+        .logo {
+            margin-bottom: 24px;
+        }
+        .logo img {
+            max-width: 160px;
+            height: auto;
+        }
+        h1 {
+            color: #111827;
+            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+        input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border: 1px solid #fecaca;
+            font-size: 14px;
+        }
+        .success {
+            background: #ecfdf5;
+            color: #059669;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border: 1px solid #a7f3d0;
+            font-size: 14px;
+        }
+        .toggle-form {
+            margin-top: 24px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .toggle-form a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .hidden {
+            display: none;
+        }
+        .benefits {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .benefits h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        .benefits ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .benefits li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <img src="https://pandaadmin.com/assets/PandaLogo.png" alt="Panda Exteriors">
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginSection">
+            <h1>Advocate Portal</h1>
+            <p class="subtitle">Sign in to track your referrals and earnings</p>
+
+            <div id="loginError" class="error"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Your password">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span id="loginText">Sign In</span>
+                    <span id="loginLoading" class="hidden"><i class="fas fa-spinner fa-spin"></i> Signing in...</span>
+                </button>
+            </form>
+
+            <div class="toggle-form">
+                Don't have an account? <a href="#" onclick="showSignup(); return false;">Sign up as an Advocate</a>
+            </div>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupSection" class="hidden">
+            <h1>Become an Advocate</h1>
+            <p class="subtitle">Join our referral program and earn commissions</p>
+
+            <div class="benefits">
+                <h3>Advocate Benefits:</h3>
+                <ul>
+                    <li>$50 for each qualified lead</li>
+                    <li>$150 when your referral buys</li>
+                    <li>$200 bonus after 3 sales</li>
+                    <li>Track your earnings in real-time</li>
+                </ul>
+            </div>
+
+            <div id="signupError" class="error"></div>
+            <div id="signupSuccess" class="success"></div>
+
+            <form id="signupForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" required placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" required placeholder="Doe">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="signupPhone">Phone (optional)</label>
+                    <input type="tel" id="signupPhone" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required placeholder="Create a password" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" required placeholder="Confirm your password">
+                </div>
+                <div class="form-group">
+                    <label for="referralCodeInput">Referral Code (if you have one)</label>
+                    <input type="text" id="referralCodeInput" placeholder="Optional">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span id="signupText">Create Account</span>
+                    <span id="signupLoading" class="hidden"><i class="fas fa-spinner fa-spin"></i> Creating account...</span>
+                </button>
+            </form>
+
+            <div class="toggle-form">
+                Already have an account? <a href="#" onclick="showLogin(); return false;">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'https://7paaginnvg.execute-api.us-east-2.amazonaws.com/prod/referrals';
+
+        // Check if already logged in
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('advocateToken');
+            if (token) {
+                // Verify token
+                verifyToken(token);
+            }
+
+            // Check for referral code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            if (code) {
+                showSignup();
+                const referralInput = document.getElementById('referralCodeInput');
+                referralInput.value = code;
+                referralInput.readOnly = true;
+                referralInput.style.backgroundColor = '#f3f4f6';
+                referralInput.style.cursor = 'not-allowed';
+                // Update label to show it's from their Sales Rep
+                const label = referralInput.previousElementSibling;
+                if (label && label.tagName === 'LABEL') {
+                    label.textContent = 'Sales Rep Referral Code';
+                }
+            }
+        });
+
+        // Verify existing token
+        async function verifyToken(token) {
+            try {
+                const response = await fetch(`${API_BASE}/auth/verify`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    window.location.href = 'advocate-portal.html';
+                } else {
+                    localStorage.removeItem('advocateToken');
+                    localStorage.removeItem('advocateData');
+                }
+            } catch (error) {
+                console.error('Token verification failed:', error);
+            }
+        }
+
+        // Show signup form
+        function showSignup() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('signupSection').classList.remove('hidden');
+        }
+
+        // Show login form
+        function showLogin() {
+            document.getElementById('signupSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const loginText = document.getElementById('loginText');
+            const loading = document.getElementById('loginLoading');
+
+            // Show loading
+            loginText.classList.add('hidden');
+            loading.classList.remove('hidden');
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/advocate/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.token) {
+                    // Store token and redirect
+                    localStorage.setItem('advocateToken', result.token);
+                    localStorage.setItem('advocateData', JSON.stringify(result.advocate));
+                    window.location.href = 'advocate-portal.html';
+                } else {
+                    errorDiv.textContent = result.error || 'Invalid email or password';
+                    errorDiv.style.display = 'block';
+                    loginText.classList.remove('hidden');
+                    loading.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.style.display = 'block';
+                loginText.classList.remove('hidden');
+                loading.classList.add('hidden');
+            }
+        });
+
+        // Signup form handler
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('signupEmail').value;
+            const phone = document.getElementById('signupPhone').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const referralCode = document.getElementById('referralCodeInput').value;
+
+            const errorDiv = document.getElementById('signupError');
+            const successDiv = document.getElementById('signupSuccess');
+            const signupText = document.getElementById('signupText');
+            const loading = document.getElementById('signupLoading');
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Show loading
+            signupText.classList.add('hidden');
+            loading.classList.remove('hidden');
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/advocate/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        firstName,
+                        lastName,
+                        email,
+                        phone,
+                        password,
+                        referralCode: referralCode || undefined
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.token) {
+                    // Store token and redirect
+                    localStorage.setItem('advocateToken', result.token);
+                    localStorage.setItem('advocateData', JSON.stringify(result.advocate));
+
+                    successDiv.textContent = 'Account created! Redirecting to your portal...';
+                    successDiv.style.display = 'block';
+
+                    setTimeout(() => {
+                        window.location.href = 'advocate-portal.html';
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = result.error || 'Failed to create account';
+                    errorDiv.style.display = 'block';
+                    signupText.classList.remove('hidden');
+                    loading.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.style.display = 'block';
+                signupText.classList.remove('hidden');
+                loading.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

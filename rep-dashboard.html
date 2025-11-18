@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Rep Dashboard - Panda Exteriors</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #374151;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            padding: 16px 24px;
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .navbar-brand img {
+            height: 36px;
+            margin-right: 12px;
+        }
+        .user-info {
+            color: white;
+            font-size: 14px;
+        }
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .main-container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+        .page-header {
+            margin-bottom: 24px;
+        }
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .page-header p {
+            color: #6b7280;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #111827;
+            margin: 8px 0;
+        }
+        .stat-card .value.money {
+            color: #059669;
+        }
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .content-card h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            color: #6b7280;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            font-weight: 500;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .table {
+            font-size: 14px;
+        }
+        .table th {
+            background: #f9fafb;
+            font-weight: 500;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .table td {
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        .badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .btn-success {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        .btn-outline-primary {
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .btn-outline-primary:hover {
+            background: #3b82f6;
+            color: white;
+        }
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            max-width: 300px;
+        }
+        .form-control {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .modal-content {
+            border-radius: 12px;
+        }
+        .modal-header {
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .alert-success {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        .empty-state i {
+            font-size: 48px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
+        .quick-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .quick-action:hover {
+            background: #2563eb;
+            color: white;
+        }
+        .advocate-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .advocate-card .name {
+            font-weight: 600;
+            color: #111827;
+        }
+        .advocate-card .stats {
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .invite-link {
+            background: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="d-flex align-items-center justify-content-between w-100">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="https://pandaexteriors.com/wp-content/uploads/2023/09/cropped-Panda-Logo-Main-3.png" alt="Panda">
+                Sales Rep Dashboard
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="user-info">
+                    <span class="name" id="userName">Loading...</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Welcome, <span id="welcomeName">Sales Rep</span>!</h1>
+            <p>Manage your advocates and track their leads</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">My Advocates</div>
+                <div class="value" id="totalAdvocates">0</div>
+                <div class="change text-muted" style="font-size: 12px;">Active recruiters</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Total Leads</div>
+                <div class="value" id="totalLeads">0</div>
+                <div class="change text-muted" style="font-size: 12px;">From my advocates</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Qualified Leads</div>
+                <div class="value" id="qualifiedLeads">0</div>
+                <div class="change text-muted" style="font-size: 12px;">Ready to work</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Conversions</div>
+                <div class="value" id="soldLeads">0</div>
+                <div class="change text-muted" style="font-size: 12px;">Closed deals</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('advocates')">
+                    <i class="fas fa-users"></i> My Advocates
+                </button>
+                <button class="tab" onclick="switchTab('leads')">
+                    <i class="fas fa-clipboard-list"></i> Leads
+                </button>
+                <button class="tab" onclick="switchTab('invite')">
+                    <i class="fas fa-user-plus"></i> Invite Advocates
+                </button>
+            </div>
+
+            <!-- Advocates Tab -->
+            <div id="advocatesTab" class="tab-content active">
+                <div class="toolbar">
+                    <input type="text" class="form-control search-box" id="advocateSearch" placeholder="Search advocates..." onkeyup="filterAdvocates()">
+                    <button class="btn btn-primary btn-sm" onclick="showInviteTab()">
+                        <i class="fas fa-user-plus"></i> Invite New Advocate
+                    </button>
+                </div>
+                <div id="advocatesTable">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Referral Code</th>
+                                <th>Leads</th>
+                                <th>Earnings</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="advocatesBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">Loading advocates...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Leads Tab -->
+            <div id="leadsTab" class="tab-content">
+                <div class="toolbar">
+                    <input type="text" class="form-control search-box" id="leadSearch" placeholder="Search leads..." onkeyup="filterLeads()">
+                    <select class="form-control" style="width: 150px;" id="statusFilter" onchange="filterLeads()">
+                        <option value="">All Status</option>
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="working">Working</option>
+                        <option value="sold">Sold</option>
+                        <option value="lost">Lost</option>
+                    </select>
+                </div>
+                <div id="leadsTable">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Product</th>
+                                <th>Advocate</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">Loading leads...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Invite Tab -->
+            <div id="inviteTab" class="tab-content">
+                <h3 class="mb-3">Invite New Advocate</h3>
+                <p class="text-muted mb-4">Add advocates to your team and they'll earn commissions for referrals</p>
+
+                <div id="inviteAlert"></div>
+
+                <form id="inviteForm" style="max-width: 500px;">
+                    <div class="mb-3">
+                        <label class="form-label">First Name *</label>
+                        <input type="text" class="form-control" id="inviteFirstName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name *</label>
+                        <input type="text" class="form-control" id="inviteLastName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="inviteEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="invitePhone">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Create Advocate & Send Invite
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Lead Status Modal -->
+    <div class="modal fade" id="updateLeadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Lead Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Lead Name</label>
+                        <input type="text" class="form-control" id="modalLeadName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-control" id="modalLeadStatus">
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="qualified">Qualified</option>
+                            <option value="working">Working</option>
+                            <option value="sold">Sold</option>
+                            <option value="lost">Lost</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="modalLeadNotes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveLeadStatus()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'https://7paaginnvg.execute-api.us-east-2.amazonaws.com/prod/referrals';
+
+        let repData = null;
+        let advocates = [];
+        let leads = [];
+        let currentLead = null;
+
+        // Check authentication on page load
+        window.addEventListener('load', async function() {
+            const token = localStorage.getItem('repToken');
+            const data = localStorage.getItem('repData');
+
+            if (!token || !data) {
+                window.location.href = 'rep-login.html';
+                return;
+            }
+
+            try {
+                repData = JSON.parse(data);
+                updateUI();
+                await loadDashboardData();
+            } catch (error) {
+                console.error('Error loading rep data:', error);
+                window.location.href = 'rep-login.html';
+            }
+        });
+
+        // Update UI with rep info
+        function updateUI() {
+            document.getElementById('userName').textContent = `${repData.firstName} ${repData.lastName}`;
+            document.getElementById('welcomeName').textContent = repData.firstName;
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard?repId=${repData.repId}`);
+                const data = await response.json();
+
+                advocates = data.advocates || [];
+                leads = data.leads || [];
+
+                // Update stats
+                document.getElementById('totalAdvocates').textContent = advocates.length;
+                document.getElementById('totalLeads').textContent = leads.length;
+                document.getElementById('qualifiedLeads').textContent = leads.filter(l => l.status === 'qualified').length;
+                document.getElementById('soldLeads').textContent = leads.filter(l => l.status === 'sold').length;
+
+                // Render tables
+                renderAdvocates();
+                renderLeads();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Render advocates table
+        function renderAdvocates() {
+            const tbody = document.getElementById('advocatesBody');
+
+            if (!advocates.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-users d-block"></i>
+                            <p>No advocates yet. Invite your first one!</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = advocates.map(adv => {
+                const name = `${adv.firstName || ''} ${adv.lastName || ''}`.trim();
+                const advLeads = leads.filter(l => l.advocateId === adv.advocateId).length;
+
+                return `
+                    <tr>
+                        <td>${name || 'N/A'}</td>
+                        <td>${adv.email || 'N/A'}</td>
+                        <td>${adv.phone || 'N/A'}</td>
+                        <td><code>${adv.referralCode || 'N/A'}</code></td>
+                        <td>${advLeads}</td>
+                        <td>$${(adv.totalEarnings || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="copyInviteLink('${adv.referralCode}')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render leads table
+        function renderLeads() {
+            const tbody = document.getElementById('leadsBody');
+            const searchTerm = (document.getElementById('leadSearch').value || '').toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            let filteredLeads = leads;
+
+            if (searchTerm) {
+                filteredLeads = filteredLeads.filter(lead => {
+                    const name = `${lead.firstName} ${lead.lastName}`.toLowerCase();
+                    return name.includes(searchTerm) || (lead.phone || '').includes(searchTerm);
+                });
+            }
+
+            if (statusFilter) {
+                filteredLeads = filteredLeads.filter(lead => lead.status === statusFilter);
+            }
+
+            if (!filteredLeads.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-clipboard-list d-block"></i>
+                            <p>No leads found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredLeads.map(lead => {
+                const name = `${lead.firstName || ''} ${lead.lastName || ''}`.trim();
+                const advocate = advocates.find(a => a.advocateId === lead.advocateId);
+                const advocateName = advocate ? `${advocate.firstName} ${advocate.lastName}` : 'N/A';
+                const date = new Date(lead.createdAt).toLocaleDateString();
+                const statusBadge = getStatusBadge(lead.status);
+
+                return `
+                    <tr>
+                        <td>${name || 'N/A'}</td>
+                        <td>${lead.phone || 'N/A'}</td>
+                        <td>${lead.product || 'N/A'}</td>
+                        <td>${advocateName}</td>
+                        <td>${statusBadge}</td>
+                        <td>${date}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editLead('${lead.leadId}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get status badge
+        function getStatusBadge(status) {
+            const badges = {
+                'new': '<span class="badge bg-primary">New</span>',
+                'contacted': '<span class="badge bg-info">Contacted</span>',
+                'qualified': '<span class="badge bg-success">Qualified</span>',
+                'working': '<span class="badge bg-warning text-dark">Working</span>',
+                'sold': '<span class="badge bg-success">Sold</span>',
+                'lost': '<span class="badge bg-secondary">Lost</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Show invite tab
+        function showInviteTab() {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.querySelector('.tab:last-child').classList.add('active');
+            document.getElementById('inviteTab').classList.add('active');
+        }
+
+        // Filter advocates
+        function filterAdvocates() {
+            const searchTerm = document.getElementById('advocateSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#advocatesBody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        // Filter leads
+        function filterLeads() {
+            renderLeads();
+        }
+
+        // Copy invite link
+        function copyInviteLink(code) {
+            const url = `https://pandaadmin.com/advocate-portal.html?code=${code}`;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Invite link copied to clipboard!');
+            });
+        }
+
+        // Edit lead
+        function editLead(leadId) {
+            currentLead = leads.find(l => l.leadId === leadId);
+            if (!currentLead) return;
+
+            document.getElementById('modalLeadName').value = `${currentLead.firstName} ${currentLead.lastName}`;
+            document.getElementById('modalLeadStatus').value = currentLead.status || 'new';
+            document.getElementById('modalLeadNotes').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('updateLeadModal'));
+            modal.show();
+        }
+
+        // Save lead status
+        async function saveLeadStatus() {
+            if (!currentLead) return;
+
+            const newStatus = document.getElementById('modalLeadStatus').value;
+            const notes = document.getElementById('modalLeadNotes').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/leads/${currentLead.leadId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        oldStatus: currentLead.status,
+                        notes: notes
+                    })
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('updateLeadModal')).hide();
+                    await loadDashboardData();
+                    alert('Lead updated successfully!');
+                } else {
+                    alert('Failed to update lead');
+                }
+            } catch (error) {
+                console.error('Error updating lead:', error);
+                alert('Error updating lead');
+            }
+        }
+
+        // Invite form handler
+        document.getElementById('inviteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const alertDiv = document.getElementById('inviteAlert');
+
+            const advocateData = {
+                repId: repData.repId,
+                firstName: document.getElementById('inviteFirstName').value,
+                lastName: document.getElementById('inviteLastName').value,
+                email: document.getElementById('inviteEmail').value,
+                phone: document.getElementById('invitePhone').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/advocates`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(advocateData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alertDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            Advocate created successfully!
+                            <br>Referral code: <strong>${result.advocate.referralCode}</strong>
+                            <br>Invite link: <code>${result.advocate.referralUrl}</code>
+                        </div>
+                    `;
+                    document.getElementById('inviteForm').reset();
+                    await loadDashboardData();
+                } else {
+                    alertDiv.innerHTML = `<div class="alert alert-error">${result.error || 'Failed to create advocate'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error creating advocate:', error);
+                alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
+            }
+        });
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('repToken');
+            localStorage.removeItem('repData');
+            window.location.href = 'rep-login.html';
+        }
+    </script>
+</body>
+</html>

@@ -1019,7 +1019,16 @@
                     employees = [];
                 }
                 console.log(`Loaded ${employees.length} employees from database`);
-                
+
+                // Normalize employee data - ensure lowercase fields exist
+                employees = employees.map(emp => {
+                    return {
+                        ...emp,
+                        hire_date: emp.hire_date || emp['Hire Date'] || emp['Employment Date'] || '',
+                        employment_date: emp.employment_date || emp['Employment Date'] || emp['Hire Date'] || ''
+                    };
+                });
+
                 filteredEmployees = [...employees];
                 
                 displayEmployees();
