@@ -254,6 +254,86 @@
             font-size: 12px;
             color: #3b82f6;
         }
+        /* Expandable advocate rows */
+        .advocate-row {
+            cursor: pointer;
+        }
+        .advocate-row:hover {
+            background: #f9fafb;
+        }
+        .advocate-row td:first-child {
+            position: relative;
+            padding-left: 32px;
+        }
+        .advocate-row td:first-child::before {
+            content: '\f054';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #9ca3af;
+            transition: transform 0.2s;
+        }
+        .advocate-row.expanded td:first-child::before {
+            transform: translateY(-50%) rotate(90deg);
+        }
+        .referrals-row {
+            display: none;
+            background: #f8fafc;
+        }
+        .referrals-row.show {
+            display: table-row;
+        }
+        .referrals-container {
+            padding: 16px;
+        }
+        .referrals-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .referral-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .referral-item:last-child {
+            margin-bottom: 0;
+        }
+        .referral-info {
+            flex: 1;
+        }
+        .referral-name {
+            font-weight: 500;
+            color: #111827;
+        }
+        .referral-details {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        .no-referrals {
+            color: #9ca3af;
+            font-style: italic;
+            padding: 12px;
+            text-align: center;
+        }
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .referral-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -531,24 +611,75 @@
 
             tbody.innerHTML = advocates.map(adv => {
                 const name = `${adv.firstName || ''} ${adv.lastName || ''}`.trim();
-                const advLeads = leads.filter(l => l.advocateId === adv.advocateId).length;
+                const advLeads = leads.filter(l => l.advocateId === adv.advocateId);
+                const advLeadsCount = advLeads.length;
+
+                // Build referrals list HTML
+                let referralsHtml = '';
+                if (advLeads.length > 0) {
+                    referralsHtml = advLeads.map(lead => {
+                        const leadName = `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'N/A';
+                        const statusBadge = getStatusBadge(lead.status);
+                        const date = new Date(lead.createdAt).toLocaleDateString();
+                        return `
+                            <li class="referral-item">
+                                <div class="referral-info">
+                                    <div class="referral-name">${leadName}</div>
+                                    <div class="referral-details">${lead.phone || 'No phone'} • ${lead.product || 'Roofing'} • ${date}</div>
+                                </div>
+                                <div>${statusBadge}</div>
+                            </li>
+                        `;
+                    }).join('');
+                } else {
+                    referralsHtml = '<div class="no-referrals">No referrals submitted yet</div>';
+                }
 
                 return `
-                    <tr>
+                    <tr class="advocate-row" onclick="toggleAdvocateReferrals('${adv.advocateId}')">
                         <td>${name || 'N/A'}</td>
                         <td>${adv.email || 'N/A'}</td>
                         <td>${adv.phone || 'N/A'}</td>
                         <td><code>${adv.referralCode || 'N/A'}</code></td>
-                        <td>${advLeads}</td>
+                        <td>${advLeadsCount}</td>
                         <td>$${(adv.totalEarnings || 0).toFixed(2)}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="copyInviteLink('${adv.referralCode}')">
-                                <i class="fas fa-copy"></i>
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); copyInviteLink('${adv.referralCode}')" title="Copy invite link">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); sendAdvocateEmail('${adv.advocateId}')" title="Send welcome email" ${adv.email ? '' : 'disabled'}>
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); sendAdvocateSMS('${adv.advocateId}')" title="Send welcome SMS" ${adv.phone ? '' : 'disabled'}>
+                                    <i class="fas fa-sms"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="referrals-row" id="referrals-${adv.advocateId}">
+                        <td colspan="7">
+                            <div class="referrals-container">
+                                <strong style="font-size: 13px; color: #374151;">Referrals from ${name || 'this advocate'}:</strong>
+                                <ul class="referrals-list" style="margin-top: 12px;">
+                                    ${referralsHtml}
+                                </ul>
+                            </div>
                         </td>
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Toggle advocate referrals visibility
+        function toggleAdvocateReferrals(advocateId) {
+            const row = document.querySelector(`tr.advocate-row[onclick*="${advocateId}"]`);
+            const referralsRow = document.getElementById(`referrals-${advocateId}`);
+
+            if (row && referralsRow) {
+                row.classList.toggle('expanded');
+                referralsRow.classList.toggle('show');
+            }
         }
 
         // Render leads table
@@ -660,6 +791,70 @@
             navigator.clipboard.writeText(url).then(() => {
                 alert('Invite link copied to clipboard!');
             });
+        }
+
+        // Send welcome email to advocate
+        async function sendAdvocateEmail(advocateId) {
+            const advocate = advocates.find(a => a.advocateId === advocateId);
+            if (!advocate || !advocate.email) {
+                alert('No email address for this advocate');
+                return;
+            }
+
+            if (!confirm(`Send welcome email to ${advocate.firstName} ${advocate.lastName} (${advocate.email})?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/advocates/${advocateId}/send-welcome`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'email' })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Welcome email sent to ${advocate.email}!`);
+                } else {
+                    alert(result.error || 'Failed to send email');
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+                alert('Error sending email. Please try again.');
+            }
+        }
+
+        // Send welcome SMS to advocate
+        async function sendAdvocateSMS(advocateId) {
+            const advocate = advocates.find(a => a.advocateId === advocateId);
+            if (!advocate || !advocate.phone) {
+                alert('No phone number for this advocate');
+                return;
+            }
+
+            if (!confirm(`Send welcome SMS to ${advocate.firstName} ${advocate.lastName} (${advocate.phone})?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/advocates/${advocateId}/send-welcome`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'sms' })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Welcome SMS sent to ${advocate.phone}!`);
+                } else {
+                    alert(result.error || 'Failed to send SMS');
+                }
+            } catch (error) {
+                console.error('Error sending SMS:', error);
+                alert('Error sending SMS. Please try again.');
+            }
         }
 
         // Edit lead

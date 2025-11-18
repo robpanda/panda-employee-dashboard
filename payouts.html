@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payout Management - Panda Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #374151;
+        }
+        .navbar {
+            background: #1a1a1a;
+            padding: 12px 24px;
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.7) !important;
+            font-size: 14px;
+            padding: 8px 16px !important;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+        }
+        .main-container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .stat-card .label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #111827;
+            margin: 4px 0;
+        }
+        .stat-card .value.warning {
+            color: #f59e0b;
+        }
+        .stat-card .value.success {
+            color: #10b981;
+        }
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            color: #6b7280;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            font-weight: 500;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .table {
+            font-size: 14px;
+        }
+        .table th {
+            background: #f9fafb;
+            font-weight: 500;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        .table td {
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        .badge {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .btn-approve {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-approve:hover {
+            background: #059669;
+        }
+        .btn-reject {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-reject:hover {
+            background: #dc2626;
+        }
+        .btn-approve:disabled, .btn-reject:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .bank-info {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .bank-info code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+        .btn-batch {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-batch:hover {
+            background: #2563eb;
+        }
+        .btn-batch:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .select-all {
+            margin-right: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        .empty-state i {
+            font-size: 48px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
+        .amount {
+            font-weight: 600;
+            color: #059669;
+        }
+        .payout-method {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="d-flex align-items-center justify-content-between w-100">
+            <a class="navbar-brand" href="index.html">
+                <img src="panda-logo.png" alt="Panda" style="height: 28px; margin-right: 8px;">
+                Panda Admin
+            </a>
+            <div class="d-flex align-items-center">
+                <a class="nav-link" href="leads.html">Leads</a>
+                <a class="nav-link active" href="payouts.html">Payouts</a>
+                <a class="nav-link" href="index.html">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Payout Management</h1>
+            <button class="btn-batch" onclick="exportPayouts()" id="exportBtn">
+                <i class="fas fa-download"></i> Export CSV
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="label">Pending Approval</div>
+                <div class="value warning" id="pendingCount">0</div>
+                <div class="label">requests</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Pending Amount</div>
+                <div class="value warning" id="pendingAmount">$0</div>
+                <div class="label">to pay out</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Approved This Month</div>
+                <div class="value success" id="approvedCount">0</div>
+                <div class="label">payouts</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Paid This Month</div>
+                <div class="value success" id="paidAmount">$0</div>
+                <div class="label">total</div>
+            </div>
+        </div>
+
+        <!-- Alert for Stripe setup -->
+        <div id="stripeAlert" class="alert alert-warning" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Stripe not configured.</strong> Add your Stripe API key to AWS Secrets Manager (secret: <code>stripe/api-key</code>) to enable ACH payouts.
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('pending')">
+                    <i class="fas fa-clock"></i> Pending Approval
+                </button>
+                <button class="tab" onclick="switchTab('approved')">
+                    <i class="fas fa-check"></i> Approved
+                </button>
+                <button class="tab" onclick="switchTab('paid')">
+                    <i class="fas fa-money-bill-wave"></i> Paid
+                </button>
+                <button class="tab" onclick="switchTab('all')">
+                    <i class="fas fa-list"></i> All Payouts
+                </button>
+            </div>
+
+            <!-- Pending Tab -->
+            <div id="pendingTab" class="tab-content active">
+                <div class="toolbar">
+                    <label class="select-all">
+                        <input type="checkbox" id="selectAllPending" onchange="toggleSelectAll('pending')"> Select All
+                    </label>
+                    <button class="btn-batch" onclick="batchApprove()" id="batchApproveBtn" disabled>
+                        <i class="fas fa-check-double"></i> Approve Selected
+                    </button>
+                </div>
+                <div id="pendingTable">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th width="40"></th>
+                                <th>Advocate</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Bank Info</th>
+                                <th>Requested</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Approved Tab -->
+            <div id="approvedTab" class="tab-content">
+                <div id="approvedTable">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Advocate</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Approved</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvedBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paid Tab -->
+            <div id="paidTab" class="tab-content">
+                <div id="paidTable">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Advocate</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Paid Date</th>
+                                <th>Transaction ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paidBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- All Tab -->
+            <div id="allTab" class="tab-content">
+                <div id="allTable">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Advocate</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Payout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Reason for rejection</label>
+                        <textarea class="form-control" id="rejectReason" rows="3" placeholder="e.g., Invalid bank information"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmReject()">Reject Payout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'https://7paaginnvg.execute-api.us-east-2.amazonaws.com/prod/referrals';
+
+        let payouts = [];
+        let advocates = [];
+        let selectedPayouts = new Set();
+        let currentRejectId = null;
+
+        // Check auth and load data
+        window.addEventListener('load', async function() {
+            if (sessionStorage.getItem('pandaAdmin') !== 'authenticated') {
+                window.location.href = 'login.html';
+                return;
+            }
+            await loadData();
+        });
+
+        // Load all data
+        async function loadData() {
+            try {
+                // Load payouts and advocates in parallel
+                const [payoutsRes, advocatesRes] = await Promise.all([
+                    fetch(`${API_BASE}/payouts`),
+                    fetch(`${API_BASE}/advocates`)
+                ]);
+
+                const payoutsData = await payoutsRes.json();
+                const advocatesData = await advocatesRes.json();
+
+                payouts = payoutsData.payouts || [];
+                advocates = advocatesData.advocates || [];
+
+                updateStats();
+                renderTables();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            const pending = payouts.filter(p => p.status === 'pending');
+            const approved = payouts.filter(p => p.status === 'approved');
+            const paid = payouts.filter(p => p.status === 'paid');
+
+            // This month
+            const now = new Date();
+            const thisMonth = paid.filter(p => {
+                const date = new Date(p.paidAt || p.createdAt);
+                return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+            });
+
+            document.getElementById('pendingCount').textContent = pending.length;
+            document.getElementById('pendingAmount').textContent = '$' + pending.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2);
+            document.getElementById('approvedCount').textContent = approved.length + thisMonth.length;
+            document.getElementById('paidAmount').textContent = '$' + thisMonth.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2);
+        }
+
+        // Get advocate name by ID
+        function getAdvocateName(advocateId) {
+            const advocate = advocates.find(a => a.advocateId === advocateId);
+            if (!advocate) return 'Unknown';
+            return `${advocate.firstName || ''} ${advocate.lastName || ''}`.trim() || 'Unknown';
+        }
+
+        // Get advocate by ID
+        function getAdvocate(advocateId) {
+            return advocates.find(a => a.advocateId === advocateId) || {};
+        }
+
+        // Render all tables
+        function renderTables() {
+            renderPendingTable();
+            renderApprovedTable();
+            renderPaidTable();
+            renderAllTable();
+        }
+
+        // Render pending table
+        function renderPendingTable() {
+            const tbody = document.getElementById('pendingBody');
+            const pending = payouts.filter(p => p.status === 'pending');
+
+            if (!pending.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-check-circle d-block"></i>
+                            <p>No pending payout requests</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = pending.map(payout => {
+                const advocate = getAdvocate(payout.advocateId);
+                const name = getAdvocateName(payout.advocateId);
+                const date = new Date(payout.requestedAt || payout.createdAt).toLocaleDateString();
+
+                let bankInfo = '<span class="text-muted">No bank info</span>';
+                if (advocate.payoutMethod === 'ach' && advocate.payoutDetails) {
+                    bankInfo = `
+                        <div class="bank-info">
+                            Routing: <code>${advocate.payoutDetails.routingNumber || 'N/A'}</code><br>
+                            Account: <code>****${(advocate.payoutDetails.accountNumber || '').slice(-4)}</code>
+                        </div>
+                    `;
+                } else if (advocate.payoutMethod === 'venmo') {
+                    bankInfo = `<div class="bank-info">Venmo: ${advocate.payoutDetails?.username || 'N/A'}</div>`;
+                } else if (advocate.payoutMethod === 'paypal') {
+                    bankInfo = `<div class="bank-info">PayPal: ${advocate.payoutDetails?.email || 'N/A'}</div>`;
+                }
+
+                return `
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="payout-checkbox" value="${payout.payoutId}" onchange="updateSelection()">
+                        </td>
+                        <td>
+                            <strong>${name}</strong><br>
+                            <small class="text-muted">${advocate.email || ''}</small>
+                        </td>
+                        <td class="amount">$${(payout.amount || 0).toFixed(2)}</td>
+                        <td><span class="badge bg-secondary">${payout.type || 'cashout'}</span></td>
+                        <td>${bankInfo}</td>
+                        <td>${date}</td>
+                        <td>
+                            <button class="btn-approve" onclick="approvePayout('${payout.payoutId}')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn-reject" onclick="showRejectModal('${payout.payoutId}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render approved table
+        function renderApprovedTable() {
+            const tbody = document.getElementById('approvedBody');
+            const approved = payouts.filter(p => p.status === 'approved');
+
+            if (!approved.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><p>No approved payouts awaiting transfer</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = approved.map(payout => {
+                const name = getAdvocateName(payout.advocateId);
+                const date = new Date(payout.approvedAt || payout.updatedAt).toLocaleDateString();
+
+                return `
+                    <tr>
+                        <td><strong>${name}</strong></td>
+                        <td class="amount">$${(payout.amount || 0).toFixed(2)}</td>
+                        <td><span class="badge bg-secondary">${payout.type || 'cashout'}</span></td>
+                        <td>${date}</td>
+                        <td><span class="badge bg-info">Processing</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render paid table
+        function renderPaidTable() {
+            const tbody = document.getElementById('paidBody');
+            const paid = payouts.filter(p => p.status === 'paid').sort((a, b) => (b.paidAt || 0) - (a.paidAt || 0));
+
+            if (!paid.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><p>No completed payouts yet</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = paid.slice(0, 50).map(payout => {
+                const name = getAdvocateName(payout.advocateId);
+                const date = new Date(payout.paidAt || payout.updatedAt).toLocaleDateString();
+
+                return `
+                    <tr>
+                        <td><strong>${name}</strong></td>
+                        <td class="amount">$${(payout.amount || 0).toFixed(2)}</td>
+                        <td><span class="badge bg-secondary">${payout.type || 'cashout'}</span></td>
+                        <td>${date}</td>
+                        <td><code>${payout.stripeTransferId || payout.payoutId}</code></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render all table
+        function renderAllTable() {
+            const tbody = document.getElementById('allBody');
+            const sorted = [...payouts].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            if (!sorted.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><p>No payouts found</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sorted.slice(0, 100).map(payout => {
+                const name = getAdvocateName(payout.advocateId);
+                const date = new Date(payout.createdAt).toLocaleDateString();
+                const statusBadge = {
+                    'pending': '<span class="badge bg-warning">Pending</span>',
+                    'approved': '<span class="badge bg-info">Approved</span>',
+                    'paid': '<span class="badge bg-success">Paid</span>',
+                    'rejected': '<span class="badge bg-danger">Rejected</span>'
+                }[payout.status] || '<span class="badge bg-secondary">Unknown</span>';
+
+                return `
+                    <tr>
+                        <td><strong>${name}</strong></td>
+                        <td class="amount">$${(payout.amount || 0).toFixed(2)}</td>
+                        <td><span class="badge bg-secondary">${payout.type || 'commission'}</span></td>
+                        <td>${statusBadge}</td>
+                        <td>${date}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Toggle select all
+        function toggleSelectAll(type) {
+            const checked = document.getElementById('selectAllPending').checked;
+            document.querySelectorAll('.payout-checkbox').forEach(cb => {
+                cb.checked = checked;
+            });
+            updateSelection();
+        }
+
+        // Update selection
+        function updateSelection() {
+            selectedPayouts.clear();
+            document.querySelectorAll('.payout-checkbox:checked').forEach(cb => {
+                selectedPayouts.add(cb.value);
+            });
+            document.getElementById('batchApproveBtn').disabled = selectedPayouts.size === 0;
+        }
+
+        // Approve single payout
+        async function approvePayout(payoutId) {
+            if (!confirm('Approve this payout? This will initiate an ACH transfer.')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/payouts/${payoutId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'approved', action: 'approve' })
+                });
+
+                if (response.ok) {
+                    alert('Payout approved! ACH transfer initiated.');
+                    await loadData();
+                } else {
+                    const result = await response.json();
+                    alert(result.error || 'Failed to approve payout');
+                }
+            } catch (error) {
+                console.error('Error approving payout:', error);
+                alert('Error approving payout');
+            }
+        }
+
+        // Batch approve
+        async function batchApprove() {
+            if (selectedPayouts.size === 0) return;
+
+            if (!confirm(`Approve ${selectedPayouts.size} payouts? This will initiate ACH transfers.`)) return;
+
+            let success = 0;
+            let failed = 0;
+
+            for (const payoutId of selectedPayouts) {
+                try {
+                    const response = await fetch(`${API_BASE}/payouts/${payoutId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'approved', action: 'approve' })
+                    });
+
+                    if (response.ok) {
+                        success++;
+                    } else {
+                        failed++;
+                    }
+                } catch (error) {
+                    failed++;
+                }
+            }
+
+            alert(`Approved: ${success}, Failed: ${failed}`);
+            selectedPayouts.clear();
+            await loadData();
+        }
+
+        // Show reject modal
+        function showRejectModal(payoutId) {
+            currentRejectId = payoutId;
+            document.getElementById('rejectReason').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+            modal.show();
+        }
+
+        // Confirm reject
+        async function confirmReject() {
+            if (!currentRejectId) return;
+
+            const reason = document.getElementById('rejectReason').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/payouts/${currentRejectId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'rejected',
+                        action: 'reject',
+                        reason: reason
+                    })
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+                    alert('Payout rejected');
+                    await loadData();
+                } else {
+                    const result = await response.json();
+                    alert(result.error || 'Failed to reject payout');
+                }
+            } catch (error) {
+                console.error('Error rejecting payout:', error);
+                alert('Error rejecting payout');
+            }
+
+            currentRejectId = null;
+        }
+
+        // Export payouts to CSV
+        function exportPayouts() {
+            const pending = payouts.filter(p => p.status === 'pending');
+
+            if (!pending.length) {
+                alert('No pending payouts to export');
+                return;
+            }
+
+            let csv = 'Advocate,Email,Amount,Routing Number,Account Number,Type,Requested Date\n';
+
+            pending.forEach(payout => {
+                const advocate = getAdvocate(payout.advocateId);
+                const name = getAdvocateName(payout.advocateId);
+                const routing = advocate.payoutDetails?.routingNumber || '';
+                const account = advocate.payoutDetails?.accountNumber || '';
+                const date = new Date(payout.requestedAt || payout.createdAt).toLocaleDateString();
+
+                csv += `"${name}","${advocate.email || ''}",${payout.amount},${routing},${account},"${payout.type || 'cashout'}","${date}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pending-payouts-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
