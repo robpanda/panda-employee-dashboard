@@ -529,12 +529,29 @@
     <nav class="navbar">
         <div class="d-flex align-items-center justify-content-between w-100">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="/PandaLogo.png" alt="Panda Exteriors">
+                <img src="http://pandaadmin.com.s3-website-us-east-1.amazonaws.com/PandaLogo.png" alt="Panda Exteriors">
                 Sales Rep Dashboard
             </a>
             <div class="d-flex align-items-center gap-3">
                 <div class="user-info">
                     <span class="name" id="userName">Loading...</span>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="adminMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cog"></i> Admin
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenuDropdown">
+                        <li><a class="dropdown-item" href="/payouts.html" target="_blank">
+                            <i class="fas fa-money-bill-wave me-2"></i>Payouts Dashboard
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin.html" target="_blank">
+                            <i class="fas fa-user-shield me-2"></i>Admin Portal
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/advocate-login.html" target="_blank">
+                            <i class="fas fa-users me-2"></i>Advocate Portal
+                        </a></li>
+                    </ul>
                 </div>
                 <button class="btn-logout" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout

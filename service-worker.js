@@ -1,22 +1,10 @@
 // Panda Admin Portal Service Worker
-const CACHE_NAME = 'panda-admin-v1';
-const urlsToCache = [
-  '/rep-dashboard.html',
-  '/advocate-login.html',
-  '/PandaLogo.png',
-  '/manifest.json'
-];
+const CACHE_NAME = 'panda-admin-v2';
 
-// Install event - cache essential files
+// Install event - skip caching problematic files
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Caching files');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => self.skipWaiting())
-  );
+  console.log('Service Worker: Installing');
+  self.skipWaiting();
 });
 
 // Activate event - clean up old caches
@@ -26,7 +14,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Clearing old cache');
+            console.log('Service Worker: Clearing old cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -36,30 +24,33 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - network first, then cache
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        // Clone the request
-        const fetchRequest = event.request.clone();
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-          // Clone the response
+        // Check if valid response
+        if (response && response.status === 200) {
+          // Clone and cache HTML/CSS/JS files
           const responseToCache = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
+          const url = event.request.url;
+
+          if (url.includes('.html') || url.includes('.css') || url.includes('.js') || url.includes('.json')) {
+            caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
             });
-          return response;
-        });
+          }
+        }
+        return response;
+      })
+      .catch(() => {
+        // Network failed, try cache
+        return caches.match(event.request);
       })
   );
 });
