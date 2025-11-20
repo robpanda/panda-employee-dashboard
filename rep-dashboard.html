@@ -823,6 +823,9 @@
                                 <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); sendAdvocateSMS('${adv.advocateId}')" title="Send welcome SMS" ${adv.phone ? '' : 'disabled'}>
                                     <i class="fas fa-sms"></i>
                                 </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation(); openAddReferralModal('${adv.advocateId}', '${(adv.firstName || '') + ' ' + (adv.lastName || '')}')" title="Add referral">
+                                    <i class="fas fa-plus"></i> Referral
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -1192,5 +1195,168 @@
             <button id="installBtn" class="install-btn">Install</button>
         </div>
     </div>
+
+    <!-- Add Referral Modal -->
+    <div class="modal fade" id="addReferralModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Referral for <span id="modalAdvocateName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addReferralForm">
+                        <input type="hidden" id="modalAdvocateId">
+
+                        <div class="mb-3">
+                            <label for="customerFirstName" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="customerFirstName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customerLastName" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="customerLastName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customerEmail" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="customerEmail" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customerPhone" class="form-label">Phone *</label>
+                            <input type="tel" class="form-control" id="customerPhone" required placeholder="(555) 123-4567">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customerAddress" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="customerAddress" placeholder="Street address">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customerCity" class="form-label">City</label>
+                            <input type="text" class="form-control" id="customerCity">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="customerState" class="form-label">State</label>
+                                <input type="text" class="form-control" id="customerState" maxlength="2" placeholder="MA">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="customerZip" class="form-label">ZIP Code</label>
+                                <input type="text" class="form-control" id="customerZip" placeholder="02101">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="serviceInterest" class="form-label">Service Interest</label>
+                            <select class="form-select" id="serviceInterest">
+                                <option value="Roofing">Roofing</option>
+                                <option value="Siding">Siding</option>
+                                <option value="Windows">Windows</option>
+                                <option value="Doors">Doors</option>
+                                <option value="Gutters">Gutters</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" rows="3" placeholder="Additional information about this lead..."></textarea>
+                        </div>
+
+                        <div id="referralError" class="alert alert-danger" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitReferral()">
+                        <span id="submitText">Add Referral</span>
+                        <span id="submitLoading" class="d-none"><i class="fas fa-spinner fa-spin"></i> Adding...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Open add referral modal
+        function openAddReferralModal(advocateId, advocateName) {
+            document.getElementById('modalAdvocateId').value = advocateId;
+            document.getElementById('modalAdvocateName').textContent = advocateName;
+            document.getElementById('addReferralForm').reset();
+            document.getElementById('referralError').style.display = 'none';
+
+            const modal = new bootstrap.Modal(document.getElementById('addReferralModal'));
+            modal.show();
+        }
+
+        // Submit referral
+        async function submitReferral() {
+            const advocateId = document.getElementById('modalAdvocateId').value;
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+            const errorDiv = document.getElementById('referralError');
+
+            // Get form data
+            const referralData = {
+                advocateId: advocateId,
+                firstName: document.getElementById('customerFirstName').value.trim(),
+                lastName: document.getElementById('customerLastName').value.trim(),
+                email: document.getElementById('customerEmail').value.trim(),
+                phone: document.getElementById('customerPhone').value.trim(),
+                address: document.getElementById('customerAddress').value.trim(),
+                city: document.getElementById('customerCity').value.trim(),
+                state: document.getElementById('customerState').value.trim().toUpperCase(),
+                zip: document.getElementById('customerZip').value.trim(),
+                serviceInterest: document.getElementById('serviceInterest').value,
+                notes: document.getElementById('notes').value.trim(),
+                source: 'Sales Rep'
+            };
+
+            // Validation
+            if (!referralData.firstName || !referralData.lastName || !referralData.email || !referralData.phone) {
+                errorDiv.textContent = 'Please fill in all required fields (First Name, Last Name, Email, Phone)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Show loading
+            submitText.classList.add('d-none');
+            submitLoading.classList.remove('d-none');
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/leads`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(referralData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Success - close modal and reload data
+                    bootstrap.Modal.getInstance(document.getElementById('addReferralModal')).hide();
+                    loadDashboardData();
+
+                    // Show success message
+                    alert('Referral added successfully!');
+                } else {
+                    throw new Error(data.message || 'Failed to add referral');
+                }
+            } catch (error) {
+                console.error('Error adding referral:', error);
+                errorDiv.textContent = error.message || 'Failed to add referral. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                submitText.classList.remove('d-none');
+                submitLoading.classList.add('d-none');
+            }
+        }
+    </script>
 </body>
 </html>
