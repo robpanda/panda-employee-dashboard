@@ -527,14 +527,16 @@
                 if (advocate.payoutMethod === 'ach' && advocate.payoutDetails) {
                     bankInfo = `
                         <div class="bank-info">
+                            <span class="badge bg-primary">ACH</span><br>
                             Routing: <code>${advocate.payoutDetails.routingNumber || 'N/A'}</code><br>
                             Account: <code>****${(advocate.payoutDetails.accountNumber || '').slice(-4)}</code>
                         </div>
                     `;
                 } else if (advocate.payoutMethod === 'venmo') {
-                    bankInfo = `<div class="bank-info">Venmo: ${advocate.payoutDetails?.username || 'N/A'}</div>`;
+                    bankInfo = `<div class="bank-info"><span class="badge bg-info">Venmo</span><br>${advocate.payoutDetails?.username || 'N/A'}</div>`;
                 } else if (advocate.payoutMethod === 'paypal') {
-                    bankInfo = `<div class="bank-info">PayPal: ${advocate.payoutDetails?.email || 'N/A'}</div>`;
+                    const paypalEmail = advocate.paypalEmail || advocate.payoutDetails?.email || 'N/A';
+                    bankInfo = `<div class="bank-info"><span class="badge bg-primary">PayPal</span><br>${paypalEmail}</div>`;
                 }
 
                 return `
@@ -602,6 +604,14 @@
             tbody.innerHTML = paid.slice(0, 50).map(payout => {
                 const name = getAdvocateName(payout.advocateId);
                 const date = new Date(payout.paidAt || payout.updatedAt).toLocaleDateString();
+                const paymentMethod = payout.paymentMethod || 'ACH';
+                const methodBadge = {
+                    'paypal': '<span class="badge bg-primary">PayPal</span>',
+                    'ach': '<span class="badge bg-info">ACH</span>',
+                    'venmo': '<span class="badge bg-warning">Venmo</span>',
+                    'manual': '<span class="badge bg-secondary">Manual</span>'
+                }[paymentMethod.toLowerCase()] || '<span class="badge bg-secondary">ACH</span>';
+                const paymentId = payout.paymentId || payout.stripeTransferId || payout.payoutId;
 
                 return `
                     <tr>
@@ -609,7 +619,7 @@
                         <td class="amount">$${(payout.amount || 0).toFixed(2)}</td>
                         <td><span class="badge bg-secondary">${payout.type || 'cashout'}</span></td>
                         <td>${date}</td>
-                        <td><code>${payout.stripeTransferId || payout.payoutId}</code></td>
+                        <td>${methodBadge}<br><small><code>${paymentId}</code></small></td>
                     </tr>
                 `;
             }).join('');
@@ -676,7 +686,7 @@
 
         // Approve single payout
         async function approvePayout(payoutId) {
-            if (!confirm('Approve this payout? This will initiate an ACH transfer.')) return;
+            if (!confirm('Approve this payout? Payment will be sent via the advocate\'s preferred method (PayPal or ACH).')) return;
 
             try {
                 const response = await fetch(`${API_BASE}/payouts/${payoutId}`, {
@@ -686,7 +696,8 @@
                 });
 
                 if (response.ok) {
-                    alert('Payout approved! ACH transfer initiated.');
+                    const result = await response.json();
+                    alert(result.message || 'Payout approved! Payment initiated.');
                     await loadData();
                 } else {
                     const result = await response.json();
@@ -702,7 +713,7 @@
         async function batchApprove() {
             if (selectedPayouts.size === 0) return;
 
-            if (!confirm(`Approve ${selectedPayouts.size} payouts? This will initiate ACH transfers.`)) return;
+            if (!confirm(`Approve ${selectedPayouts.size} payouts? Payments will be sent via each advocate's preferred method.`)) return;
 
             let success = 0;
             let failed = 0;
