@@ -198,6 +198,85 @@
         .tier-list li i {
             color: #ca8a04;
         }
+
+        /* PWA Install Prompt */
+        #pwaInstallPrompt {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            max-width: 90%;
+            width: 400px;
+            z-index: 10000;
+            transition: bottom 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        #pwaInstallPrompt.show {
+            bottom: 20px;
+        }
+        #pwaInstallPrompt .icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+        #pwaInstallPrompt .content {
+            flex: 1;
+        }
+        #pwaInstallPrompt .content strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        #pwaInstallPrompt .content small {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        #pwaInstallPrompt .actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        #pwaInstallPrompt button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        #pwaInstallPrompt .install-btn {
+            background: white;
+            color: #059669;
+        }
+        #pwaInstallPrompt .install-btn:hover {
+            background: #f3f4f6;
+        }
+        #pwaInstallPrompt .close-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        #pwaInstallPrompt .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        @media (max-width: 600px) {
+            #pwaInstallPrompt {
+                width: calc(100% - 32px);
+                flex-direction: column;
+                text-align: center;
+            }
+            #pwaInstallPrompt .actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
