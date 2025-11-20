@@ -617,12 +617,24 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Product</th>
-                                <th>Advocate</th>
-                                <th>Status</th>
-                                <th>Date</th>
+                                <th onclick="sortLeads('name')" style="cursor: pointer;">
+                                    Name <i class="fas fa-sort" id="sort-name"></i>
+                                </th>
+                                <th onclick="sortLeads('phone')" style="cursor: pointer;">
+                                    Phone <i class="fas fa-sort" id="sort-phone"></i>
+                                </th>
+                                <th onclick="sortLeads('product')" style="cursor: pointer;">
+                                    Product <i class="fas fa-sort" id="sort-product"></i>
+                                </th>
+                                <th onclick="sortLeads('advocate')" style="cursor: pointer;">
+                                    Advocate <i class="fas fa-sort" id="sort-advocate"></i>
+                                </th>
+                                <th onclick="sortLeads('status')" style="cursor: pointer;">
+                                    Status <i class="fas fa-sort" id="sort-status"></i>
+                                </th>
+                                <th onclick="sortLeads('date')" style="cursor: pointer;">
+                                    Date <i class="fas fa-sort-down" id="sort-date"></i>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -814,6 +826,9 @@
                         <td data-label="Earnings">$${(adv.totalEarnings || 0).toFixed(2)}</td>
                         <td data-label="Actions">
                             <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); openEditAdvocateModal('${adv.advocateId}')" title="Edit advocate">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
                                 <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); copyInviteLink('${adv.referralCode}')" title="Copy invite link">
                                     <i class="fas fa-copy"></i>
                                 </button>
@@ -854,6 +869,30 @@
             }
         }
 
+        // Sorting state for leads
+        let leadSortColumn = 'date';
+        let leadSortDirection = 'desc'; // Default: newest first
+
+        // Sort leads table
+        function sortLeads(column) {
+            // Toggle direction if same column, otherwise default to ascending
+            if (leadSortColumn === column) {
+                leadSortDirection = leadSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                leadSortColumn = column;
+                leadSortDirection = column === 'date' ? 'desc' : 'asc'; // Date defaults to desc, others asc
+            }
+
+            // Update sort icons
+            document.querySelectorAll('[id^="sort-"]').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            const iconClass = leadSortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+            document.getElementById(`sort-${column}`).className = `fas ${iconClass}`;
+
+            renderLeads();
+        }
+
         // Render leads table
         function renderLeads() {
             const tbody = document.getElementById('leadsBody');
@@ -872,6 +911,46 @@
             if (statusFilter) {
                 filteredLeads = filteredLeads.filter(lead => lead.status === statusFilter);
             }
+
+            // Sort leads
+            filteredLeads.sort((a, b) => {
+                let aVal, bVal;
+
+                switch (leadSortColumn) {
+                    case 'name':
+                        aVal = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+                        bVal = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+                        break;
+                    case 'phone':
+                        aVal = (a.phone || '').toLowerCase();
+                        bVal = (b.phone || '').toLowerCase();
+                        break;
+                    case 'product':
+                        aVal = (a.product || '').toLowerCase();
+                        bVal = (b.product || '').toLowerCase();
+                        break;
+                    case 'advocate':
+                        const advA = advocates.find(adv => adv.advocateId === a.advocateId);
+                        const advB = advocates.find(adv => adv.advocateId === b.advocateId);
+                        aVal = advA ? `${advA.firstName} ${advA.lastName}`.toLowerCase() : '';
+                        bVal = advB ? `${advB.firstName} ${advB.lastName}`.toLowerCase() : '';
+                        break;
+                    case 'status':
+                        aVal = (a.status || '').toLowerCase();
+                        bVal = (b.status || '').toLowerCase();
+                        break;
+                    case 'date':
+                        aVal = a.createdAt || 0;
+                        bVal = b.createdAt || 0;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aVal < bVal) return leadSortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return leadSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
 
             if (!filteredLeads.length) {
                 tbody.innerHTML = `
@@ -1323,6 +1402,68 @@
         </div>
     </div>
 
+    <!-- Edit Advocate Modal -->
+    <div class="modal fade" id="editAdvocateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Advocate</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAdvocateForm">
+                        <input type="hidden" id="editAdvocateId">
+
+                        <div class="mb-3">
+                            <label for="editFirstName" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="editFirstName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editLastName" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="editLastName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editPhone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="editPhone" placeholder="(555) 123-4567">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editPaypalEmail" class="form-label">PayPal Email (for payouts)</label>
+                            <input type="email" class="form-control" id="editPaypalEmail" placeholder="paypal@email.com">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="editActive" checked>
+                                <label class="form-check-label" for="editActive">
+                                    <span id="activeLabel">Active</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Inactive advocates cannot earn commissions or receive referrals</small>
+                        </div>
+
+                        <div id="editAdvocateError" class="alert alert-danger" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAdvocateEdit()">
+                        <span id="editSubmitText">Save Changes</span>
+                        <span id="editSubmitLoading" class="d-none"><i class="fas fa-spinner fa-spin"></i> Saving...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Open add referral modal
         function openAddReferralModal(advocateId, advocateName) {
@@ -1394,6 +1535,104 @@
             } catch (error) {
                 console.error('Error adding referral:', error);
                 errorDiv.textContent = error.message || 'Failed to add referral. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                submitText.classList.remove('d-none');
+                submitLoading.classList.add('d-none');
+            }
+        }
+
+        // Open edit advocate modal
+        function openEditAdvocateModal(advocateId) {
+            const advocate = advocates.find(a => a.advocateId === advocateId);
+            if (!advocate) return;
+
+            document.getElementById('editAdvocateId').value = advocate.advocateId;
+            document.getElementById('editFirstName').value = advocate.firstName || '';
+            document.getElementById('editLastName').value = advocate.lastName || '';
+            document.getElementById('editEmail').value = advocate.email || '';
+            document.getElementById('editPhone').value = advocate.phone || '';
+            document.getElementById('editPaypalEmail').value = advocate.paypalEmail || '';
+            document.getElementById('editActive').checked = advocate.active !== false;
+            document.getElementById('editAdvocateError').style.display = 'none';
+
+            // Update label text
+            updateActiveLabel();
+
+            const modal = new bootstrap.Modal(document.getElementById('editAdvocateModal'));
+            modal.show();
+        }
+
+        // Update active/inactive label
+        function updateActiveLabel() {
+            const checkbox = document.getElementById('editActive');
+            const label = document.getElementById('activeLabel');
+            label.textContent = checkbox.checked ? 'Active' : 'Inactive';
+            label.style.color = checkbox.checked ? '#10b981' : '#ef4444';
+        }
+
+        // Add event listener for checkbox change
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('editActive');
+            if (checkbox) {
+                checkbox.addEventListener('change', updateActiveLabel);
+            }
+        });
+
+        // Submit advocate edit
+        async function submitAdvocateEdit() {
+            const advocateId = document.getElementById('editAdvocateId').value;
+            const submitText = document.getElementById('editSubmitText');
+            const submitLoading = document.getElementById('editSubmitLoading');
+            const errorDiv = document.getElementById('editAdvocateError');
+
+            // Get form data
+            const advocateData = {
+                firstName: document.getElementById('editFirstName').value.trim(),
+                lastName: document.getElementById('editLastName').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                paypalEmail: document.getElementById('editPaypalEmail').value.trim() || null,
+                active: document.getElementById('editActive').checked
+            };
+
+            // Validation
+            if (!advocateData.firstName || !advocateData.lastName || !advocateData.email) {
+                errorDiv.textContent = 'Please fill in all required fields (First Name, Last Name, Email)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Show loading
+            submitText.classList.add('d-none');
+            submitLoading.classList.remove('d-none');
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/advocates/${advocateId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(advocateData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success - close modal and reload data
+                    bootstrap.Modal.getInstance(document.getElementById('editAdvocateModal')).hide();
+                    await loadDashboardData();
+
+                    // Show success message
+                    const statusMsg = advocateData.active ? 'activated' : 'deactivated';
+                    alert(`Advocate updated successfully! Status: ${statusMsg}`);
+                } else {
+                    throw new Error(data.error || 'Failed to update advocate');
+                }
+            } catch (error) {
+                console.error('Error updating advocate:', error);
+                errorDiv.textContent = error.message || 'Failed to update advocate. Please try again.';
                 errorDiv.style.display = 'block';
             } finally {
                 submitText.classList.remove('d-none');
