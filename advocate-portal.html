@@ -613,6 +613,69 @@
                 loadAdvocate();
             }
         });
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installPrompt = document.getElementById('pwaInstallPrompt');
+        const installBtn = document.getElementById('installBtn');
+        const closePromptBtn = document.getElementById('closePrompt');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            if (!sessionStorage.getItem('pwaPromptDismissed')) {
+                setTimeout(() => {
+                    installPrompt.classList.add('show');
+                }, 3000);
+            }
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                return;
+            }
+
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            installPrompt.classList.remove('show');
+
+            if (outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            }
+        });
+
+        closePromptBtn.addEventListener('click', () => {
+            installPrompt.classList.remove('show');
+            sessionStorage.setItem('pwaPromptDismissed', 'true');
+        });
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+
+        if (isIOS && !isStandalone && !sessionStorage.getItem('pwaPromptDismissed')) {
+            setTimeout(() => {
+                installPrompt.classList.add('show');
+                installBtn.textContent = 'Instructions';
+                installBtn.onclick = () => {
+                    alert('To add to Home Screen:\n1. Tap the Share button ⬆️\n2. Scroll and tap "Add to Home Screen"\n3. Tap "Add"');
+                };
+            }, 3000);
+        }
     </script>
+
+    <!-- PWA Install Prompt -->
+    <div id="pwaInstallPrompt">
+        <div class="icon">📱</div>
+        <div class="content">
+            <strong>Add to Home Screen</strong>
+            <small>Access this app instantly from your home screen</small>
+        </div>
+        <div class="actions">
+            <button id="installBtn" class="install-btn">Install</button>
+            <button id="closePrompt" class="close-btn">Later</button>
+        </div>
+    </div>
 </body>
 </html>
