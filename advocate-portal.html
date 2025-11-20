@@ -292,14 +292,21 @@
                 <!-- Login Section (shown before advocate is loaded) -->
                 <div id="loginSection">
                     <div class="mb-4">
-                        <label class="form-label">Enter Your Referral Code</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="referralCodeInput" placeholder="e.g., ABC123" style="text-transform: uppercase;">
-                            <button class="btn btn-primary" onclick="loadAdvocate()" style="padding: 12px 24px;">
+                        <p class="text-center mb-3" style="font-size: 14px; color: #6b7280;">Sign in to access your referral portal</p>
+                        <form id="advocateLoginForm" onsubmit="loginAdvocate(event)">
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="advocateEmail" placeholder="your@email.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" id="advocatePassword" placeholder="Enter your password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" style="padding: 12px;">
                                 <i class="fas fa-sign-in-alt me-2"></i>Login
                             </button>
-                        </div>
-                        <small class="text-muted">Don't have a code? Contact your sales rep to get started!</small>
+                        </form>
+                        <small class="text-muted d-block text-center mt-3">Don't have an account? Contact your sales rep to get started!</small>
                     </div>
                 </div>
 
