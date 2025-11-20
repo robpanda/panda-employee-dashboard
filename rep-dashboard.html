@@ -344,6 +344,7 @@
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             padding: 16px 24px;
+            padding-right: 44px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
             max-width: 90%;
@@ -353,9 +354,27 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            position: relative;
         }
         #pwaInstallPrompt.show {
             bottom: 20px;
+        }
+        #pwaInstallPrompt .close-x-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 28px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        #pwaInstallPrompt .close-x-btn:hover {
+            opacity: 1;
         }
         #pwaInstallPrompt .icon {
             font-size: 32px;
@@ -411,6 +430,77 @@
             #pwaInstallPrompt .actions {
                 width: 100%;
                 justify-content: center;
+            }
+        }
+
+        /* Mobile-friendly table cards */
+        @media (max-width: 768px) {
+            .table-responsive {
+                overflow-x: visible !important;
+            }
+            .table thead {
+                display: none;
+            }
+            .table, .table tbody, .table tr, .table td {
+                display: block;
+                width: 100%;
+            }
+            .table tr {
+                margin-bottom: 16px;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                background: white;
+                padding: 12px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .table tr.referrals-row {
+                margin-bottom: 0;
+                margin-top: 8px;
+                background: #f9fafb;
+                border-top: 2px solid #e5e7eb;
+            }
+            .table td {
+                border: none;
+                padding: 8px 0 !important;
+                text-align: left !important;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .table td:before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #6b7280;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .table td:first-child {
+                padding-top: 0 !important;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            .table td:first-child:before {
+                display: none;
+            }
+            .table td:last-child {
+                padding-bottom: 0 !important;
+            }
+            /* Advocate row toggle arrow */
+            .advocate-row td:first-child {
+                padding-left: 24px !important;
+            }
+            /* Hide empty cells */
+            .table td:empty {
+                display: none;
+            }
+            /* Referrals list mobile */
+            .referrals-list {
+                padding: 0 !important;
+            }
+            .referral-item {
+                margin-bottom: 12px !important;
+                padding: 12px !important;
             }
         }
     </style>
@@ -716,13 +806,13 @@
 
                 return `
                     <tr class="advocate-row" onclick="toggleAdvocateReferrals('${adv.advocateId}')">
-                        <td>${name || 'N/A'}</td>
-                        <td>${adv.email || 'N/A'}</td>
-                        <td>${adv.phone || 'N/A'}</td>
-                        <td><code>${adv.referralCode || 'N/A'}</code></td>
-                        <td>${advLeadsCount}</td>
-                        <td>$${(adv.totalEarnings || 0).toFixed(2)}</td>
-                        <td>
+                        <td data-label="Name">${name || 'N/A'}</td>
+                        <td data-label="Email">${adv.email || 'N/A'}</td>
+                        <td data-label="Phone">${adv.phone || 'N/A'}</td>
+                        <td data-label="Code"><code>${adv.referralCode || 'N/A'}</code></td>
+                        <td data-label="Referrals">${advLeadsCount}</td>
+                        <td data-label="Earnings">$${(adv.totalEarnings || 0).toFixed(2)}</td>
+                        <td data-label="Actions">
                             <div class="btn-group" role="group">
                                 <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); copyInviteLink('${adv.referralCode}')" title="Copy invite link">
                                     <i class="fas fa-copy"></i>
@@ -801,13 +891,13 @@
 
                 return `
                     <tr>
-                        <td>${name || 'N/A'}</td>
-                        <td>${lead.phone || 'N/A'}</td>
-                        <td>${lead.product || 'N/A'}</td>
-                        <td>${advocateName}</td>
-                        <td>${statusBadge}</td>
-                        <td>${date}</td>
-                        <td>
+                        <td data-label="Name">${name || 'N/A'}</td>
+                        <td data-label="Phone">${lead.phone || 'N/A'}</td>
+                        <td data-label="Product">${lead.product || 'N/A'}</td>
+                        <td data-label="Advocate">${advocateName}</td>
+                        <td data-label="Status">${statusBadge}</td>
+                        <td data-label="Date">${date}</td>
+                        <td data-label="Actions">
                             <button class="btn btn-sm btn-primary" onclick="editLead('${lead.leadId}')">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -1034,6 +1124,7 @@
         const installPrompt = document.getElementById('pwaInstallPrompt');
         const installBtn = document.getElementById('installBtn');
         const closePromptBtn = document.getElementById('closePrompt');
+        const closePromptXBtn = document.getElementById('closePromptX');
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -1061,10 +1152,19 @@
             }
         });
 
-        closePromptBtn.addEventListener('click', () => {
+        // Close button handlers (both "Later" and "X" button)
+        const closePromptHandler = () => {
             installPrompt.classList.remove('show');
             sessionStorage.setItem('pwaPromptDismissed', 'true');
-        });
+        };
+
+        if (closePromptBtn) {
+            closePromptBtn.addEventListener('click', closePromptHandler);
+        }
+
+        if (closePromptXBtn) {
+            closePromptXBtn.addEventListener('click', closePromptHandler);
+        }
 
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
@@ -1082,6 +1182,7 @@
 
     <!-- PWA Install Prompt -->
     <div id="pwaInstallPrompt">
+        <button id="closePromptX" class="close-x-btn" aria-label="Close" title="Dismiss">×</button>
         <div class="icon">📱</div>
         <div class="content">
             <strong>Add to Home Screen</strong>
@@ -1089,7 +1190,6 @@
         </div>
         <div class="actions">
             <button id="installBtn" class="install-btn">Install</button>
-            <button id="closePrompt" class="close-btn">Later</button>
         </div>
     </div>
 </body>
