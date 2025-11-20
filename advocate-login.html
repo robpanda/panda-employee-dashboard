@@ -215,7 +215,7 @@
             gap: 12px;
         }
         #pwaInstallPrompt.show {
-            bottom: 20px;
+            bottom: max(100px, calc(20px + env(safe-area-inset-bottom)));
         }
         #pwaInstallPrompt .icon {
             font-size: 32px;
@@ -552,6 +552,17 @@
         });
 
         // PWA Install Prompt - Mobile Only
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((registration) => {
+                    console.log('Service Worker registered:', registration);
+                })
+                .catch((error) => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        }
+
         let deferredPrompt;
         const installPrompt = document.getElementById('pwaInstallPrompt');
         const installBtn = document.getElementById('installBtn');

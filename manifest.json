@@ -1,0 +1,24 @@
+{
+  "name": "Panda Admin Portal",
+  "short_name": "Panda Admin",
+  "description": "Panda Exteriors Admin Portal for Sales Reps and Advocates",
+  "start_url": "/rep-dashboard.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/PandaLogo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/PandaLogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

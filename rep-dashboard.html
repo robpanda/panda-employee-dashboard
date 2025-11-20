@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Rep Dashboard - Panda Exteriors</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="apple-touch-icon" href="/PandaLogo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -357,7 +360,12 @@
             position: relative;
         }
         #pwaInstallPrompt.show {
-            bottom: 20px;
+            bottom: max(80px, calc(20px + env(safe-area-inset-bottom)));
+        }
+        @media (max-width: 768px) {
+            #pwaInstallPrompt.show {
+                bottom: max(100px, calc(20px + env(safe-area-inset-bottom)));
+            }
         }
         #pwaInstallPrompt .close-x-btn {
             position: absolute;
@@ -458,6 +466,17 @@
                 margin-top: 8px;
                 background: #f9fafb;
                 border-top: 2px solid #e5e7eb;
+                display: none !important;
+            }
+            .table tr.referrals-row.show {
+                display: block !important;
+            }
+            .table tr.referrals-row td {
+                display: block !important;
+                padding: 12px !important;
+            }
+            .table tr.referrals-row td:before {
+                display: none !important;
             }
             .table td {
                 border: none;
@@ -1196,9 +1215,23 @@
                 repId: repData.repId,
                 firstName: document.getElementById('inviteFirstName').value,
                 lastName: document.getElementById('inviteLastName').value,
-                email: document.getElementById('inviteEmail').value,
-                phone: document.getElementById('invitePhone').value
+                email: document.getElementById('inviteEmail').value.toLowerCase().trim(),
+                phone: document.getElementById('invitePhone').value.trim()
             };
+
+            // Client-side duplicate check
+            const emailExists = advocates.find(a => a.email && a.email.toLowerCase() === advocateData.email);
+            const phoneExists = advocates.find(a => a.phone && a.phone.replace(/\D/g, '') === advocateData.phone.replace(/\D/g, ''));
+
+            if (emailExists) {
+                alertDiv.innerHTML = `<div class="alert alert-danger">An advocate with this email already exists: ${emailExists.firstName} ${emailExists.lastName}</div>`;
+                return;
+            }
+
+            if (phoneExists) {
+                alertDiv.innerHTML = `<div class="alert alert-danger">An advocate with this phone number already exists: ${phoneExists.firstName} ${phoneExists.lastName}</div>`;
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_BASE}/advocates`, {
@@ -1220,7 +1253,7 @@
                     document.getElementById('inviteForm').reset();
                     await loadDashboardData();
                 } else {
-                    alertDiv.innerHTML = `<div class="alert alert-error">${result.error || 'Failed to create advocate'}</div>`;
+                    alertDiv.innerHTML = `<div class="alert alert-danger">${result.error || 'Failed to create advocate'}</div>`;
                 }
             } catch (error) {
                 console.error('Error creating advocate:', error);
@@ -1233,6 +1266,17 @@
             localStorage.removeItem('repToken');
             localStorage.removeItem('repData');
             window.location.href = '/rep-login.html';
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((registration) => {
+                    console.log('Service Worker registered:', registration);
+                })
+                .catch((error) => {
+                    console.log('Service Worker registration failed:', error);
+                });
         }
 
         // PWA Install Prompt - Mobile Only
@@ -1352,23 +1396,23 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="customerAddress" class="form-label">Address</label>
-                            <input type="text" class="form-control" id="customerAddress" placeholder="Street address">
+                            <label for="customerAddress" class="form-label">Address *</label>
+                            <input type="text" class="form-control" id="customerAddress" placeholder="Street address" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="customerCity" class="form-label">City</label>
-                            <input type="text" class="form-control" id="customerCity">
+                            <label for="customerCity" class="form-label">City *</label>
+                            <input type="text" class="form-control" id="customerCity" required>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="customerState" class="form-label">State</label>
-                                <input type="text" class="form-control" id="customerState" maxlength="2" placeholder="MA">
+                                <label for="customerState" class="form-label">State *</label>
+                                <input type="text" class="form-control" id="customerState" maxlength="2" placeholder="MA" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="customerZip" class="form-label">ZIP Code</label>
-                                <input type="text" class="form-control" id="customerZip" placeholder="02101">
+                                <label for="customerZip" class="form-label">ZIP Code *</label>
+                                <input type="text" class="form-control" id="customerZip" placeholder="02101" required>
                             </div>
                         </div>
 
@@ -1488,7 +1532,7 @@
                 advocateId: advocateId,
                 firstName: document.getElementById('customerFirstName').value.trim(),
                 lastName: document.getElementById('customerLastName').value.trim(),
-                email: document.getElementById('customerEmail').value.trim(),
+                email: document.getElementById('customerEmail').value.trim().toLowerCase(),
                 phone: document.getElementById('customerPhone').value.trim(),
                 address: document.getElementById('customerAddress').value.trim(),
                 city: document.getElementById('customerCity').value.trim(),
@@ -1502,6 +1546,28 @@
             // Validation
             if (!referralData.firstName || !referralData.lastName || !referralData.email || !referralData.phone) {
                 errorDiv.textContent = 'Please fill in all required fields (First Name, Last Name, Email, Phone)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!referralData.address || !referralData.city || !referralData.state || !referralData.zip) {
+                errorDiv.textContent = 'Please fill in all address fields (Address, City, State, ZIP)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Duplicate check - check if lead with same email or phone already exists
+            const emailExists = leads.find(l => l.email && l.email.toLowerCase() === referralData.email);
+            const phoneExists = leads.find(l => l.phone && l.phone.replace(/\D/g, '') === referralData.phone.replace(/\D/g, ''));
+
+            if (emailExists) {
+                errorDiv.textContent = `A referral with this email already exists: ${emailExists.firstName} ${emailExists.lastName} (Status: ${emailExists.status || 'new'})`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (phoneExists) {
+                errorDiv.textContent = `A referral with this phone number already exists: ${phoneExists.firstName} ${phoneExists.lastName} (Status: ${phoneExists.status || 'new'})`;
                 errorDiv.style.display = 'block';
                 return;
             }
