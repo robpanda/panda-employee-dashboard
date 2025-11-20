@@ -490,9 +490,25 @@ def update_employee(event):
         for key, value in body.items():
             if key not in ['id']:
                 employee[key] = value
-        
+
+        # Auto-set employee as inactive if termination date is set
+        termination_date = body.get('termination_date') or body.get('Termination Date')
+        if termination_date:
+            employee['status'] = 'inactive'
+            employee['is_active'] = False
+            employee['Terminated'] = 'Yes'
+            print(f'UPDATE: Employee {employee_id} marked as inactive due to termination date: {termination_date}')
+        # If termination date is cleared, mark as active
+        elif termination_date == '' and ('termination_date' in body or 'Termination Date' in body):
+            employee['status'] = 'active'
+            employee['is_active'] = True
+            employee['Terminated'] = 'No'
+            employee.pop('termination_date', None)
+            employee.pop('Termination Date', None)
+            print(f'UPDATE: Employee {employee_id} marked as active (termination date cleared)')
+
         employee['updated_at'] = datetime.now().isoformat()
-        
+
         # Save updated employee
         employees_table.put_item(Item=employee)
         print(f'UPDATE: Successfully updated employee {employee_id}')
@@ -1922,13 +1938,35 @@ def handle_employee_login(event):
                     'body': json.dumps({'error': 'Invalid email or password'})
                 }
             
-            # Check if employee is terminated
-            if employee.get('Terminated', 'No') == 'Yes':
-                return {
-                    'statusCode': 401,
-                    'headers': get_cors_headers(),
-                    'body': json.dumps({'error': 'Account is inactive'})
-                }
+            # Check if employee is terminated or inactive
+            is_terminated = (
+                employee.get('Terminated', 'No') == 'Yes' or
+                employee.get('status') == 'inactive' or
+                employee.get('is_active') == False or
+                employee.get('termination_date') or
+                employee.get('Termination Date')
+            )
+
+            if is_terminated:
+                termination_date = employee.get('termination_date') or employee.get('Termination Date')
+                if termination_date:
+                    return {
+                        'statusCode': 401,
+                        'headers': get_cors_headers(),
+                        'body': json.dumps({
+                            'error': 'Account is inactive',
+                            'message': f'Your employment was terminated on {termination_date}. Please contact HR if you believe this is an error.'
+                        })
+                    }
+                else:
+                    return {
+                        'statusCode': 401,
+                        'headers': get_cors_headers(),
+                        'body': json.dumps({
+                            'error': 'Account is inactive',
+                            'message': 'Your account has been deactivated. Please contact HR for assistance.'
+                        })
+                    }
             
             # Check password - default is "Panda2025!" or custom password if set
             stored_password = employee.get('password', 'Panda2025!')
