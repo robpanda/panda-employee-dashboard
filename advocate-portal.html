@@ -277,6 +277,60 @@
                 justify-content: center;
             }
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            .portal-card {
+                border-radius: 12px;
+            }
+            .portal-header {
+                padding: 20px 16px;
+            }
+            .portal-header img {
+                max-width: 120px;
+            }
+            .portal-header h1 {
+                font-size: 20px;
+            }
+            .portal-body {
+                padding: 20px 16px;
+            }
+            .welcome-message h3 {
+                font-size: 18px;
+            }
+            .earnings-card {
+                padding: 20px;
+            }
+            .earnings-card .amount {
+                font-size: 36px;
+            }
+            .form-control, .btn {
+                font-size: 16px !important; /* Prevents zoom on iOS */
+            }
+            .referral-item {
+                padding: 12px;
+            }
+            .col-md-6 {
+                margin-bottom: 12px;
+            }
+            /* Better spacing for mobile forms */
+            .row.g-3 {
+                gap: 0 !important;
+            }
+        }
+
+        /* Extra small phones */
+        @media (max-width: 375px) {
+            .portal-header h1 {
+                font-size: 18px;
+            }
+            .earnings-card .amount {
+                font-size: 32px;
+            }
+        }
     </style>
 </head>
 <body>
