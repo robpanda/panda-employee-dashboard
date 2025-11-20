@@ -200,12 +200,91 @@
         .hidden {
             display: none;
         }
+
+        /* PWA Install Prompt */
+        #pwaInstallPrompt {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            max-width: 90%;
+            width: 400px;
+            z-index: 10000;
+            transition: bottom 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        #pwaInstallPrompt.show {
+            bottom: 20px;
+        }
+        #pwaInstallPrompt .icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+        #pwaInstallPrompt .content {
+            flex: 1;
+        }
+        #pwaInstallPrompt .content strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        #pwaInstallPrompt .content small {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        #pwaInstallPrompt .actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        #pwaInstallPrompt button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        #pwaInstallPrompt .install-btn {
+            background: white;
+            color: #1d4ed8;
+        }
+        #pwaInstallPrompt .install-btn:hover {
+            background: #f3f4f6;
+        }
+        #pwaInstallPrompt .close-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        #pwaInstallPrompt .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        @media (max-width: 600px) {
+            #pwaInstallPrompt {
+                width: calc(100% - 32px);
+                flex-direction: column;
+                text-align: center;
+            }
+            #pwaInstallPrompt .actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div class="logo">
-            <img src="https://pandaadmin.com/assets/PandaLogo.png" alt="Panda Exteriors">
+            <img src="http://pandaadmin.com.s3-website-us-east-1.amazonaws.com/PandaLogo.png" alt="Panda Exteriors">
         </div>
 
         <!-- Login Form -->
@@ -449,6 +528,85 @@
                 loading.classList.add('hidden');
             }
         });
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installPrompt = document.getElementById('pwaInstallPrompt');
+        const installBtn = document.getElementById('installBtn');
+        const closePromptBtn = document.getElementById('closePrompt');
+
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+
+            // Don't show if already dismissed in this session
+            if (!sessionStorage.getItem('pwaPromptDismissed')) {
+                // Show prompt after 2 seconds
+                setTimeout(() => {
+                    installPrompt.classList.add('show');
+                }, 2000);
+            }
+        });
+
+        // Install button click
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                return;
+            }
+
+            // Show the install prompt
+            deferredPrompt.prompt();
+
+            // Wait for the user to respond to the prompt
+            const { outcome } = await deferredPrompt.userChoice;
+
+            // We no longer need the prompt. Clear it up.
+            deferredPrompt = null;
+
+            // Hide the prompt
+            installPrompt.classList.remove('show');
+
+            if (outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            }
+        });
+
+        // Close button click
+        closePromptBtn.addEventListener('click', () => {
+            installPrompt.classList.remove('show');
+            sessionStorage.setItem('pwaPromptDismissed', 'true');
+        });
+
+        // For iOS Safari (can't trigger install, show instructions)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+
+        if (isIOS && !isStandalone && !sessionStorage.getItem('pwaPromptDismissed')) {
+            setTimeout(() => {
+                installPrompt.classList.add('show');
+                // Change button text for iOS
+                installBtn.textContent = 'Instructions';
+                installBtn.onclick = () => {
+                    alert('To add to Home Screen:\n1. Tap the Share button ⬆️\n2. Scroll and tap "Add to Home Screen"\n3. Tap "Add"');
+                };
+            }, 2000);
+        }
     </script>
+
+    <!-- PWA Install Prompt -->
+    <div id="pwaInstallPrompt">
+        <div class="icon">📱</div>
+        <div class="content">
+            <strong>Add to Home Screen</strong>
+            <small>Access this app instantly from your home screen</small>
+        </div>
+        <div class="actions">
+            <button id="installBtn" class="install-btn">Install</button>
+            <button id="closePrompt" class="close-btn">Later</button>
+        </div>
+    </div>
 </body>
 </html>
