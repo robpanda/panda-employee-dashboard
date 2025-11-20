@@ -485,6 +485,7 @@
             const lastName = document.getElementById('lastName').value;
             const email = document.getElementById('signupEmail').value;
             const phone = document.getElementById('signupPhone').value;
+            const paypalEmail = document.getElementById('paypalEmail').value;
             const password = document.getElementById('signupPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const referralCode = document.getElementById('referralCodeInput').value;
@@ -516,6 +517,7 @@
                         lastName,
                         email,
                         phone,
+                        paypalEmail: paypalEmail || undefined,
                         password,
                         referralCode: referralCode || undefined
                     })
