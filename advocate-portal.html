@@ -444,29 +444,60 @@
         let currentAdvocate = null;
 
         // Load advocate by referral code
-        async function loadAdvocate() {
-            const code = document.getElementById('referralCodeInput').value.trim().toUpperCase();
-            if (!code) {
-                alert('Please enter your referral code');
+        // New login function using email/password
+        async function loginAdvocate(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('advocateEmail').value.trim();
+            const password = document.getElementById('advocatePassword').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
                 return;
             }
 
             try {
-                // Get all advocates and find by referral code
+                // Call advocate login API
+                const response = await fetch(`${API_BASE}/auth/advocate/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                // API returns {token, advocate} on success or {error} on failure
+                if (data.advocate && data.token) {
+                    currentAdvocate = data.advocate;
+                    localStorage.setItem('advocateToken', data.token);
+                    await loadAdvocatePortal();
+                } else {
+                    alert(data.error || 'Invalid email or password. Please try again.');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Error connecting to server. Please try again.');
+            }
+        }
+
+        // Legacy function - kept for URL parameter support
+        async function loadAdvocate() {
+            const code = document.getElementById('referralCodeInput')?.value.trim().toUpperCase();
+            if (!code) return;
+
+            try {
                 const response = await fetch(`${API_BASE}/advocates`);
                 const data = await response.json();
                 const advocate = data.advocates.find(a => a.referralCode === code);
 
-                if (!advocate) {
-                    alert('Referral code not found. Please check your code and try again.');
-                    return;
+                if (advocate) {
+                    currentAdvocate = advocate;
+                    await loadAdvocatePortal();
                 }
-
-                currentAdvocate = advocate;
-                await loadAdvocatePortal();
             } catch (error) {
                 console.error('Error loading advocate:', error);
-                alert('Error loading your account. Please try again.');
             }
         }
 
