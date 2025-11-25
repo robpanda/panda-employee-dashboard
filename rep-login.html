@@ -219,9 +219,33 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
         }
         #pwaInstallPrompt.show {
-            bottom: 20px;
+            bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
+        }
+
+        /* Mobile adjustments for PWA prompt */
+        @media (max-width: 768px) {
+            #pwaInstallPrompt {
+                width: calc(100% - 32px);
+                max-width: none;
+                padding: 12px 16px;
+                font-size: 14px;
+                flex-wrap: wrap;
+            }
+            #pwaInstallPrompt.show {
+                bottom: max(16px, calc(env(safe-area-inset-bottom) + 8px));
+            }
+            #pwaInstallPrompt .icon {
+                font-size: 24px;
+            }
+            #pwaInstallPrompt .content strong {
+                font-size: 14px;
+            }
+            #pwaInstallPrompt .content small {
+                font-size: 12px;
+            }
         }
         #pwaInstallPrompt .icon {
             font-size: 32px;
@@ -284,7 +308,7 @@
 <body>
     <div class="auth-container">
         <div class="logo">
-            <img src="http://pandaadmin.com.s3-website-us-east-1.amazonaws.com/PandaLogo.png" alt="Panda Exteriors">
+            <img src="http://pandaadmin.com.s3-website-us-east-1.amazonaws.com/panda-logo.png" alt="Panda Exteriors">
         </div>
 
         <!-- Login Form -->
@@ -381,8 +405,14 @@
         // Check if already logged in
         window.addEventListener('load', function() {
             const token = localStorage.getItem('repToken');
-            if (token) {
+            const repData = localStorage.getItem('repData');
+
+            // Only auto-redirect if we have BOTH token and data
+            if (token && repData) {
                 verifyToken(token);
+            } else if (token && !repData) {
+                // Clear orphaned token
+                localStorage.removeItem('repToken');
             }
         });
 
@@ -393,13 +423,31 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
-                    window.location.href = 'rep-dashboard.html';
+                    // Get stored rep data to check role
+                    const repData = localStorage.getItem('repData');
+                    if (repData) {
+                        const rep = JSON.parse(repData);
+                        const role = rep.role || 'rep';
+
+                        // Route based on role
+                        if (role === 'superadmin') {
+                            window.location.href = 'admin-dashboard.html';
+                        } else if (role === 'manager') {
+                            window.location.href = 'manager-dashboard.html';
+                        } else {
+                            window.location.href = 'rep-dashboard.html';
+                        }
+                    } else {
+                        window.location.href = 'rep-dashboard.html';
+                    }
                 } else {
                     localStorage.removeItem('repToken');
                     localStorage.removeItem('repData');
                 }
             } catch (error) {
                 console.error('Token verification failed:', error);
+                localStorage.removeItem('repToken');
+                localStorage.removeItem('repData');
             }
         }
 
@@ -442,7 +490,16 @@
                 if (response.ok && result.token) {
                     localStorage.setItem('repToken', result.token);
                     localStorage.setItem('repData', JSON.stringify(result.rep));
-                    window.location.href = 'rep-dashboard.html';
+
+                    // Route based on role
+                    const role = result.rep.role || 'rep';
+                    if (role === 'superadmin') {
+                        window.location.href = 'admin-dashboard.html';
+                    } else if (role === 'manager') {
+                        window.location.href = 'manager-dashboard.html';
+                    } else {
+                        window.location.href = 'rep-dashboard.html';
+                    }
                 } else {
                     errorDiv.textContent = result.error || 'Invalid email or password';
                     errorDiv.style.display = 'block';
