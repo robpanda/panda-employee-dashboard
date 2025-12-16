@@ -199,8 +199,11 @@
                         document.querySelector('.admin').style.display = 'none';
                     }
                     
-                    // Assets - hide for all except super admin
-                    if (admin.role !== 'super_admin') {
+                    // Assets - show for super admin, or users with assets permission, or Assets department
+                    const hasAssetsAccess = admin.role === 'super_admin' ||
+                                           permissions.includes('assets') ||
+                                           admin.department === 'Assets';
+                    if (!hasAssetsAccess) {
                         document.querySelector('.assets').style.display = 'none';
                     }
                 } catch (e) {
