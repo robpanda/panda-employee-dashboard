@@ -5,6 +5,8 @@ import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 import uuid
+import urllib.request
+import urllib.error
 
 def get_cors_headers():
     # Lambda Function URL handles CORS automatically, only return Content-Type
@@ -1710,18 +1712,27 @@ def create_shopify_gift_card(value, employee):
     print(f'DEBUG: Creating gift card at URL: {url}')
     print(f'DEBUG: Store: {SHOPIFY_STORE}, Token: {SHOPIFY_ACCESS_TOKEN[:10]}...')
     print(f'DEBUG: Gift card data: {gift_card_data}')
-    
+
     try:
-        response = requests.post(url, headers=headers, json=gift_card_data, timeout=30)
-        print(f'DEBUG: Response status: {response.status_code}')
-        print(f'DEBUG: Response text: {response.text}')
-        
-        if response.status_code == 201:
-            gift_card = response.json()['gift_card']
-            return gift_card['code']
-        else:
-            print(f'Shopify API error: {response.status_code} - {response.text}')
-            return None
+        # Use urllib instead of requests (requests not in Lambda runtime)
+        req_data = json.dumps(gift_card_data).encode('utf-8')
+        req = urllib.request.Request(url, data=req_data, headers=headers, method='POST')
+
+        with urllib.request.urlopen(req, timeout=30) as response:
+            status_code = response.getcode()
+            response_text = response.read().decode('utf-8')
+            print(f'DEBUG: Response status: {status_code}')
+            print(f'DEBUG: Response text: {response_text}')
+
+            if status_code == 201:
+                gift_card = json.loads(response_text)['gift_card']
+                return gift_card['code']
+            else:
+                print(f'Shopify API error: {status_code} - {response_text}')
+                return None
+    except urllib.error.HTTPError as e:
+        print(f'Shopify API HTTP error: {e.code} - {e.read().decode("utf-8")}')
+        return None
     except Exception as e:
         print(f'Shopify API request failed: {e}')
         return None
