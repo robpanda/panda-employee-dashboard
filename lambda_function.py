@@ -1,5 +1,6 @@
 import json
 import boto3
+from botocore.exceptions import ClientError
 import os
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -952,20 +953,41 @@ def handle_points(event):
                 )
                 if response['Items']:
                     emp = response['Items'][0]
-                    current_points = float(emp.get('points', emp.get('Panda Points', 0)) or 0)
+                    stored_points = float(emp.get('points', emp.get('Panda Points', 0)) or 0)
 
-                    # Calculate lifetime total and redeemed from points history
+                    # Calculate lifetime total and redeemed from points history (source of truth)
                     try:
                         history_response = points_history_table.query(
                             IndexName='employee_id-index',
                             KeyConditionExpression='employee_id = :emp_id',
                             ExpressionAttributeValues={':emp_id': emp_id}
                         )
-                        total_received = sum(h.get('points', 0) for h in history_response.get('Items', []) if h.get('points', 0) > 0)
-                        points_redeemed = sum(abs(h.get('points', 0)) for h in history_response.get('Items', []) if h.get('points', 0) < 0)
-                    except:
-                        total_received = current_points
+                        total_received = sum(float(h.get('points', 0)) for h in history_response.get('Items', []) if float(h.get('points', 0)) > 0)
+                        points_redeemed = sum(abs(float(h.get('points', 0))) for h in history_response.get('Items', []) if float(h.get('points', 0)) < 0)
+                        # Calculate actual balance from history - this is the source of truth
+                        calculated_balance = total_received - points_redeemed
+                    except Exception as hist_error:
+                        print(f'Points history error: {hist_error}')
+                        total_received = max(0, stored_points)
                         points_redeemed = 0
+                        calculated_balance = stored_points
+
+                    # Never return negative balance - floor at 0
+                    current_points = max(0, calculated_balance)
+
+                    # If stored balance differs from calculated, sync it (fix data drift)
+                    if stored_points != calculated_balance:
+                        print(f'Points sync needed for {emp_id}: stored={stored_points}, calculated={calculated_balance}')
+                        try:
+                            employee_key = {'id': emp.get('id')} if 'id' in emp else {'employee_id': emp.get('employee_id')}
+                            employees_table.update_item(
+                                Key=employee_key,
+                                UpdateExpression='SET points = :balance, #pp = :balance',
+                                ExpressionAttributeNames={'#pp': 'Panda Points'},
+                                ExpressionAttributeValues={':balance': Decimal(str(max(0, calculated_balance)))}
+                            )
+                        except Exception as sync_error:
+                            print(f'Points sync error: {sync_error}')
 
                     return {
                         'statusCode': 200,
@@ -1054,25 +1076,53 @@ def handle_gift_cards(event):
             employee = response['Items'][0]
             current_points = float(employee.get('points', employee.get('Panda Points', 0)) or 0)
             
+            # Ensure we don't allow negative balance redemptions
+            if current_points <= 0:
+                return {
+                    'statusCode': 400,
+                    'headers': get_cors_headers(),
+                    'body': json.dumps({'error': 'No points available to redeem'})
+                }
+
             if current_points < points_to_redeem:
                 return {
                     'statusCode': 400,
                     'headers': get_cors_headers(),
-                    'body': json.dumps({'error': 'Insufficient points balance'})
+                    'body': json.dumps({'error': f'Insufficient points balance. You have {int(current_points)} points available.'})
                 }
-            
+
             # Create Shopify gift card
             gift_card_code = create_shopify_gift_card(points_to_redeem, employee)
-            
+
             if gift_card_code:
-                # Deduct points from employee
+                # Deduct points atomically using conditional update
+                # This prevents race conditions and ensures balance never goes negative
                 new_balance = current_points - points_to_redeem
-                employees_table.put_item(Item={
-                    **employee,
-                    'points': Decimal(str(new_balance)),
-                    'Panda Points': Decimal(str(new_balance)),
-                    'updated_at': datetime.now().isoformat()
-                })
+                employee_key = {'id': employee.get('id')} if 'id' in employee else {'employee_id': employee.get('employee_id')}
+
+                try:
+                    employees_table.update_item(
+                        Key=employee_key,
+                        UpdateExpression='SET points = :new_balance, #pp = :new_balance, updated_at = :updated',
+                        ConditionExpression='points >= :redeem_amount',
+                        ExpressionAttributeNames={
+                            '#pp': 'Panda Points'
+                        },
+                        ExpressionAttributeValues={
+                            ':new_balance': Decimal(str(new_balance)),
+                            ':redeem_amount': Decimal(str(points_to_redeem)),
+                            ':updated': datetime.now().isoformat()
+                        }
+                    )
+                except ClientError as e:
+                    if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                        # Another redemption happened simultaneously, balance is now insufficient
+                        return {
+                            'statusCode': 400,
+                            'headers': get_cors_headers(),
+                            'body': json.dumps({'error': 'Insufficient points balance. Please refresh and try again.'})
+                        }
+                    raise  # Re-raise other errors
                 
                 # Record redemption
                 redemption_record = {
