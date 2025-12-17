@@ -103,6 +103,9 @@ def lambda_handler(event, context):
         elif path == '/gift-cards':
             print(f'LAMBDA DEBUG: Calling handle_gift_cards')
             return handle_gift_cards(event)
+        elif path == '/gift-card-status':
+            print(f'LAMBDA DEBUG: Calling handle_gift_card_status')
+            return handle_gift_card_status(event)
         elif path == '/diagnose-shopify':
             print('LAMBDA DEBUG: Calling diagnose_shopify')
             return diagnose_shopify(event)
@@ -1686,8 +1689,6 @@ def get_shopify_credentials():
         return 'pandaexteriors', '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'
 
 def create_shopify_gift_card(value, employee):
-    import requests
-    
     # Get Shopify credentials from AWS Secrets Manager
     SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
     
@@ -1736,6 +1737,101 @@ def create_shopify_gift_card(value, employee):
     except Exception as e:
         print(f'Shopify API request failed: {e}')
         return None
+
+def handle_gift_card_status(event):
+    """Check the balance/status of gift cards from Shopify"""
+    try:
+        # Parse request body
+        if 'body' in event:
+            body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
+        else:
+            body = {}
+
+        codes = body.get('codes', [])
+
+        if not codes:
+            return {
+                'statusCode': 400,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Gift card codes required'})
+            }
+
+        SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN = get_shopify_credentials()
+
+        if not SHOPIFY_ACCESS_TOKEN:
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'error': 'Shopify credentials not available'})
+            }
+
+        results = []
+
+        for code in codes:
+            try:
+                # Search for gift card by code using the search endpoint
+                search_url = f'https://{SHOPIFY_STORE}.myshopify.com/admin/api/2023-10/gift_cards/search.json?query={code}'
+                headers = {
+                    'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+                    'Content-Type': 'application/json'
+                }
+
+                req = urllib.request.Request(search_url, headers=headers, method='GET')
+
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    response_data = json.loads(response.read().decode('utf-8'))
+                    gift_cards = response_data.get('gift_cards', [])
+
+                    if gift_cards:
+                        gc = gift_cards[0]
+                        initial_value = float(gc.get('initial_value', 0))
+                        balance = float(gc.get('balance', 0))
+
+                        results.append({
+                            'code': code,
+                            'initial_value': initial_value,
+                            'balance': balance,
+                            'used_amount': initial_value - balance,
+                            'is_used': balance == 0,
+                            'is_partially_used': 0 < balance < initial_value,
+                            'disabled_at': gc.get('disabled_at'),
+                            'expires_on': gc.get('expires_on')
+                        })
+                    else:
+                        results.append({
+                            'code': code,
+                            'error': 'Gift card not found',
+                            'is_used': False
+                        })
+
+            except urllib.error.HTTPError as e:
+                print(f'Shopify search error for {code}: {e.code}')
+                results.append({
+                    'code': code,
+                    'error': f'API error: {e.code}',
+                    'is_used': False
+                })
+            except Exception as e:
+                print(f'Error checking gift card {code}: {e}')
+                results.append({
+                    'code': code,
+                    'error': str(e),
+                    'is_used': False
+                })
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'gift_cards': results})
+        }
+
+    except Exception as e:
+        print(f'Gift card status error: {e}')
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
+        }
 
 def handle_points_history(event):
     if 'requestContext' in event and 'http' in event['requestContext']:
