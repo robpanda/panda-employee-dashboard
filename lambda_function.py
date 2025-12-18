@@ -110,6 +110,9 @@ def lambda_handler(event, context):
             print('LAMBDA DEBUG: Calling diagnose_shopify')
             return diagnose_shopify(event)
 
+        elif path == '/merchandise':
+            print(f'LAMBDA DEBUG: Calling get_merchandise')
+            return get_merchandise(event)
         elif path == '/sync-shopify-merchandise':
             print(f'LAMBDA DEBUG: Calling sync_shopify_merchandise')
             return sync_shopify_merchandise(event)
@@ -1259,6 +1262,81 @@ def diagnose_shopify(event):
                 'error': str(e),
                 'traceback': traceback.format_exc()
             })
+        }
+
+def get_merchandise(event):
+    """
+    Get all merchandise orders from employees.
+    Returns a list of orders parsed from employee 'Merch Requested' field.
+    """
+    try:
+        print('GET_MERCHANDISE: Starting function')
+
+        # Scan all employees
+        response = employees_table.scan()
+        employees = response['Items']
+
+        merchandise_orders = []
+
+        for emp in employees:
+            merch_requested = emp.get('Merch Requested', '')
+            merch_value_str = emp.get('Merchandise Value', '$0.00')
+
+            if not merch_requested:
+                continue
+
+            # Parse merchandise value
+            try:
+                merch_value = float(merch_value_str.replace('$', '').replace(',', ''))
+            except:
+                merch_value = 0.0
+
+            emp_name = f"{emp.get('First Name', '')} {emp.get('Last Name', '')}".strip()
+            emp_id = emp.get('id', emp.get('employee_id', ''))
+            emp_email = emp.get('Email', emp.get('email', ''))
+
+            # Parse individual orders from pipe-separated list
+            orders = [o.strip() for o in merch_requested.split('|') if o.strip()]
+
+            for order_text in orders:
+                order_data = {
+                    'employee_id': emp_id,
+                    'employee_name': emp_name,
+                    'employee_email': emp_email,
+                    'order_text': order_text,
+                    'status': 'pending'
+                }
+
+                # Try to extract order number from [Shopify #XXX] format
+                if '[Shopify #' in order_text:
+                    try:
+                        order_num = order_text.split('[Shopify #')[1].split(']')[0].strip()
+                        order_data['order_number'] = order_num
+                    except:
+                        pass
+
+                merchandise_orders.append(order_data)
+
+        print(f'GET_MERCHANDISE: Found {len(merchandise_orders)} orders')
+
+        return {
+            'statusCode': 200,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'success': True,
+                'merchandise': merchandise_orders,
+                'total': len(merchandise_orders)
+            })
+        }
+
+    except Exception as e:
+        print(f'GET_MERCHANDISE ERROR: {e}')
+        import traceback
+        traceback.print_exc()
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({'error': str(e)})
         }
 
 def sync_shopify_merchandise(event):
